@@ -27,7 +27,7 @@ PushECOToAnnotationFile=1
 DItemRevisionGUID=
 
 [Document1]
-DocumentPath=..\..\..\..\AD9Pack\元件库\SIM7020\ATK-SIM800C.SCHLIB
+DocumentPath=Project Outputs for SIM7020\02.MCU_KL25.SCHLIB
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -42,7 +42,7 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
 [Document2]
-DocumentPath=..\..\..\..\AD9Pack\元件库\SIM7020\ATK-SIM800C.PcbLib
+DocumentPath=Project Outputs for SIM7020\02.MCU_KL25.PcbLib
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
