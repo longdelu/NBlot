@@ -99,7 +99,7 @@ SCH_ShowNoErc=-1
 SCH_ShowParameter=-1
 SCH_ShowProbes=-1
 SCH_ShowBlankets=-1
-OutputFileName=SIM7020.PrjPcb=G:\NBlot\ALIENTEK\原理图\SIM7020_PCB\SIM7020.pdf
+OutputFileName=SIM7020.PrjPcb=G:\NBlot\ALIENTEK\原理图\SIM7020\SIM7020.pdf
 SCH_ExpandLogicalToPhysical=-1
 SCH_VariantName=[No Variations]
 SCH_ExpandComponentDesignators=-1
