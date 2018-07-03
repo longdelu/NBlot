@@ -261,6 +261,7 @@ static void TIM_SlaveTimer_SetConfig(TIM_HandleTypeDef *htim,
   */
 HAL_StatusTypeDef HAL_TIM_Base_Init(TIM_HandleTypeDef *htim)
 {
+    
   /* Check the TIM handle allocation */
   if (htim == NULL)
   {

@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32L476xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../Drivers/STM32L4xx_HAL_Driver/Inc;../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../Drivers/CMSIS/Include;..\HARDWARE\KEY;..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\NBLOT_UART;..\HARDWARE\TIMER</IncludePath>
+              <IncludePath>../Inc;../Drivers/STM32L4xx_HAL_Driver/Inc;../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../Drivers/CMSIS/Include;..\HARDWARE\KEY;..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\NBLOT_UART;..\HARDWARE\TIMER;..\HARDWARE\LPTIMER;..\EXAMPLE</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -535,6 +535,11 @@
               <FilePath>..\HARDWARE\LED\led.c</FilePath>
             </File>
             <File>
+              <FileName>lptimer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\LPTIMER\lptimer.c</FilePath>
+            </File>
+            <File>
               <FileName>timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\TIMER\timer.c</FilePath>
@@ -578,6 +583,16 @@
               <FileName>demo_entry.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\EXAMPLE\demo_entry.h</FilePath>
+            </File>
+            <File>
+              <FileName>demo_uart_poll_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\nb_uart\demo_uart_poll_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_timer_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\timer\demo_timer_entry.c</FilePath>
             </File>
           </Files>
         </Group>

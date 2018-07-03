@@ -19,7 +19,7 @@
 
 //串口1中断服务程序
 //注意,读取USARTx->SR能避免莫名其妙的错误   	
-u8 NBLOT_RxBuffer[USART_REC_LEN];     //接收缓冲,最大USART_REC_LEN个字节.
+u8 NBLOT_RxBuffer[LPUSART_REC_LEN];     //接收缓冲,最大LPUSART_REC_LEN个字节.
 //接收状态
 //bit15，	接收完成标志
 //bit14，	接收到0x0d
@@ -62,6 +62,7 @@ void HAL_LPUART1_MspInit(UART_HandleTypeDef *huart)
 //bound:波特率
 void lpuart1_init (u32 bound)
 {
+    
   hlpuart1.Instance = LPUART1;
   hlpuart1.Init.BaudRate = bound;
   hlpuart1.Init.WordLength = UART_WORDLENGTH_8B;
@@ -71,7 +72,9 @@ void lpuart1_init (u32 bound)
   hlpuart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   hlpuart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   hlpuart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+    
   HAL_LPUART1_MspInit(&hlpuart1);  
+    
   if (HAL_UART_Init(&hlpuart1) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
@@ -108,7 +111,7 @@ void LPUART1_IRQHandler(void)
 				{
 					NBLOT_RxBuffer[NBLOT_USART_RX_STA&0X3FFF]=Res ;
 					NBLOT_USART_RX_STA++;
-					if(NBLOT_USART_RX_STA>(USART_REC_LEN-1))NBLOT_USART_RX_STA=0;//接收数据错误,重新开始接收	  
+					if(NBLOT_USART_RX_STA>(LPUSART_REC_LEN-1))NBLOT_USART_RX_STA=0;//接收数据错误,重新开始接收	  
 				}		 
 			}
 		}   		 
@@ -116,4 +119,40 @@ void LPUART1_IRQHandler(void)
 	HAL_UART_IRQHandler(&hlpuart1);	
 } 
 #endif	
+
+
+//轮询发送串口数据
+int uart_data_tx_poll(UART_HandleTypeDef *huart, uint8_t *pData,uint16_t size)
+{
+    if(size == 0 || pData == NULL)
+    {
+       return -1;
+    }
+    
+    /* 发送设置超时为 HAL_MAX_DELAY ms */
+    return HAL_UART_Transmit(huart, pData, size, HAL_MAX_DELAY);
+}
+
+//轮询接收串口数据
+int uart_data_rx_poll(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t size)
+{
+    int ret = 0;
+    
+    if(size == 0 || pData == NULL)
+    {
+       return -1;
+    }
+    
+    __HAL_UART_DISABLE_IT(&hlpuart1, UART_IT_RXNE);    //禁止接收中断
+    
+    /* 发送设置超时为 HAL_MAX_DELAY ms */
+    ret = HAL_UART_Receive(huart, pData, size, HAL_MAX_DELAY);
+    
+    __HAL_UART_DISABLE_IT(&hlpuart1, UART_IT_RXNE);    //开启接收中断
+    
+    return ret;
+}
+
+
+
 

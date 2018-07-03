@@ -65,16 +65,22 @@ int main(void)
 	delay_init(HAL_RCC_GetHCLKFreq()/1000000);
 
 	uart1_init(115200);	
+    
 	lpuart1_init(115200);	
+    
 	key_init();
 	led_init();	
     
+//    demo_key_entry();
     
+//    demo_uart_poll_entry();
+    
+    demo_timer_timing_entry();
     
 	while (1)
 	{	   
                    
-	   delay_us(100);                      
+	   delay_ms(100);                      
        printf("running");
 
 	}

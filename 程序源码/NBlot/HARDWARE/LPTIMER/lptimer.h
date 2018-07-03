@@ -1,8 +1,8 @@
 #ifndef _TIMER_H
 #define _TIMER_H
 #include "sys.h"
+#include "stm32l4xx_hal_rcc.h"
 
-#include "stm32l4xx_hal_tim.h"
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F7开发板
@@ -16,10 +16,11 @@
 //All rights reserved									  
 ////////////////////////////////////////////////////////////////////////////////// 
 
+extern LPTIM_HandleTypeDef hlptim1;
+extern LPTIM_HandleTypeDef hlptim2;
 
-extern TIM_HandleTypeDef TIM7_Handler; //定时器句柄 
-
-void TIM7_Init(u16 arr,u16 psc);
+void LPTIM1_Init(u32 psc, u32 arr);
+void LPTIM2_Init(u32 psc, u32 arr);
 
 #endif
 

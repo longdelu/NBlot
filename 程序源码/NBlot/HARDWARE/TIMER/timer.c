@@ -13,109 +13,55 @@
 //All rights reserved									  
 ////////////////////////////////////////////////////////////////////////////////// 	
 
-//低功耗定时器句柄      
-LPTIM_HandleTypeDef hlptim1;
-LPTIM_HandleTypeDef hlptim2;
+TIM_HandleTypeDef TIM7_Handler; //定时器句柄 
 
+//定时器7配置预装载周期值
+void TIM7_SetARR(u16 period)
+{
+	 TIM7->CNT = 0;     //计数器清空
+	 TIM7->ARR&=0x00;   //先清预装载周期值为0
+	 TIM7->ARR|= period;//更新预装载周期值 
+}
 
-//低功耗定时器1中断初始化
+//通用定时器7中断初始化
 //arr：自动重装值。
 //psc：时钟预分频数
 //定时器溢出时间计算方法:Tout=((arr+1)*(psc+1))/Ft us.
 //Ft=定时器工作频率,单位:Mhz
-//这里使用的是低功耗定时器1(定时器1挂在APB1上，时钟为HCLK/2)
-void LPTIM1_Init(u32 psc, u32 arr)
+//这里使用的是定时器7!(定时器7挂在APB1上，因为APB1的时钟没有分频，时钟为HCLK)
+void TIM7_Init(u16 arr,u16 psc)
+{  
+	__HAL_RCC_TIM7_CLK_ENABLE();                           //使能TIM7时钟
+    TIM7_Handler.Instance=TIM7;                            //基本定时器7
+    TIM7_Handler.Init.Prescaler=psc;                       //分频系数
+    TIM7_Handler.Init.CounterMode=TIM_COUNTERMODE_UP;      //向上计数器
+    TIM7_Handler.Init.Period=arr;                          //自动装载值
+    TIM7_Handler.Init.ClockDivision=TIM_CLOCKDIVISION_DIV1;//时钟分频因子
+    
+    HAL_TIM_Base_Init(&TIM7_Handler);
+    
+    HAL_TIM_Base_Start_IT(&TIM7_Handler);
+
+	HAL_NVIC_SetPriority(TIM7_IRQn,13,0);                  //设置中断优先级，抢占优先级13，子优先级0
+	HAL_NVIC_EnableIRQ(TIM7_IRQn);                         //开启ITM7中断  	
+}
+
+
+//定时器7中断服务函数
+void TIM7_IRQHandler(void)
 {
-    hlptim1.Instance = LPTIM1;
-    hlptim1.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
-    hlptim1.Init.Clock.Prescaler = psc;                //分频系数
- //   hlptim1.Init.Period=arr;                          //自动装载值
+    HAL_TIM_IRQHandler(&TIM7_Handler);
+}
 
-
-
-  //  hlptim1.Init.ClockDivision=TIM_CLOCKDIVISION_DIV1;//时钟分频因子   
-    
-    hlptim1.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
-    hlptim1.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
-    hlptim1.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
-    hlptim1.Init.CounterSource = LPTIM_COUNTERSOURCE_INTERNAL;
-    hlptim1.Init.Input1Source = LPTIM_INPUT1SOURCE_GPIO;
-    hlptim1.Init.Input2Source = LPTIM_INPUT2SOURCE_GPIO;
-    
-       
-    if (HAL_LPTIM_Init(&hlptim1) != HAL_OK)
+//回调函数，定时器中断服务函数调用
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{ 
+	
+    if (htim == (&TIM7_Handler)) //定时器7中断服务函数调用(GSM调用)
     {
-      _Error_Handler(__FILE__, __LINE__);
-    }
-    
-
-
-}
-
-
-//低功耗定时器2中断初始化
-//arr：自动重装值。
-//psc：时钟预分频数
-//定时器溢出时间计算方法:Tout=((arr+1)*(psc+1))/Ft us.
-//Ft=定时器工作频率,单位:Mhz
-//这里使用的是低功耗定时器1(定时器1挂在APB1上，时钟为HCLK/2)
-void LPTIM2_Init(u32 psc, u32 arr)
-{
-          
-  hlptim2.Instance = LPTIM2;
-  hlptim2.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
-  hlptim1.Init.Clock.Prescaler=psc;                       //分频系数
-//  hlptim1.Init.CounterMode=TIM_COUNTERMODE_UP;      //向上计数器
-//  hlptim1.Init.Period=arr;                          //自动装载值
-//  hlptim1.Init.ClockDivision=TIM_CLOCKDIVISION_DIV1;//时钟分频因子   
-  hlptim2.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
-  hlptim2.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
-  hlptim2.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
-  hlptim2.Init.CounterSource = LPTIM_COUNTERSOURCE_INTERNAL;
-  hlptim2.Init.Input1Source = LPTIM_INPUT1SOURCE_GPIO;
-  hlptim2.Init.Input2Source = LPTIM_INPUT2SOURCE_GPIO;
-  if (HAL_LPTIM_Init(&hlptim2) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
-}
-
-//低功耗定时器底册驱动，开启时钟，设置中断优先级
-//此函数会被HAL_TIM_Base_Init()函数调用
-void HAL_LPTIM_MspInit(LPTIM_HandleTypeDef *htim)
-{
-    if(htim->Instance==LPTIM1)
-	{
-		__HAL_RCC_LPTIM1_CLK_ENABLE();             //使能LPTIM1时钟
-		HAL_NVIC_SetPriority(LPTIM1_IRQn,14,0);    //设置中断优先级，抢占优先级1，子优先级3
-		HAL_NVIC_EnableIRQ(LPTIM1_IRQn);           //开启ITM3中断   
-	}  
-}
-
-//低功耗定时器1中断服务函数
-void LPTIM1_IRQHandler(void)
-{
-    HAL_LPTIM_IRQHandler(&hlptim1);
-}
-
-
-//低功耗定时器2中断服务函数
-void LPTIM2_IRQHandler(void)
-{
-    HAL_LPTIM_IRQHandler(&hlptim2);
-}
-
-//低功耗定时器2中断服务函数调用
-void HAL_LPTIM_PeriodElapsedCallback(LPTIM_HandleTypeDef *htim)
-{
-    if(htim==(&hlptim1))
-    {
-       
-    } else if(htim==(&hlptim2)) {
         
-    } else {
-        
+        LED0_Toggle;
     }
 }
+
 
