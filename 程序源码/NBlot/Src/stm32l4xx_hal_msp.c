@@ -78,113 +78,16 @@ void HAL_MspInit(void)
   /* USER CODE END MspInit 1 */
 }
 
-void HAL_LPTIM_MspInit(LPTIM_HandleTypeDef* hlptim)
-{
-
-  if(hlptim->Instance==LPTIM1)
-  {
-  /* USER CODE BEGIN LPTIM1_MspInit 0 */
-
-  /* USER CODE END LPTIM1_MspInit 0 */
-    /* Peripheral clock enable */
-    __HAL_RCC_LPTIM1_CLK_ENABLE();
-  /* USER CODE BEGIN LPTIM1_MspInit 1 */
-
-  /* USER CODE END LPTIM1_MspInit 1 */
-  }
-  else if(hlptim->Instance==LPTIM2)
-  {
-  /* USER CODE BEGIN LPTIM2_MspInit 0 */
-
-  /* USER CODE END LPTIM2_MspInit 0 */
-    /* Peripheral clock enable */
-    __HAL_RCC_LPTIM2_CLK_ENABLE();
-  /* USER CODE BEGIN LPTIM2_MspInit 1 */
-
-  /* USER CODE END LPTIM2_MspInit 1 */
-  }
-
-}
-
-void HAL_LPTIM_MspDeInit(LPTIM_HandleTypeDef* hlptim)
-{
-
-  if(hlptim->Instance==LPTIM1)
-  {
-  /* USER CODE BEGIN LPTIM1_MspDeInit 0 */
-
-  /* USER CODE END LPTIM1_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_LPTIM1_CLK_DISABLE();
-  /* USER CODE BEGIN LPTIM1_MspDeInit 1 */
-
-  /* USER CODE END LPTIM1_MspDeInit 1 */
-  }
-  else if(hlptim->Instance==LPTIM2)
-  {
-  /* USER CODE BEGIN LPTIM2_MspDeInit 0 */
-
-  /* USER CODE END LPTIM2_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_LPTIM2_CLK_DISABLE();
-  /* USER CODE BEGIN LPTIM2_MspDeInit 1 */
-
-  /* USER CODE END LPTIM2_MspDeInit 1 */
-  }
-
-}
 
 void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 {
 
-  GPIO_InitTypeDef GPIO_InitStruct;
-  if(huart->Instance==LPUART1)
-  {
-  /* USER CODE BEGIN LPUART1_MspInit 0 */
-
-  /* USER CODE END LPUART1_MspInit 0 */
-    /* Peripheral clock enable */
-    __HAL_RCC_LPUART1_CLK_ENABLE();
-  
-    /**LPUART1 GPIO Configuration    
-    PC0     ------> LPUART1_RX
-    PC1     ------> LPUART1_TX 
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF8_LPUART1;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /* USER CODE BEGIN LPUART1_MspInit 1 */
-
-  /* USER CODE END LPUART1_MspInit 1 */
-  }
 
 }
 
 void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 {
 
-  if(huart->Instance==LPUART1)
-  {
-  /* USER CODE BEGIN LPUART1_MspDeInit 0 */
-
-  /* USER CODE END LPUART1_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_LPUART1_CLK_DISABLE();
-  
-    /**LPUART1 GPIO Configuration    
-    PC0     ------> LPUART1_RX
-    PC1     ------> LPUART1_TX 
-    */
-    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_0|GPIO_PIN_1);
-
-  /* USER CODE BEGIN LPUART1_MspDeInit 1 */
-
-  /* USER CODE END LPUART1_MspDeInit 1 */
-  }
 
 }
 
