@@ -18,13 +18,14 @@
   */
 void demo_timer_timing_entry(void)
 { 
-    
-  TIM7_Init(50000 - 1, 720 -1);
-    
-  while (1)
-  { 
-	  delay_ms(100);	  
-  }
+  
+    //计数频率为64M/640=100000HZ, 然后计数周期为50000个计数，为1S的一半    
+    TIM7_Init(50000 - 1, 640 -1);
+
+    while (1)
+    { 
+      delay_ms(100);	  
+    }
   /* USER CODE END 3 */
 
 }

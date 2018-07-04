@@ -18,7 +18,7 @@
 
 
 /**
-  * @brief System Clock Configuration
+  * @brief System Clock Configuration, the ahb sys clk is 64MHZ, the apb1 and apb2 div is 1 
   * @retval None
   */
 void SystemClock_Config (void)
