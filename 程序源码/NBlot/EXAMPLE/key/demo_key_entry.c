@@ -11,9 +11,10 @@
 #include "key.h"
 #include "stm32l4xx_hal.h"
 
-void key_val_handle(int key)
-{   		
-    switch(key)
+void key_val_handle(u32 key_event,void *p_arg)
+{   
+  
+    switch(key_event)
     {
         case KEY0_PRES://KEY0按下,读取sector
 		    printf("key0 press\r\n");
@@ -43,12 +44,25 @@ void key_val_handle(int key)
 void demo_key_entry(void)
 { 
   int key = 0;
+  int key_mode = 1;
+    
+  key_init(key_mode); 
+
+  if (key_mode == 1) {    
+      KEY_RegisterCb(key_val_handle, NULL);
+  }
   
   while (1)
   {  
-      key = KEY_Scan(0); 
+      if (key_mode == 0) {
+          key = KEY_Scan(0); 
       
-      key_val_handle(key);
+          key_val_handle(key, NULL);
+      } else {
+          
+          KEY_Poll();
+          
+      }
       
 	  delay_ms(10);	  
   }

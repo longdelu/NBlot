@@ -1,5 +1,5 @@
-#ifndef _TIMER_H
-#define _TIMER_H
+#ifndef _LPTIMER_H
+#define _LPTIMER_H
 #include "sys.h"
 #include "stm32l4xx_hal_rcc.h"
 

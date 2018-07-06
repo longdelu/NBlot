@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32L476xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../Drivers/STM32L4xx_HAL_Driver/Inc;../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../Drivers/CMSIS/Include;..\HARDWARE\KEY;..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\NBLOT_UART;..\HARDWARE\TIMER;..\HARDWARE\LPTIMER;..\EXAMPLE</IncludePath>
+              <IncludePath>../Inc;../Drivers/STM32L4xx_HAL_Driver/Inc;../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../Drivers/CMSIS/Include;..\HARDWARE\KEY;..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\NBLOT_UART;..\HARDWARE\TIMER;..\HARDWARE\LPTIMER;..\EXAMPLE;..\HARDWARE\SIM7020;..\ATK_SOFT_TIMER</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -544,6 +544,11 @@
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\TIMER\timer.c</FilePath>
             </File>
+            <File>
+              <FileName>sim7020.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\SIM7020\sim7020.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -593,6 +598,21 @@
               <FileName>demo_timer_entry.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\timer\demo_timer_entry.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>SOFTTIMER</GroupName>
+          <Files>
+            <File>
+              <FileName>atk_soft_timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ATK_SOFT_TIMER\atk_soft_timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>atk_soft_timer_demo_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ATK_SOFT_TIMER\atk_soft_timer_demo_entry.c</FilePath>
             </File>
           </Files>
         </Group>

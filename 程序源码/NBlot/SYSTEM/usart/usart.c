@@ -140,7 +140,6 @@ void USART1_IRQHandler(void)
         }            
     }
     HAL_UART_IRQHandler(&UART1_Handler);    
-
 } 
 #endif    
 

@@ -1330,7 +1330,7 @@ HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *pData,
     huart->RxXferCount = Size;
     huart->RxISR       = NULL;
 
-    /* Computation of UART mask to apply to RDR register */
+    /* Computation of UART mask to apply               to RDR register */
     UART_MASK_COMPUTATION(huart);
 
     huart->ErrorCode = HAL_UART_ERROR_NONE;

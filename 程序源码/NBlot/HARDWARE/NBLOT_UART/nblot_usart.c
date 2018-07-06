@@ -1,5 +1,6 @@
 #include "nblot_usart.h"
 #include "delay.h"
+#include "stdio.h"
 
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
@@ -13,6 +14,8 @@
 //Copyright(C) 广州市星翼电子科技有限公司 2009-2019
 //All rights reserved
 //********************************************************************************
+
+static uart_dev_t uart_dev;
 
 
 #if EN_LPUART1_RX   //如果使能了接收
@@ -31,7 +34,6 @@ UART_HandleTypeDef hlpuart1;
 //UART底层初始化，时钟使能，引脚配置，中断配置
 //此函数会被HAL_UART_Init()调用
 //huart:串口句柄
-
 void HAL_LPUART1_MspInit(UART_HandleTypeDef *huart)
 {
     //GPIO端口设置
@@ -89,6 +91,7 @@ void lpuart1_init (u32 bound)
 }
 
 
+#if 0
 //串口1中断服务程序
 void LPUART1_IRQHandler(void)                	
 { 
@@ -116,25 +119,60 @@ void LPUART1_IRQHandler(void)
 			}
 		}   		 
 	}
+    
 	HAL_UART_IRQHandler(&hlpuart1);	
 } 
+
+#endif /* if 0 */
+
+
 #endif	
 
 
-//轮询发送串口数据
-int uart_data_tx_poll(UART_HandleTypeDef *huart, uint8_t *pData,uint16_t size)
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
+	if(huart->Instance==USART1)//如果是串口1
+	{
+        
+        
+	}
+}
+
+//串口1中断服务程序
+void USART1_IRQHandler(void)                	
+{ 
+    	
+	HAL_UART_IRQHandler(&hlpuart1);	//调用HAL库中断处理公用函数	
+    
+    atk_soft_timer_stop(&uart_dev.uart_timer);
+	
+}
+
+
+
+
+//轮询发送串口数据
+int uart_data_tx_poll(UART_HandleTypeDef *huart, uint8_t *pData,uint16_t size, uint32_t Timeout)
+{   
+    int ret = 0;
+    
     if(size == 0 || pData == NULL)
     {
        return -1;
     }
     
-    /* 发送设置超时为 HAL_MAX_DELAY ms */
-    return HAL_UART_Transmit(huart, pData, size, HAL_MAX_DELAY);
+    __HAL_UART_DISABLE_IT(&hlpuart1, UART_IT_TXE);    //禁能发送中断  
+    
+    /* 发送设置超时为 HAL_MAX_DELAY ms */ 
+     ret = HAL_UART_Transmit(huart, pData, size, HAL_MAX_DELAY);
+    
+    __HAL_UART_ENABLE_IT(&hlpuart1, UART_IT_TXE);    //使能发送中断      
+    
+     return  ret;
 }
 
 //轮询接收串口数据
-int uart_data_rx_poll(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t size)
+int uart_data_rx_poll(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t size, uint32_t Timeout)
 {
     int ret = 0;
     
@@ -146,12 +184,78 @@ int uart_data_rx_poll(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t size)
     __HAL_UART_DISABLE_IT(&hlpuart1, UART_IT_RXNE);    //禁止接收中断
     
     /* 发送设置超时为 HAL_MAX_DELAY ms */
-    ret = HAL_UART_Receive(huart, pData, size, HAL_MAX_DELAY);
+    ret = HAL_UART_Receive(huart, pData, size, Timeout);
     
     __HAL_UART_DISABLE_IT(&hlpuart1, UART_IT_RXNE);    //开启接收中断
     
     return ret;
 }
+
+
+
+//**************************************
+// fn : LPUART_RegisterCb
+//
+// brief : 注册按钮事件回调
+//
+// param : cb -> 处理按钮事件函数指针
+//
+// return : none
+void LPUART_RegisterCb(uart_cb cb, void *p_arg)
+{
+  if(cb != 0)
+  {
+    uart_dev.lpuart_cb = cb;
+    uart_dev.p_arg     = p_arg;
+  }
+}
+
+
+
+//中断接收串口数据
+int uart_data_rx_int(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t size, uint32_t Timeout)
+{
+    int ret = 0;
+    
+    if(size == 0 || pData == NULL)
+    {
+       return -1;
+    }
+       
+  
+    /* 发送设置超时为 HAL_MAX_DELAY ms */
+    ret = HAL_UART_Receive_IT(huart, pData, size);
+    
+    /* 初始超时计算 */
+    atk_soft_timer_init(&uart_dev.uart_timer, uart_dev.lpuart_cb,  uart_dev.p_arg, Timeout, 0); //1s loop
+    atk_soft_timer_start(&uart_dev.uart_timer);
+    
+             
+    /* 同步超时的时间 */
+    while (HAL_UART_GetState(&hlpuart1) != HAL_UART_STATE_READY);//等待就绪
+    
+           
+    return ret;
+}
+
+
+//中断发送串口数据
+int uart_data_tx_int(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t size, uint32_t Timeout)
+{
+    int ret = 0;
+    
+    if(size == 0 || pData == NULL)
+    {
+       return -1;
+    }
+    
+    while (HAL_UART_GetState(&hlpuart1) != HAL_UART_STATE_READY);//等待就绪
+
+    ret = HAL_UART_Transmit_IT(huart, pData, size);
+    
+    return ret;
+}
+
 
 
 

@@ -23,8 +23,47 @@
 #define KEY2_PRES	3
 #define WKUP_PRES   4
 
-void key_init(void);
+//按键消抖时延
+#define KEY_DELAY_TICK   20
+
+//定义按键回调函数指针
+typedef void (*key_cb)(u32 key_event, void *p_arg);
+
+//按键结构体
+typedef struct key_dev
+{
+    uint8_t key_event;
+    
+    int     start_tick;
+    
+    key_cb  pFkey_cb;
+    
+    void   *p_arg;       
+    
+}key_dev_t;
+
+void key_init(int mode);
 
 u8 KEY_Scan(u8 mode);
+
+//**************************************
+// fn : KEY_RegisterCb
+//
+// brief : 注册按钮事件回调
+//
+// param : cb -> 处理按钮事件函数指针
+//
+// return : none
+void KEY_RegisterCb(key_cb cb, void *p_arg);
+
+//**************************************
+// fn : KEY_Poll
+//
+// brief : 轮询按钮事件
+//
+// param : none
+//
+// return : none
+void KEY_Poll(void);
 
 #endif

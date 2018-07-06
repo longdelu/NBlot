@@ -5,7 +5,7 @@
   * @brief          : 串口轮询收发数据实验
   */
 /* Includes ------------------------------------------------------------------*/
-
+#include "sys.h"
 #include "led.h"
 #include "delay.h"
 #include "nblot_usart.h"
@@ -20,11 +20,13 @@ void demo_uart_poll_entry(void)
 { 
   uint8_t buf[32];  
     
-  uart_data_tx_poll(&hlpuart1, (uint8_t *)"nblot_uart test\r\n", sizeof("nblot_uart test\r\n"));   
-        
-  uart_data_rx_poll(&hlpuart1, buf, sizeof("nblot_uart rx tx test ok"));   
+  lpuart1_init(115200);	  
     
-  uart_data_tx_poll(&hlpuart1, buf, sizeof("nblot_uart rx tx test ok"));
+  uart_data_tx_poll(&hlpuart1, (uint8_t *)"nblot_uart test\r\n", sizeof("nblot_uart test\r\n"), HAL_MAX_DELAY);   
+        
+  uart_data_rx_poll(&hlpuart1, buf, sizeof("nblot_uart rx tx test ok"), HAL_MAX_DELAY);   
+    
+  uart_data_tx_poll(&hlpuart1, buf, sizeof("nblot_uart rx tx test ok"),HAL_MAX_DELAY);
     
   while (1)
   {

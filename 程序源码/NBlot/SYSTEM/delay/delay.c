@@ -1,5 +1,6 @@
 #include "delay.h"
 #include "sys.h"
+#include "atk_soft_timer.h"
 ////////////////////////////////////////////////////////////////////////////////// 	 
 //如果使用ucos,则包括下面的头文件即可.
 #if SYSTEM_SUPPORT_OS
@@ -101,10 +102,17 @@ void SysTick_Handler(void)
 }
 #else
 
+void HAL_SYSTICK_Callback(void)
+{
+    atk_soft_timer_ticks(); //1ms ticks
+}
+
 //systick中断服务函数HAL库使用到
 void SysTick_Handler(void)
 {	
     HAL_IncTick();
+    
+    HAL_SYSTICK_Callback();
 }
 
 #endif
