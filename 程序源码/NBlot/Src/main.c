@@ -57,13 +57,13 @@
   */
 int main(void)
 { 
-	/* HAL库初始化 */
-	HAL_Init();		
-	/* Configure the system clock */
-	SystemClock_Config();
-	delay_init(HAL_RCC_GetHCLKFreq()/1000000);
-	uart1_init(115200);	      
-	led_init();	
+    /* HAL库初始化 */
+    HAL_Init();        
+    /* Configure the system clock */
+    SystemClock_Config();
+    delay_init(HAL_RCC_GetHCLKFreq()/1000000);
+    uart1_init(115200);          
+    led_init();    
     
 //    demo_key_entry();
     
@@ -71,15 +71,17 @@ int main(void)
     
 //    demo_timer_timing_entry();
     
-	while (1)
-	{	   
-       
-       atk_soft_timer_loop();
-        
-	   delay_ms(100);                      
+//    demo_soft_timer_entry();
+    
+    
+    demo_uart_int_entry();
+    
+    while (1)
+    {            
+       delay_ms(100);                      
        printf("running");
 
-	}
+    }
 }
 
 

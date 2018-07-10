@@ -1,8 +1,8 @@
 #include "sys.h"
-//////////////////////////////////////////////////////////////////////////////////	 
+//////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F429开发板
-//系统时钟初始化	
+//系统时钟初始化    
 //包括时钟设置/中断管理/GPIO设置等
 //正点原子@ALIENTEK
 //技术论坛:www.openedv.com
@@ -95,9 +95,9 @@ void SystemClock_Config (void)
 //line：指向在文件中的行数
 void assert_failed(uint8_t* file, uint32_t line)
 { 
-	while (1)
-	{
-	}
+    while (1)
+    {
+    }
 }
 #endif
 
@@ -105,24 +105,24 @@ void assert_failed(uint8_t* file, uint32_t line)
 //采用如下方法实现执行汇编指令WFI  
 __asm void WFI_SET(void)
 {
-	WFI;		  
+    WFI;          
 }
 //关闭所有中断(但是不包括fault和NMI中断)
 __asm void INTX_DISABLE(void)
 {
-	CPSID   I
-	BX      LR	  
+    CPSID   I
+    BX      LR      
 }
 //开启所有中断
 __asm void INTX_ENABLE(void)
 {
-	CPSIE   I
-	BX      LR  
+    CPSIE   I
+    BX      LR  
 }
 //设置栈顶地址
 //addr:栈顶地址
 __asm void MSR_MSP(u32 addr) 
 {
-	MSR MSP, r0 			//set Main Stack value
-	BX r14
+    MSR MSP, r0             //set Main Stack value
+    BX r14
 }

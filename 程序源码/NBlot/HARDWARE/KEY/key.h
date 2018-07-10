@@ -18,13 +18,13 @@
 #define KEY2        HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_1)  //KEY2按键PC1
 #define WK_UP       HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_0)  //WKUP按键PC0
 
-#define KEY0_PRES 	1
-#define KEY1_PRES	2
-#define KEY2_PRES	3
-#define WKUP_PRES   4
+#define KEY0_PRES   1
+#define KEY1_PRES   2
+#define KEY2_PRES   4
+#define WKUP_PRES   8
 
 //按键消抖时延
-#define KEY_DELAY_TICK   20
+#define KEY_DELAY_TICK   15
 
 //定义按键回调函数指针
 typedef void (*key_cb)(u32 key_event, void *p_arg);
@@ -54,16 +54,16 @@ u8 KEY_Scan(u8 mode);
 // param : cb -> 处理按钮事件函数指针
 //
 // return : none
-void KEY_RegisterCb(key_cb cb, void *p_arg);
+void key_registercb(key_cb cb, void *p_arg);
 
 //**************************************
-// fn : KEY_Poll
+// fn : key_poll
 //
 // brief : 轮询按钮事件
 //
 // param : none
 //
 // return : none
-void KEY_Poll(void);
+void key_poll(void);
 
 #endif

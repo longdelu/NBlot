@@ -17,7 +17,7 @@ void key_val_handle(u32 key_event,void *p_arg)
     switch(key_event)
     {
         case KEY0_PRES://KEY0按下,读取sector
-		    printf("key0 press\r\n");
+            printf("key0 press\r\n");
             
             break;
         
@@ -49,7 +49,7 @@ void demo_key_entry(void)
   key_init(key_mode); 
 
   if (key_mode == 1) {    
-      KEY_RegisterCb(key_val_handle, NULL);
+      key_registercb(key_val_handle, NULL);
   }
   
   while (1)
@@ -58,13 +58,13 @@ void demo_key_entry(void)
           key = KEY_Scan(0); 
       
           key_val_handle(key, NULL);
+          delay_ms(10); 
+          
       } else {
           
-          KEY_Poll();
+          key_poll();
           
-      }
-      
-	  delay_ms(10);	  
+      }          
   }
   /* USER CODE END 3 */
 }

@@ -100,7 +100,8 @@ void uart1_init(u32 bound)
     if (HAL_UART_Init(&UART1_Handler) != HAL_OK)
     {
         while(1);
-    }    
+    }
+    __HAL_UART_DISABLE_IT(&UART1_Handler,UART_IT_TXE);   //禁止发送中断     
     __HAL_UART_DISABLE_IT(&UART1_Handler,UART_IT_TC);    //禁能发送完成中断
     
 #if EN_USART1_RX

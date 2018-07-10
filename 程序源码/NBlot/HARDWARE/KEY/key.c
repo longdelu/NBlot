@@ -43,15 +43,15 @@ void key_init(int mode)
         HAL_NVIC_EnableIRQ(EXTI0_IRQn);             //使能中断线0
         
         //中断线1-PC1
-        HAL_NVIC_SetPriority(EXTI1_IRQn,12,1);       //抢占优先级为12，子优先级为1
+        HAL_NVIC_SetPriority(EXTI1_IRQn,12,0);       //抢占优先级为12，子优先级为0
         HAL_NVIC_EnableIRQ(EXTI1_IRQn);           
         
         //中断线2-PC2
-        HAL_NVIC_SetPriority(EXTI2_IRQn,12,2);       //抢占优先级为12，子优先级为2
+        HAL_NVIC_SetPriority(EXTI2_IRQn,12,0);       //抢占优先级为12，子优先级为0
         HAL_NVIC_EnableIRQ(EXTI2_IRQn);              //使能中断线2
            
         //中断线3-PC3
-        HAL_NVIC_SetPriority(EXTI3_IRQn,12,3);       //抢占优先级为12，子优先级为3
+        HAL_NVIC_SetPriority(EXTI3_IRQn,12,0);       //抢占优先级为12，子优先级为0
         HAL_NVIC_EnableIRQ(EXTI3_IRQn);              //使能中断线13          
     }
 }
@@ -128,7 +128,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             if(KEY1==0)  
             {
                 key_check_press.key_event  = KEY1_PRES;
-                key_check_press.start_tick = HAL_GetTick();   				
+                key_check_press.start_tick = HAL_GetTick();
+                
             }
             break;
             
@@ -136,8 +137,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             
             if(KEY0==0)  //
             {
+                
                 key_check_press.key_event  = KEY0_PRES;
-                key_check_press.start_tick = HAL_GetTick();   ;
+                key_check_press.start_tick = HAL_GetTick();
             }
             break;
     }
@@ -152,7 +154,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 // param : cb -> 处理按钮事件函数指针
 //
 // return : none
-void KEY_RegisterCb(key_cb cb, void *p_arg)
+void key_registercb(key_cb cb, void *p_arg)
 {
   if(cb != 0)
   {
@@ -163,19 +165,19 @@ void KEY_RegisterCb(key_cb cb, void *p_arg)
 
 
 //**************************************
-// fn : KEY_Poll
+// fn : key_poll
 //
 // brief : 轮询按钮事件
 //
 // param : none
 //
 // return : none
-void KEY_Poll(void)
+void key_poll(void)
 {
   uint8_t key_event = 0;
     
   if(key_check_press.key_event)
-  {
+  { 
     if(HAL_GetTick() - key_check_press.start_tick >= KEY_DELAY_TICK )
     {
       if(key_check_press.key_event & WKUP_PRES)

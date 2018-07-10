@@ -1340,6 +1340,7 @@ HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *pData,
     SET_BIT(huart->Instance->CR3, USART_CR3_EIE);
 
 #if defined(USART_CR1_FIFOEN)
+    
     /* Configure Rx interrupt processing*/
     if ((huart->FifoMode == UART_FIFOMODE_ENABLE) && (Size >= huart->NbRxDataToProcess))
     {
