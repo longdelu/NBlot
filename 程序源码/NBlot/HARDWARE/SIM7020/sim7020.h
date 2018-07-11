@@ -190,7 +190,7 @@ typedef enum sim7020_main_status
     SIM7020_TCP_SEND,     // 利用已经创建的TCP发送数据
     SIM7020_TCP_RECV,     // TCP接收信息    
     SIM7020_CoAP_SEVER,   // CoAP远程地址设置与获取
-    SIM7020_CoAP_SEND,    // 利用CoAP发送消息
+    SIM7020_CoAP_SEND,    //  发送消息
     SIM7020_CoAP_RECV,    // CoAP返回信息
     SIM7020_RESET,        // 复位NB
     SIM7020_END
@@ -292,5 +292,8 @@ void sim7020_event_registercb(sim7020_cb cb, void *p_arg);
 
 //sim7020消息事件处理函数
 void sim7020_app_status_poll(int *sim702_main_status);
+
+//sim7020事件处理函数
+void sim7020_event_poll (sim7020_handle_t sim7020_handle);
 
 #endif

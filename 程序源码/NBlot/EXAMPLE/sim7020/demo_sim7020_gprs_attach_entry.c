@@ -65,7 +65,8 @@ static void __sim7020_event_cb_handler (void *p_arg)
   */
 void demo_sim7020_gprs_attach_entry(void)
 { 
-
+    int sm7020_main_status =  SIM7020_INIT;
+        
     uart_handle_t lpuart_handle = NULL; 
 
     sim7020_handle_t  sim7020_handle = NULL;   
@@ -78,14 +79,16 @@ void demo_sim7020_gprs_attach_entry(void)
          
     while (1)
     {
-        uart_event_poll(lpuart_handle);
+        
+        
+        sim7020_event_poll(sim7020_handle);
 
         LED0_Toggle; 
         
         delay_ms(10);  
     }
-
 }
 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
