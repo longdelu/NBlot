@@ -36,7 +36,7 @@ typedef struct key_dev
     
     int     start_tick;
     
-    key_cb  pFkey_cb;
+    key_cb  key_cb;
     
     void   *p_arg;       
     

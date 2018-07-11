@@ -118,6 +118,7 @@ void atk_soft_timer_poll()
   * @brief  background ticks, atk soft timer repeat invoking interval 1ms.
   * @param  None.
   * @retval None.
+  * @note   This fuction must call by a tick nvic handler
   */
 void atk_soft_timer_ticks()
 {

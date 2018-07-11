@@ -1,8 +1,7 @@
-
 /**
   *
-  * @file           : demo_led_entry.c
-  * @brief          : 串口轮询收发数据实验
+  * @file           : demo_sim7020_tcpip_entry.c
+  * @brief          : sim7020 tcpip 收发数据实验
   */
 /* Includes ------------------------------------------------------------------*/
 #include "sys.h"
@@ -71,20 +70,8 @@ void demo_sim7020_tcpip_entry(void)
      LED0_Toggle;  
      delay_ms(100);  
   }
-  
-  /* USER CODE END3 */
 
 }
 
-
-
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

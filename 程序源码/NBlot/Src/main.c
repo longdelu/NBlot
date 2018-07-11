@@ -44,8 +44,8 @@
 #include "timer.h"
 #include "delay.h"
 #include "usart.h"
-
 #include "nblot_usart.h"
+#include "sim7020.h"
 #include "demo_entry.h"
 
 

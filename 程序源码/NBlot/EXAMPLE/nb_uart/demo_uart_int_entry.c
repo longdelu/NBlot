@@ -1,8 +1,8 @@
 
 /**
   *
-  * @file           : demo_led_entry.c
-  * @brief          : 串口轮询收发数据实验
+  * @file           : demo_uart_int_entry.c
+  * @brief          : 串口异步收发数据实验
   */
 /* Includes ------------------------------------------------------------------*/
 #include "sys.h"
@@ -11,7 +11,7 @@
 #include "nblot_usart.h"
 #include "stm32l4xx_hal.h"
 
-void uart_int_callback_handle(void *p_arg)
+static void uart_event_callback_handle(void *p_arg)
 {   
   
     uart_dev_t *p_uart_dev = (uart_dev_t *)p_arg; 
@@ -58,7 +58,7 @@ void demo_uart_int_entry(void)
     
   lpuart_handle = lpuart1_init(115200);  
      
-  lpuart_event_registercb(uart_int_callback_handle, lpuart_handle);  
+  lpuart_event_registercb(uart_event_callback_handle, lpuart_handle);  
 
   uart_data_rx_int(&hlpuart1,  buf, sizeof("nblot_uart rx tx test ok\r\n") - 1, 20000); 
   uart_data_tx_poll(&hlpuart1, buf, sizeof("nblot_uart rx tx test ok\r\n") - 1, 20000);    
@@ -75,12 +75,6 @@ void demo_uart_int_entry(void)
 
 }
 
-
-
-
-/**
-  * @}
-  */
 
 /**
   * @}

@@ -27,8 +27,6 @@
 #define    NB_COAP_RE_EVENT       0X0008           //COAP接收事件
 #define    NB_REG_STA_EVENT       0x0010           //NB IOT网络附着事件
 
-
-
 /*
  * AT命令常量定义区域
  */
@@ -67,7 +65,7 @@
 #define AT_CSODCP     "AT+CSODCP";
 #define AT_CRTDCP     "AT+CRTDCP";
 */
-#define  AT_NMGS      "AT+NMGS";
+#define AT_NMGS       "AT+NMGS";
 #define AT_NMGR       "AT+NMGR";
 #define AT_NNMI       "AT+NNMI";
 #define AT_NSMI       "AT+NSMI";
@@ -127,31 +125,6 @@
 #define BAND_700MHZ_STR          "700"
 
 
-
-
-//定义收发数据缓冲区长度
-#define NB_UART_RECE_BUF_MAX_LEN    512
-#define NB_UART_SEND_BUF_MAX_LEN    512
-
-typedef enum sim7020state
-{
-    SIM7020NONE,
-    SIM7020INIT,       // 初始化操作
-    SIM7020MODULE,     // 获取 NB 模块厂商及固件，频段等信息
-    SIM7020SIGN,
-    SIM7020UDP_CR,     // 创建 UDP
-    SIM7020UDP_CL,     // 关闭 UDP
-    SIM7020TCP_CR,     // 创建 TCP
-    SIM7020TCP_CL,     // 关闭 TCP
-    SIM7020UDP_ST,     // 利用已经创建的 UDP 发送数据
-    SIM7020UDP_RE,     // UDP 接收信息
-    SIM7020CoAP_SEVER, // CoAP 远程地址设置与获取
-    SIM7020CoAP_ST,    // 利用 CoAP 发送消息
-    SIM7020CoAP_RE,    // CoAP 返回信息
-    SIM7020RESET,      // 复位 NB
-    SIM7020END    
-}sim7020state_t;
-
 /*
  * cmd 属性枚举
  */
@@ -188,9 +161,65 @@ typedef struct at_cmd_info
     uint32_t        max_timeout;   // 最大超时时间
 }at_cmd_info_t;
 
+
 //声明AT cmd结构指针类型
 typedef at_cmd_info_t *at_cmdhandle;
 
+#define    SIM7020_NONE_EVENT          0x0000           //没有其它事件发生
+#define    SIM7020_RECV_EVENT          0x0001           //收到串口数据事件
+#define    SIM7020_TIMEOUT_EVENT       0x0002           //超时事件
+#define    SIM7020_REG_STA_EVENT       0x0004           //NBIOT网络附着事件
+#define    SIM7020_TCP_RECV_EVENT      0x0008           //TCP接收事件
+#define    SIM7020_UDP_RECV_EVENT      0x0010           //UDP接收事件
+#define    SIM7020_COAP_RECV_EVENT     0X0020           //COAP接收事件
+
+
+//sim7020 主状态定义，app可以使用该信息
+typedef enum sim7020_main_status
+{
+    SIM7020_NONE,
+    SIM7020_INIT,         // 初始化操作
+    SIM7020_MODULE_INFO,  // 获取 NB 模块厂商及固件，频段等信息
+    SIM7020_SIGN,         // 获取信号质量
+    SIM7020_UDP_CR,       // 创建 UDP
+    SIM7020_UDP_CL,       // 关闭 UDP
+    SIM7020_TCP_CR,       // 创建 TCP
+    SIM7020_TCP_CL,       // 关闭 TCP
+    SIM7020_UDP_SEND,     // 利用已经创建的UDP发送数据
+    SIM7020_UDP_RECV,     // UDP接收信息
+    SIM7020_TCP_SEND,     // 利用已经创建的TCP发送数据
+    SIM7020_TCP_RECV,     // TCP接收信息    
+    SIM7020_CoAP_SEVER,   // CoAP远程地址设置与获取
+    SIM7020_CoAP_SEND,    // 利用CoAP发送消息
+    SIM7020_CoAP_RECV,    // CoAP返回信息
+    SIM7020_RESET,        // 复位NB
+    SIM7020_END
+    
+}sim7020_main_status_t;
+
+
+//sim7020 状态信息
+typedef struct sim7020_status_nest
+{
+    sim7020_main_status_t  main_status;         //主阶段
+    int                    sub_status;          //子阶段，用于状态嵌套    
+    uint8_t                connect_status;
+    uint8_t                register_status;  
+    uint8_t                socket_id;           //指示相应的socket id
+    uint16_t               data_len;            //提示数据长度     
+}sim7020_status_nest_t;
+
+//SIM7020G固件信息
+typedef struct sim020_firmware_info
+{
+    uint8_t      IMSI[16];
+    uint8_t      IMEI[16];      
+}sim020_firmware_info_t;
+
+
+//定义收发数据缓冲区长度
+#define NB_UART_RECE_BUF_MAX_LEN    512
+#define NB_UART_SEND_BUF_MAX_LEN    512
 
 //接收缓存空间
 typedef struct sim7020_recv
@@ -207,25 +236,13 @@ typedef struct sim7020_send
 }sim7020_send_t;
 
 
-// 定义存储SIM7020的状态信息
-typedef struct sim020_status
-{
-    uint8_t      connect_status;
-    uint8_t      register_status;
-    uint8_t      IMSI[16];
-    uint8_t      IMEI[16];
-    uint8_t      socket_id;     //指示相应的socket id
-    uint16_t     data_len;      //提示数据长度
-}sim020_status_t;
-
-
 //sim7020驱动函数结构体
 struct sim7020_drv_funcs {
     
     //sim7020发送数据
-    int (*sim7020_send_data) (UART_HandleTypeDef *p_huart, uint8_t *pData, uint16_t size, uint32_t Timeout);
+    int (*sim7020_send_data) (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);
     //sim7020接收数据
-    int (*sim7020_recv_data) (UART_HandleTypeDef *p_huart, uint8_t *pData, uint16_t size, uint32_t Timeout);    
+    int (*sim7020_recv_data) (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);    
 };
 
 //定义串口事件回调函数指针
@@ -234,18 +251,46 @@ typedef void (*sim7020_cb)(void *p_arg);
 //sim7020设备结构体
 typedef struct sim7020_dev
 {     
-    struct sim7020_drv_funcs *p_funcs;
+    struct sim7020_drv_funcs *p_drv_funcs;
     
     uart_dev_t               *p_uart_dev;
     
     //sim7020设备事件回调函数
-    sim7020_cb  sim7020_cb;  
+    sim7020_cb                sim7020_cb;  
     
-    void       *p_arg;   
-          
+    void                     *p_arg;
+
+    //事件标记
+    int                       sim7020_event; 
+
+    //sim7020状态信息
+    sim7020_status_nest_t    *sim702_status;
+    //sim7020固件信息
+    sim020_firmware_info_t   *firmware_info;      
+             
 }sim7020_dev_t;
 
 //sim7020设备句柄
 typedef sim7020_dev_t *sim7020_handle_t;
+
+
+//设置sim7020事件
+void sim7020_event_set (int sim7020_event);
+
+//获取sim7020事件
+int sim7020_event_get (int sim7020_event);
+
+//清除sim7020事件
+void sim7020_event_clr (int sim7020_event);
+
+
+//sim7020初始化 
+sim7020_handle_t sim7020_init(uart_handle_t lpuart_handle);
+
+//注册sim7020事件回调处理函数
+void sim7020_event_registercb(sim7020_cb cb, void *p_arg);
+
+//sim7020消息事件处理函数
+void sim7020_app_status_poll(int *sim702_main_status);
 
 #endif

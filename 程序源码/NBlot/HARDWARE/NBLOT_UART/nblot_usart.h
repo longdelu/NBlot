@@ -32,9 +32,10 @@ typedef void (*uart_cb)(void *p_arg);
 //串口设备结构体
 typedef struct uart_dev
 {  
-    UART_HandleTypeDef *p_huart;  
-  
-    struct atk_soft_timer uart_timer;
+    UART_HandleTypeDef *p_huart; 
+    
+    struct atk_soft_timer uart_rx_timer;  
+    struct atk_soft_timer uart_tx_timer;
     
     /* 串口事件回调函数 */
     uart_cb  uart_cb;
@@ -85,12 +86,12 @@ void lpuart_event_registercb(uart_cb cb, void *p_arg);
 //设置串口事件
 void lpuart_event_set (int uart_event);
 
-
 //获取串口事件
 int lpuart_event_get (int uart_event);
 
 //清除串口事件
 void lpuart_event_clr (int uart_event);
+
 
 //轮询串口事件
 void uart_event_poll(uart_dev_t *p_uart_dev);

@@ -1,17 +1,17 @@
 #include "lptimer.h"
 #include "led.h"
-//////////////////////////////////////////////////////////////////////////////////	 
+//////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F7开发板
-//定时器中断驱动代码	   
+//定时器中断驱动代码       
 //正点原子@ALIENTEK
 //技术论坛:www.openedv.com
 //创建日期:2015/11/27
 //版本：V1.0
 //版权所有，盗版必究。
 //Copyright(C) 广州市星翼电子科技有限公司 2014-2024
-//All rights reserved									  
-////////////////////////////////////////////////////////////////////////////////// 	
+//All rights reserved                                      
+//////////////////////////////////////////////////////////////////////////////////     
 
 //低功耗定时器句柄      
 LPTIM_HandleTypeDef hlptim1;
@@ -95,8 +95,8 @@ void HAL_LPTIM_MspInit(LPTIM_HandleTypeDef *htim)
     RCC_PeriphCLKInitTypeDef        RCC_PeriphCLKInitStruct;
     
     if(htim->Instance==LPTIM1)
-	{
-		__HAL_RCC_LPTIM1_CLK_ENABLE();             //使能LPTIM1时钟
+    {
+        __HAL_RCC_LPTIM1_CLK_ENABLE();             //使能LPTIM1时钟
         
         /* ### - 1 - Re-target the LSE to Clock the LPTIM Counter ################# */
         /* Select the LSE clock as LPTIM peripheral clock */
@@ -104,9 +104,9 @@ void HAL_LPTIM_MspInit(LPTIM_HandleTypeDef *htim)
         RCC_PeriphCLKInitStruct.Lptim2ClockSelection = RCC_LPTIM2CLKSOURCE_PCLK1;
         HAL_RCCEx_PeriphCLKConfig(&RCC_PeriphCLKInitStruct);       
         
-		HAL_NVIC_SetPriority(LPTIM1_IRQn,14,0);    //设置中断优先级，抢占优先级1，子优先级3
-		HAL_NVIC_EnableIRQ(LPTIM1_IRQn);           //开启ITM3中断   
-	}  
+        HAL_NVIC_SetPriority(LPTIM1_IRQn,14,0);    //设置中断优先级，抢占优先级1，子优先级3
+        HAL_NVIC_EnableIRQ(LPTIM1_IRQn);           //开启ITM3中断   
+    }  
 }
 
 //低功耗定时器1中断服务函数
