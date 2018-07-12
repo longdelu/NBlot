@@ -28,7 +28,7 @@ void atk_soft_timer_init(struct atk_soft_timer *handle,
     // memset(handle, sizeof(struct Timer), 0);
     handle->timeout_cb = timeout_cb;
     handle->p_arg   = p_arg;
-    handle->timeout = _timer_ticks + timeout;
+    handle->timeout = timeout;
     handle->repeat  = repeat;
 }
 
@@ -41,6 +41,9 @@ int atk_soft_timer_start(struct atk_soft_timer *handle)
 {
     struct atk_soft_timer *target = head_handle;
     
+    //确保启动时的延时正确
+    handle->timeout = _timer_ticks + handle->timeout;
+        
     //确保不会重复注册
     while(target) {
         
@@ -52,6 +55,7 @@ int atk_soft_timer_start(struct atk_soft_timer *handle)
     //加入链表元素使用临界区保护
     INTX_DISABLE();
     
+
     //元素添加在链表尾部，从左往右链表长度增加
     handle->next = head_handle;
     
