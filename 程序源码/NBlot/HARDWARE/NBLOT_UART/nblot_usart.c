@@ -165,10 +165,7 @@ int uart_data_tx_poll(UART_HandleTypeDef *huart, uint8_t *pData,uint16_t size, u
         
         //设置串口发送完成事件
         lpuart_event_set(UART_TX_EVENT);         
-    }
-
-    //回调注册进来的串口事件处理函数 
-//    uart_dev.uart_cb(uart_dev.p_arg);     
+    }   
     
     if (tx_int_flag) {
     
@@ -258,8 +255,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
        
        //设置串口接收完成事件
        lpuart_event_set(UART_RX_EVENT);
-       //回调注册进来的串口事件处理函数 
-//       uart_dev.uart_cb(uart_dev.p_arg); 
               
     }
 }

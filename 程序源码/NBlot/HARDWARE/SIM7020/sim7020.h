@@ -20,83 +20,78 @@
 //V1.0修改说明 
 //////////////////////////////////////////////////////////////////////////////////  
 
-
-#define    NB_SP_RECE_EVENT       0x0001           //收到串口数据
-#define    NB_TIMEOUT_EVENT       0x0002           //超时事件
-#define    NB_UDPRECE_EVENT       0x0004           //UDP接收事件
-#define    NB_COAP_RE_EVENT       0X0008           //COAP接收事件
-#define    NB_REG_STA_EVENT       0x0010           //NB IOT网络附着事件
-
 /*
  * AT命令常量定义区域
  */
 #define AT_SYNC        "AT"
 #define AT_ATI         "ATI"
+#define AT_CPIN        "AT+CPIN"
+#define AT_CSQ         "AT+CSQ"
+#define AT_CFUN        "AT+CFUN"
+#define AT_CGREG       "AT+CGREG"
+#define AT_CGACT       "AT+CGACT"
+#define AT_CGATT       "AT+CGATT"
+#define AT_CSCON       "AT+CSCON"
+#define AT_CLAC        "AT+CLAC"
+
+#define AT_CGPADDR     "AT+CGPADDR"
+#define AT_COPS        "AT+COPS"
 #define AT_CGMI        "AT+CGMI"
 #define AT_CGMM        "AT+CGMM"
 #define AT_CGMR        "AT+CGMR"
-#define AT_CGSN        "AT+CGSN"
-#define AT_CEREG       "AT+CEREG"
-#define AT_CSCON       "AT+CSCON"
-#define AT_CLAC        "AT+CLAC"
-#define AT_CSQ         "AT+CSQ"
-#define AT_CGPADDR     "AT+CGPADDR"
-#define AT_COPS        "AT+COPS"
-#define AT_CGATT       "AT+CGATT"
-#define AT_CGACT       "AT+CGACT"
+
 #define AT_CIMI        "AT+CIMI"
+#define AT_CGSN        "AT+CGSN"
+
 #define AT_CGDCONT     "AT+CGDCONT"
-#define AT_CFUN        "AT+CFUN"
-#define AT_CMEE        "AT+CMEE"
-#define AT_CCLK        "AT+CCLK";
-#define AT_CPSMS       "AT+CPSMS";
-#define AT_CEDRXS      "AT+CEDRXS";
-#define AT_CEER        "AT+CEER";
-#define AT_CEDRXRDP    "AT+CEDRXRDP";
-#define AT_CTZR        "AT+CTZR";
+#define AT_CCLK        "AT+CCLK"
+#define AT_CPSMS       "AT+CPSMS"
+#define AT_CEDRXS      "AT+CEDRXS"
+#define AT_CEER        "AT+CEER"
+#define AT_CEDRXRDP    "AT+CEDRXRDP"
+#define AT_CTZR        "AT+CTZR"
+
 
 /* ETSI Commands* (127.005)  <Under development> */
 /*
-#define AT_CSMS       "AT+CSMS";
-#define AT_CNMA       "AT+CNMA";
-#define AT_CSCA       "AT+CSCA";
-#define AT_CMGS       "AT+CMGS";
-#define AT_CMGC       "AT+CMGC";
-#define AT_CSODCP     "AT+CSODCP";
-#define AT_CRTDCP     "AT+CRTDCP";
+#define AT_CSMS       "AT+CSMS"
+#define AT_CNMA       "AT+CNMA"
+#define AT_CSCA       "AT+CSCA"
+#define AT_CMGS       "AT+CMGS"
+#define AT_CMGC       "AT+CMGC"
+#define AT_CSODCP     "AT+CSODCP"
+#define AT_CRTDCP     "AT+CRTDCP"
 */
-#define AT_NMGS       "AT+NMGS";
-#define AT_NMGR       "AT+NMGR";
-#define AT_NNMI       "AT+NNMI";
-#define AT_NSMI       "AT+NSMI";
-#define AT_NQMGR      "AT+NQMGR";
-#define AT_NQMGS      "AT+NQMGS";
-#define AT_NMSTATUS   "AT+NMSTATUS";
-#define AT_NRB        "AT+NRB";
-#define AT_NCDP       "AT+NCDP";
+#define AT_NMGS       "AT+NMGS"
+#define AT_NMGR       "AT+NMGR"
+#define AT_NNMI       "AT+NNMI"
+#define AT_NSMI       "AT+NSMI"
+#define AT_NQMGR      "AT+NQMGR"
+#define AT_NQMGS      "AT+NQMGS"
+#define AT_NMSTATUS   "AT+NMSTATUS"
+#define AT_NRB        "AT+NRB"
+#define AT_NCDP       "AT+NCDP"
 
-#define AT_NUESTATS   "AT+NUESTATS";
+#define AT_NUESTATS   "AT+NUESTATS"
 
-#define AT_NEARFCN    "AT+NEARFCN";
-#define AT_NSOCR      "AT+NSOCR";
-#define AT_NSOST      "AT+NSOST";
-#define AT_NSOSTF     "AT+NSOSTF";
-#define AT_NSORF      "AT+NSORF";
-#define AT_NSOCL      "AT+NSOCL";  
+#define AT_NEARFCN    "AT+NEARFCN"
+#define AT_NSOCR      "AT+NSOCR"
+#define AT_NSOST      "AT+NSOST"
+#define AT_NSOSTF     "AT+NSOSTF"
+#define AT_NSORF      "AT+NSORF"
+#define AT_NSOCL      "AT+NSOCL"  
       
-#define  AT_NPING          "AT+NPING";
-#define  AT_NBAND          "AT+NBAND";
-#define  AT_NLOGLEVEL      "AT+NLOGLEVEL";
-#define  AT_NCONFIG        "AT+NCONFIG";
-#define  AT_NATSPEED       "AT+NATSPEED";
-#define  AT_NCCID          "AT+NCCID";
-#define  AT_NFWUPD         "AT+NFWUPD";
-#define  AT_NRDCTRL        "AT+NRDCTRL";
-#define  AT_NCHIPINFO      "AT+NCHIPINFO";
-#define  AT_NTSETID        "AT+NTSETID";
+#define  AT_NPING          "AT+NPING"
+#define  AT_NBAND          "AT+NBAND"
+#define  AT_NLOGLEVEL      "AT+NLOGLEVEL"
+#define  AT_NCONFIG        "AT+NCONFIG"
+#define  AT_NATSPEED       "AT+NATSPEED"
+#define  AT_NCCID          "AT+NCCID"
+#define  AT_NFWUPD         "AT+NFWUPD"
+#define  AT_NRDCTRL        "AT+NRDCTRL"
+#define  AT_NCHIPINFO      "AT+NCHIPINFO"
+#define  AT_NTSETID        "AT+NTSETID"
 
-//                                                                              
-//
 
 #define CMD_TRY_TIMES           10
 #define CMD_READ_ARGUMENT       "?"
@@ -140,12 +135,9 @@ typedef enum
  * AT指令动作行为枚举
  */
 typedef enum
-{
-  ACTION_OK,                      //命令成功执行
-  ACTION_ERROR,                   //命令执行错误
-    
-  ACTION_ERROR_NEXT,              //命令执行错误将继续执行下一条指令
-  ACTION_ERROR_TRY                //命令执行错误后进行尝试
+{   
+  ACTION_ERROR_BUT_NEXT,              //命令执行错误将继续执行下一条指令
+  ACTION_ERROR_AND_TRY                //命令执行错误后进行尝试
 }cmd_action_t;
 
 //AT指令结构类型
@@ -161,25 +153,21 @@ typedef struct at_cmd_info
     uint32_t        max_timeout;   // 最大超时时间
 }at_cmd_info_t;
 
-
 //声明AT cmd结构指针类型
 typedef at_cmd_info_t *at_cmdhandle;
 
-#define    SIM7020_NONE_EVENT          0x0000           //没有其它事件发生
-#define    SIM7020_RECV_EVENT          0x0001           //收到串口数据事件
-#define    SIM7020_TIMEOUT_EVENT       0x0002           //超时事件
-#define    SIM7020_REG_STA_EVENT       0x0004           //NBIOT网络附着事件
-#define    SIM7020_TCP_RECV_EVENT      0x0008           //TCP接收事件
-#define    SIM7020_UDP_RECV_EVENT      0x0010           //UDP接收事件
-#define    SIM7020_COAP_RECV_EVENT     0X0020           //COAP接收事件
 
+//错误代码定义 
+#define   SIM7020_OK            0
+#define   SIM7020_ERROR        -1
+#define   SIM7020_TIMEOUT      -2
 
-//sim7020 主状态定义，app可以使用该信息
+//sim7020主状态定义，app可以使用该信息
 typedef enum sim7020_main_status
 {
     SIM7020_NONE,
-    SIM7020_INIT,         // 初始化操作
-    SIM7020_MODULE_INFO,  // 获取 NB 模块厂商及固件，频段等信息
+    SIM7020_NBLOT_INIT,   // 初始化操作
+    SIM7020_NBLOT_INFO,   // 获取 NB 模块厂商及固件，频段等信息
     SIM7020_SIGN,         // 获取信号质量
     SIM7020_UDP_CR,       // 创建 UDP
     SIM7020_UDP_CL,       // 关闭 UDP
@@ -196,6 +184,39 @@ typedef enum sim7020_main_status
     SIM7020_END
     
 }sim7020_main_status_t;
+
+
+//sim7020子状态定义
+typedef enum sim7020_sub_status
+{
+    SIM7020_SUB_NONE,
+    SIM7020_SUB_SYNC,
+    SIM7020_SUB_CPIN,
+    SIM7020_SUB_CSQ,
+    SIM7020_SUB_CFUN,
+    SIM7020_SUB_CEREG,
+    SIM7020_SUB_CGACT,
+    SIM7020_SUB_CGACT_QUERY,    
+    SIM7020_SUB_CGAAT, 
+    SIM7020_SUB_CGATT_QUERY,
+    SIM7020_SUB_CSCON,    
+    
+    SIM7020_SUB_CIMI,
+    SIM7020_SUB_CGSN,
+  
+    SIM7020_SUB_NSMI,
+    SIM7020_SUB_NNMI,
+    SIM7020_SUB_CGMI,
+    SIM7020_SUB_CGMM,
+    SIM7020_SUB_CGMR,
+    SIM7020_SUB_NBAND,
+    SIM7020_SUB_UDP_CR,
+    SIM7020_SUB_UDP_CL,
+    SIM7020_SUB_UDP_ST,
+    SIM7020_SUB_UDP_RE,
+    SIM7020_SUB_END    
+}sim7020_sub_status_t;
+
 
 
 //sim7020 状态信息
@@ -245,8 +266,50 @@ struct sim7020_drv_funcs {
     int (*sim7020_recv_data) (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);    
 };
 
+
+#define    SIM7020_NONE_EVENT          0x0000           //没有其它事件发生
+#define    SIM7020_RECV_EVENT          0x0001           //收到串口数据事件
+#define    SIM7020_TIMEOUT_EVENT       0x0002           //超时事件
+#define    SIM7020_REG_STA_EVENT       0x0004           //NBIOT网络附着事件
+#define    SIM7020_TCP_RECV_EVENT      0x0008           //TCP接收事件
+#define    SIM7020_UDP_RECV_EVENT      0x0010           //UDP接收事件
+#define    SIM7020_COAP_RECV_EVENT     0X0020           //COAP接收事件
+
+
+//sim7020消息id,回调函数中使用
+typedef enum sim7020_msg_id
+{
+  SIM7020_MSG_NONE,
+
+  SIM7020_MSG_INIT,
+  SIM7020_MSG_IMSI,
+
+  SIM7020_MSG_MODULE_INFO,
+  SIM7020_MSG_MID,        //制造商ID
+  SIM7020_MSG_MMODEL,     //厂商型号
+  SIM7020_MSG_MREV,       //厂家版本号
+  SIM7020_MSG_BAND,       //工作频段
+  SIM7020_MSG_IMEI,       //移动设备身份码
+
+  SIM7020_MSG_SIGN,       //信号强度
+  SIM7020_MSG_REG,
+
+  SIM7020_MSG_UDP_CREATE,
+  SIM7020_MSG_UDP_CLOSE,
+  SIM7020_MSG_UDP_SEND,
+  SIM7020_MSG_UDP_RECE,
+    
+  SIM7020_MSG_COAP,
+  SIM7020_MSG_COAP_SEND,
+  SIM7020_MSG_COAP_RECE,
+  
+  SIM7020_MSG_END
+  
+}sim7020_msg_id_t;
+
 //定义串口事件回调函数指针
-typedef void (*sim7020_cb)(void *p_arg);
+typedef void (*sim7020_cb)(void *p_arg, sim7020_msg_id_t, int ,char*);
+
 
 //sim7020设备结构体
 typedef struct sim7020_dev
@@ -274,23 +337,23 @@ typedef struct sim7020_dev
 typedef sim7020_dev_t *sim7020_handle_t;
 
 
+
 //设置sim7020事件
-void sim7020_event_set (int sim7020_event);
+void sim7020_event_set (sim7020_handle_t sim7020_handle, int sim7020_event);
 
 //获取sim7020事件
-int sim7020_event_get (int sim7020_event);
+int sim7020_event_get (sim7020_handle_t sim7020_handle, int sim7020_event);
 
 //清除sim7020事件
-void sim7020_event_clr (int sim7020_event);
-
+void sim7020_event_clr (sim7020_handle_t sim7020_handle, int sim7020_event);
 
 //sim7020初始化 
 sim7020_handle_t sim7020_init(uart_handle_t lpuart_handle);
 
 //注册sim7020事件回调处理函数
-void sim7020_event_registercb(sim7020_cb cb, void *p_arg);
+void sim7020_event_registercb(sim7020_handle_t sim7020_handle, sim7020_cb cb, void *p_arg);
 
-//sim7020消息事件处理函数
+//sim7020应用状态处理函数
 void sim7020_app_status_poll(int *sim702_main_status);
 
 //sim7020事件处理函数
