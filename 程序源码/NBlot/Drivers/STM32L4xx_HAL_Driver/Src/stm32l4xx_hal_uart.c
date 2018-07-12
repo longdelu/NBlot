@@ -1349,6 +1349,7 @@ HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *pData,
       {
         huart->RxISR = UART_RxISR_16BIT_FIFOEN;
       }
+      
       else
       {
         huart->RxISR = UART_RxISR_8BIT_FIFOEN;

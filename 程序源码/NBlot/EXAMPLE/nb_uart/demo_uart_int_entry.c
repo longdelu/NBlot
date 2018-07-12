@@ -12,8 +12,7 @@
 #include "stm32l4xx_hal.h"
 
 static void uart_event_callback_handle(void *p_arg)
-{   
-  
+{    
     uart_dev_t *p_uart_dev = (uart_dev_t *)p_arg; 
     
     if (p_uart_dev->uart_event & UART_NONE_EVENT) {

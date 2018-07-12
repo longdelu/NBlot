@@ -15,20 +15,14 @@
 //All rights reserved
 //********************************************************************************
 
-
 //UART设备结构体
 static uart_dev_t uart_dev;
 
-#if EN_LPUART1_RX   //如果使能了接收
 
 //串口1中断服务程序
 //注意,读取USARTx->SR能避免莫名其妙的错误       
-u8 NBLOT_RxBuffer[LPUSART_REC_LEN];     //接收缓冲,最大LPUSART_REC_LEN个字节.
-//接收状态
-//bit15，    接收完成标志
-//bit14，    接收到0x0d
-//bit13~0，    接收到的有效字节数目
-u16 NBLOT_USART_RX_STA=0;       //接收状态标记    
+atk_ring_buf_t g_uart_ring_buff;  //创建一个uart ringbuff 的缓冲区 
+
 
 UART_HandleTypeDef hlpuart1;
 
@@ -36,11 +30,11 @@ UART_HandleTypeDef hlpuart1;
 //注册串口事件回调函数
 void lpuart_event_registercb(uart_cb cb, void *p_arg)
 {  
-  if(cb != 0)
-  {
-    uart_dev.uart_cb  = cb;
-    uart_dev.p_arg    = p_arg;
-  }
+    if(cb != 0)
+    {
+        uart_dev.uart_cb  = cb;
+        uart_dev.p_arg    = p_arg;
+    }
 }
 
 //设置串口事件
@@ -61,6 +55,63 @@ void lpuart_event_clr (int uart_event)
     uart_dev.uart_event ^= uart_event;
 }
 
+ /**
+  * @brief 初始化环形缓冲区的相关信息
+  */
+void atk_ring_buff_init (atk_ring_buf_t *p_ring_buff)
+{
+    p_ring_buff->head   = 0;
+    p_ring_buff->tail   = 0;
+    p_ring_buff->lenght = 0;
+}
+
+ /**
+  * @brief 往环形缓冲区写数据
+  */
+u8 atk_ring_buff_write(atk_ring_buf_t *p_ring_buff, uint8_t data)
+{
+   if(p_ring_buff->lenght >= RING_BUFF_LEN)          //判断缓冲区是否已满
+    {
+        return -1;
+    }
+    
+    //加入临界区保护
+    INTX_DISABLE();
+    
+    p_ring_buff->ring_buff[p_ring_buff->tail] = data;
+
+    p_ring_buff->tail = (p_ring_buff->tail+1) % RING_BUFF_LEN;//防止越界非法访问
+    p_ring_buff->lenght++;
+
+    INTX_ENABLE();     
+    
+    return 0;
+}
+
+ /**
+ * @brief  读取环形缓冲区的数据
+ */
+u8 atk_read_ringbuff(atk_ring_buf_t *p_ring_buff, uint8_t *data)
+{
+   if (p_ring_buff->lenght == 0)    //判断非空
+   {
+       return -1;
+   }
+   
+   //加入临界区保护
+   INTX_DISABLE();   
+   
+   *data = p_ring_buff->ring_buff[p_ring_buff->head];        //先进先出FIFO，从缓冲区头出
+   p_ring_buff->head = (p_ring_buff->head+1) % RING_BUFF_LEN; //防止越界非法访问
+   p_ring_buff->lenght--;
+   
+   INTX_ENABLE(); 
+   
+   return TRUE;
+}
+
+
+
 //UART底层初始化，时钟使能，引脚配置，中断配置
 //此函数会被HAL_UART_Init()调用
 //huart:串口句柄
@@ -72,6 +123,7 @@ void HAL_LPUART1_MspInit(UART_HandleTypeDef *huart)
     if(huart->Instance==LPUART1)//如果是串口1，进行串口1 MSP初始化
     {
         __HAL_RCC_LPUART1_CLK_ENABLE();
+        
         /* GPIO Ports Clock Enable */
         __HAL_RCC_GPIOB_CLK_ENABLE();
        
@@ -84,9 +136,7 @@ void HAL_LPUART1_MspInit(UART_HandleTypeDef *huart)
         GPIO_Initure.Pull = GPIO_NOPULL;
         GPIO_Initure.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
         GPIO_Initure.Alternate = GPIO_AF8_LPUART1;
-        HAL_GPIO_Init(GPIOB, &GPIO_Initure);   
-       
-        
+        HAL_GPIO_Init(GPIOB, &GPIO_Initure);                 
     }
 
 }
@@ -126,7 +176,7 @@ uart_dev_t *lpuart1_init (u32 bound)
     __HAL_UART_ENABLE_IT(&hlpuart1,UART_IT_RXNE);    //开启接收中断
     
     HAL_NVIC_EnableIRQ(LPUART1_IRQn);                //使能USART1中断通道
-    HAL_NVIC_SetPriority(LPUART1_IRQn,3,3);            //抢占优先级3，子优先级3
+    HAL_NVIC_SetPriority(LPUART1_IRQn,3,3);          //抢占优先级3，子优先级3
 #endif 
 
     return  &uart_dev;   
@@ -242,10 +292,9 @@ void LPUART1_IRQHandler(void)
 
 #endif /* if 0 */
 
+   
 
-#endif    
-
-
+#if 0
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if(huart->Instance==LPUART1)//如果是串口1
@@ -262,7 +311,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-    if(huart->Instance==LPUART1)//如果是串口1
+    if(huart->Instance == LPUART1)//如果是串口1
     {
        /* 发送在超时时间内正常完成，停止超时 */  
        atk_soft_timer_stop(&uart_dev.uart_rx_timer);
@@ -280,6 +329,7 @@ void LPUART1_IRQHandler(void)
 {         
     HAL_UART_IRQHandler(&hlpuart1);    //调用HAL库中断处理公用函数            
 }
+#endif
 
 
 static void __lpuart_rx_timeout_cb (void *p_arg)
@@ -382,10 +432,10 @@ int uart_data_tx_int(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t size, u
 }
 
 //轮询串口事件
-void uart_event_poll(uart_dev_t *p_uart_dev)
+void uart_event_poll(uart_handle_t uart_handle)
 { 
     //回调注册进来的串口事件处理函数 
-    uart_dev.uart_cb(p_uart_dev->p_arg);
+    uart_dev.uart_cb(uart_handle->p_arg);
     
 }
 
