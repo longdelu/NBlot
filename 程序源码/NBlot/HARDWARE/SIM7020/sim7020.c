@@ -14,21 +14,290 @@
 //All rights reserved
 //********************************************************************************
 
-//用于保存当前正在执行的AT指令
-static at_cmd_info_t g_at_cmd;
 
+
+//定义sim7020数据收发描述结构体
 static struct sim7020_recv  sim7020_recv_desc;
 static struct sim7020_send  sim7020_send_desc;
 
-static struct sim7020_dev   g_sim7020_dev;
-static struct sim020_status g_sim020_status;  
+//定义用于保存当前正在执行的AT指令的述结构体
+static at_cmd_info_t g_at_cmd;
 
+//定义sim7020设备结构体
+static struct sim7020_dev       g_sim7020_dev;
+
+//定义sim7020状态信息结构体
+static sim7020_status_nest_t    g_sim702_status;
+
+//定义sim7020固件信息结构体
+static sim020_firmware_info_t   g_firmware_info;  
+
+//函数声明
+static int  __sim7020_uart_data_tx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);
+static int  __sim7020_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);
+static void __send_uart_callback_handle(void *p_arg);
 
 static struct sim7020_drv_funcs drv_funcs = {
     
-    uart_data_tx_poll,
-    uart_data_rx_int        
+    __sim7020_uart_data_tx,
+    __sim7020_uart_data_rx,        
 };
+
+
+//设置sim7020事件
+void sim7020_event_set (sim7020_handle_t sim7020_handle, int sim7020_event)
+{ 
+    sim7020_handle->sim7020_event |= sim7020_event;   
+}
+
+//获取sim7020事件
+int sim7020_event_get (sim7020_handle_t sim7020_handle,  int sim7020_event)
+{ 
+    return (sim7020_handle->sim7020_event & sim7020_event); 
+}
+
+//清除sim7020事件
+void sim7020_event_clr (sim7020_handle_t sim7020_handle, int sim7020_event)
+{ 
+    sim7020_handle->sim7020_event ^= sim7020_event;
+}
+
+static void __uart_event_cb_handle (void *p_arg)
+{    
+    uart_dev_t *p_uart_dev = (uart_dev_t *)p_arg; 
+    
+    if (p_uart_dev->uart_event & UART_NONE_EVENT) {
+        
+    } 
+
+    if (p_uart_dev->uart_event & UART_TX_EVENT) {
+        printf("tx data ok\r\n"); 
+        lpuart_event_clr(UART_TX_EVENT); 
+    }
+
+    if (p_uart_dev->uart_event & UART_RX_EVENT) {
+        printf("rx data ok\r\n");
+        
+        lpuart_event_clr(UART_RX_EVENT); 
+    } 
+
+    if (p_uart_dev->uart_event & UART_TX_TIMEOUT_EVENT) {
+        printf("tx data timeout\r\n");
+        
+        lpuart_event_clr(UART_TX_TIMEOUT_EVENT); 
+    } 
+
+    if (p_uart_dev->uart_event & UART_RX_TIMEOUT_EVENT) {
+        printf("rx data timeout\r\n");
+        
+        lpuart_event_clr(UART_RX_TIMEOUT_EVENT); 
+    }            
+}
+
+
+//sim7020事件处理函数
+void sim7020_event_poll(sim7020_handle_t sim7020_handle)
+{
+    char buf[16] = {0};
+    
+    if (sim7020_handle->sim7020_event & SIM7020_NONE_EVENT) {
+        
+    } 
+
+    if (sim7020_handle->sim7020_event & SIM7020_RECV_EVENT) {                       
+        printf("sim7020 recv data ok\r\n"); 
+        sim7020_event_clr(sim7020_handle, SIM7020_RECV_EVENT); 
+    }
+
+    if (sim7020_handle->sim7020_event & SIM7020_TIMEOUT_EVENT) {
+        printf("timeout\r\n");
+        
+        sim7020_event_clr(sim7020_handle, SIM7020_TIMEOUT_EVENT); 
+    } 
+
+    if (sim7020_handle->sim7020_event & SIM7020_REG_STA_EVENT) {
+        printf("gprs attach ok\r\n");
+        
+        sim7020_event_clr(sim7020_handle, SIM7020_REG_STA_EVENT); 
+    } 
+
+    if (sim7020_handle->sim7020_event & SIM7020_TCP_RECV_EVENT) {
+        printf("tcp recv ok\r\n");
+        
+        sim7020_event_clr(sim7020_handle,SIM7020_TCP_RECV_EVENT); 
+    }
+
+    if (sim7020_handle->sim7020_event & SIM7020_UDP_RECV_EVENT) {
+        printf("udp recv ok\r\n");
+        
+        sim7020_event_clr(sim7020_handle, SIM7020_UDP_RECV_EVENT); 
+    }
+    
+    if (sim7020_handle->sim7020_event & SIM7020_COAP_RECV_EVENT) {
+        
+        printf("coap recv ok\r\n");
+        
+        sim7020_event_clr(sim7020_handle, SIM7020_COAP_RECV_EVENT); 
+    }    
+    
+    //回调注册进来的SIM7020事件处理函数 
+    sim7020_handle->sim7020_cb(sim7020_handle->p_arg, SIM7020_MSG_INIT, 16, buf);   
+}
+
+//sim7020 状态处理函数
+//sim7020_main_status；sim7020所处的主状态阶段
+void sim7020_app_status_poll(int  *sim7020_main_status)
+{    
+    switch(*sim7020_main_status)
+    {
+    case SIM7020_NONE:
+      {
+        
+      }
+      break;
+      
+    case SIM7020_NBLOT_INIT:
+      {
+        printf("sim7020 init start\r\n");
+
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_NBLOT_INFO:
+      {
+         printf("sim7020 get signal start\r\n");
+
+         *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_SIGN:
+      {
+        printf("sim7020 module info start\r\n");
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_UDP_CR:
+      {
+        printf("udp socket creat start\r\n");  
+        //do nothing
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_UDP_CL:
+      {          
+        //do nothing
+        printf("udp socket close start\r\n");   
+          
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_UDP_SEND:
+      {
+          
+        printf("udp send start\r\n");     
+        //do nothing
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_UDP_RECV:
+      {
+          
+        printf("udp recv start\r\n");    
+        //do nothing
+        *sim7020_main_status = SIM7020_END; 
+      }
+      break;
+      
+    case SIM7020_TCP_CR:
+      {
+          
+        printf("tcp socket creat start\r\n");  
+          
+        //do nothing
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_TCP_CL:
+      {
+          
+        printf("tcp socket close start\r\n");    
+        //do nothing
+        *sim7020_main_status = SIM7020_END;
+      }
+      break; 
+      
+    case SIM7020_TCP_SEND:
+      {
+        //do nothing
+        printf("tcp send start\r\n");    
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_TCP_RECV:
+      {
+          
+        printf("tcp recv start\r\n");  
+        //do nothing
+        *sim7020_main_status = SIM7020_END; 
+      }
+      break;      
+      
+    case SIM7020_CoAP_SEVER:
+      {
+        printf("CoAP Server set start\r\n");
+
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_CoAP_SEND:
+      {
+        printf("CoAP send start\r\n");
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_CoAP_RECV:
+      {
+        printf("CoAP recv start\r\n");
+        *sim7020_main_status = SIM7020_END;        
+      }
+      break;  
+      
+    default:
+      {
+        
+      }
+      break;
+    }
+}
+
+
+static int  __sim7020_uart_data_tx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout)
+{      
+    sim7020_handle_t  sim7020_handle = (sim7020_handle_t)p_arg;
+    
+    UART_HandleTypeDef *p_huart = sim7020_handle->p_uart_dev->p_huart; 
+    
+    uart_data_tx_poll(p_huart, pData, size, Timeout);           
+}
+
+static int  __sim7020_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout)
+{           
+    sim7020_handle_t  sim7020_handle = (sim7020_handle_t)p_arg;
+    
+    UART_HandleTypeDef *p_huart = sim7020_handle->p_uart_dev->p_huart; 
+    
+    uart_data_rx_int(p_huart, pData, size, Timeout);                  
+}
 
 //将1个字符转换为16进制数字
 //chr:字符,0~9/A~F/a~F
@@ -65,7 +334,7 @@ static void at_cmd_param_init(at_cmdhandle cmd_handle,
     }
     cmd_handle->cmd_try     = CMD_TRY_TIMES;
     cmd_handle->property    = property;
-    cmd_handle->cmd_action  = ACTION_OK;
+    cmd_handle->cmd_action  = ACTION_ERROR_AND_TRY;
     cmd_handle->p_atcmd_arg = argument;
     cmd_handle->p_expectres = NULL;
     cmd_handle->have_tried  = 0;
@@ -81,7 +350,6 @@ static int cmd_generate(at_cmdhandle cmd_handle)
     {
        return cmdLen;
     }
-
     memset(sim7020_send_desc.buf,0,NB_UART_SEND_BUF_MAX_LEN);
     sim7020_send_desc.len = 0;
 
@@ -90,7 +358,7 @@ static int cmd_generate(at_cmdhandle cmd_handle)
         cmdLen = snprintf(sim7020_send_desc.buf,NB_UART_SEND_BUF_MAX_LEN,
                          "%s=?\r\n",
                          cmd_handle->p_atcmd);
-    }
+    }    
     else if(cmd_handle->property == CMD_READ)
     {
         cmdLen = snprintf(sim7020_send_desc.buf,NB_UART_SEND_BUF_MAX_LEN,
@@ -117,15 +385,8 @@ static int cmd_generate(at_cmdhandle cmd_handle)
 }
 
 
-//******************************************************************************
-// fn : cmd_isPass
-//
-// brief : 判断SIM7020执行的AT指令是否执行成功
-//
-// param : none
-//
-// return : none
-static int8_t at_cmd_isPass(char* buf)
+//判断at指令是否发送成功
+static int8_t at_cmd_is_ok(char* buf)
 {
   int8_t result = -1;
      
@@ -164,22 +425,133 @@ static int8_t at_cmd_isPass(char* buf)
   return result;
 }
 
+//产生下一条AT指令
+static uint8_t at_cmd_next (void)
+{ 
+    if (g_sim702_status.main_status == SIM7020_NBLOT_INIT)
+    {
+        g_sim702_status.sub_status++;
+      
+        if (g_sim702_status.sub_status == SIM7020_SUB_END)
+        {
+            return FALSE;
+        }
 
-//******************************************************************************
-// fn : NB_SendCmd
-//
-// brief : 通过注册的串口函数向外发送at指令
-//
-// param : hw_handle ->  硬件操作函数指针
-//         cmdHandle -> 将要发送指令信息
-//
-// return : none
-static void sim7020_send_at_cmd(sim7020_handle_t sim7020_handle,at_cmdhandle cmd_handle)
+        switch(g_sim702_status.sub_status)
+        {
+            
+        //查询NB卡状态是否准备好    
+        case SIM7020_SUB_CPIN:
+          {
+            at_cmd_param_init(&g_at_cmd, AT_CPIN, NULL, CMD_READ, 2000);
+          }
+          break;
+          
+        //查询射频模块信号质量   
+        case SIM7020_SUB_CSQ:
+          {
+            at_cmd_param_init(&g_at_cmd, AT_CSQ, NULL, CMD_EXCUTE, 2000);
+          }
+          break;
+
+        //使能模块射频信号,响应等待的最长时间为10S      
+        case SIM7020_SUB_CFUN:                                   
+          {
+            at_cmd_param_init(&g_at_cmd, AT_CFUN,"1",CMD_SET, 11000);
+          }
+          break;
+          
+        // 使能NBlot网络注册   
+        case SIM7020_SUB_CEREG:
+          {
+            at_cmd_param_init(&g_at_cmd, AT_CGREG, "1", CMD_SET, 2000);
+          }
+          break;      
+          
+        // 使能PDN     
+        case SIM7020_SUB_CGACT:
+          {
+            at_cmd_param_init(&g_at_cmd, AT_CGACT,"1",CMD_SET, 151000);
+          }
+          break;
+               
+        case SIM7020_SUB_CGACT_QUERY:
+          {
+            at_cmd_param_init(&g_at_cmd, AT_CGATT, NULL, CMD_READ, 151000);
+            g_at_cmd.p_expectres = "+CGACT:1,1"; //设置期望回复消息，如果指令执行完成
+                                                 //没有与期望的消息匹配，则认为出错
+                                                 //并进行出错尝试
+          }
+          break;
+          
+        //使能网络附着,最大响应时间不详      
+        case SIM7020_SUB_CGAAT:
+          {
+            at_cmd_param_init(&g_at_cmd, AT_CGATT, "1", CMD_SET, 3000);
+          }
+          break;
+
+        //查询网络附着,最大响应时间不详       
+        case SIM7020_SUB_CGATT_QUERY:
+          {
+            at_cmd_param_init(&g_at_cmd, AT_CGATT, NULL, CMD_READ, 3000);
+            g_at_cmd.p_expectres = "CGATT:1";     //设置期望回复消息，如果指令执行完成
+                                                  //没有与期望的消息匹配，则认为出错                                              //并进行出错尝试
+          }
+          break;
+          
+        default:        
+          break;   
+         }
+    }
+    else if (g_sim702_status.main_status == SIM7020_NBLOT_INFO)
+    {
+        g_sim702_status.sub_status++;
+      
+        if (g_sim702_status.sub_status == SIM7020_SUB_END)
+        {
+          return FALSE;
+        }
+        switch(g_sim702_status.sub_status)
+        {
+        case SIM7020_SUB_CGMM:
+          {
+            at_cmd_param_init(&g_at_cmd,AT_CGMM,NULL,CMD_EXCUTE,2000);
+          }
+          break;
+        case SIM7020_SUB_CGMR:
+          {
+            at_cmd_param_init(&g_at_cmd,AT_CGMR,NULL,CMD_EXCUTE,2000);
+          }
+          break;
+        case SIM7020_SUB_NBAND:
+          {
+            at_cmd_param_init(&g_at_cmd,AT_NBAND,NULL,CMD_READ,2000);
+          }
+          break;
+        }
+    }
+    else if (g_sim702_status.main_status == SIM7020_SIGN)
+    {
+        g_sim702_status.sub_status++;
+        return FALSE;
+    } 
+    else  
+    {
+      
+    }  
+    return TRUE;
+}
+
+
+//sim7020发送AT指令
+//sim7020_handle   sim7020_handle设备句柄
+//cmd_handle       将要发送指令信息句柄
+//note 调用该函数前先构造好命令的参数
+static void sim7020_send_at_cmd(sim7020_handle_t sim7020_handle, at_cmdhandle cmd_handle)
 {
     int strLen = 0;
-    
-    UART_HandleTypeDef *p_huart = sim7020_handle->p_uart_dev->p_huart; 
-    
+        
     if (sim7020_handle == NULL || cmd_handle == NULL)
     {
        return;
@@ -187,52 +559,80 @@ static void sim7020_send_at_cmd(sim7020_handle_t sim7020_handle,at_cmdhandle cmd
         
     strLen = cmd_generate(cmd_handle);
 
-    sim7020_handle->p_funcs->sim7020_send_data(p_huart, 
-                                               (uint8_t*)sim7020_send_desc.buf, 
-                                                strLen, 
-                                                cmd_handle->max_timeout);
+    sim7020_handle->p_drv_funcs->sim7020_send_data(sim7020_handle, 
+                                                   (uint8_t*)sim7020_send_desc.buf, 
+                                                   strLen,                                                    
+                                                   cmd_handle->max_timeout);
+}
+
+//sim7020接收数据
+//sim7020_handle   sim7020_handle设备句柄
+//cmd_handle       将要发送指令信息句柄
+//note 调用该函数前先构造好命令的参数
+static void sim7020_recv_data(sim7020_handle_t sim7020_handle, at_cmdhandle cmd_handle)
+{
+    int strLen = 0;
+        
+    if (sim7020_handle == NULL || cmd_handle == NULL)
+    {
+       return;
+    }
+        
+    strLen = cmd_generate(cmd_handle);
+
+    sim7020_handle->p_drv_funcs->sim7020_recv_data(sim7020_handle, 
+                                                   (uint8_t*)sim7020_recv_desc.buf, 
+                                                   strLen,                                                                                                      cmd_handle->max_timeout);
 }
 
 //sim7020初始化 
 sim7020_handle_t sim7020_init(uart_handle_t lpuart_handle)
 {
-
-     g_sim7020_dev.p_uart_dev = lpuart_handle;
-     g_sim7020_dev.p_funcs    = &drv_funcs; 
-     
+     //填充设备结构体
+     g_sim7020_dev.p_uart_dev    = lpuart_handle;
+     g_sim7020_dev.p_drv_funcs   = &drv_funcs; 
+     g_sim7020_dev.firmware_info = &g_firmware_info;
+     g_sim7020_dev.sim702_status = &g_sim702_status;    
+    
+     /* 注册sim7020串口收发事件回调函数 */
+     lpuart_event_registercb(__uart_event_cb_handle, lpuart_handle);     
+    
      return &g_sim7020_dev;    
 }
 
 //注册sim7020事件回调函数
-void lpuart_event_registercb(sim7020_cb cb, void *p_arg)
+void sim7020_event_registercb(sim7020_handle_t sim7020_handle, sim7020_cb cb, void *p_arg)
 {  
     if(cb != 0)
     {
-        g_sim7020_dev.sim7020_cb  = cb;
-        g_sim7020_dev.p_arg       = p_arg;
+        sim7020_handle->sim7020_cb  = cb;
+        sim7020_handle->p_arg       = p_arg;
     }
 }
 
 
-void sim7020_sm_event (int sim7020_event)
-{   
-    switch(sim7020_event) {
-        
-    case 0: 
-
-        break;
-
-
-    case 1:
-
-        break; 
+int sim7020_nblot_init(sim7020_handle_t sim7020_handle)
+{
     
-   default:
-        
-        break;
-   }    
-    
+  if (g_sim702_status.main_status != SIM7020_NONE)
+  {
+      return SIM7020_ERROR;
+  }
+  
+  at_cmd_param_init(&g_at_cmd, AT_SYNC, NULL,CMD_EXCUTE, 2000);
+  
+  //进入SIM7020_NBLOT_INIT状态
+  g_sim702_status.main_status = SIM7020_NBLOT_INIT;
+  g_sim702_status.sub_status  = SIM7020_SUB_SYNC;
+   
+  sim7020_send_at_cmd(sim7020_handle, &g_at_cmd);
+  
+   
+  return SUCCESS;
 }
+
+   
+
 
 
 

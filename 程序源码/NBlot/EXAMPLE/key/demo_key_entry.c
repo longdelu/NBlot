@@ -11,7 +11,7 @@
 #include "key.h"
 #include "stm32l4xx_hal.h"
 
-void key_val_handle(u32 key_event,void *p_arg)
+static void key_event_handle(u32 key_event,void *p_arg)
 {   
   
     switch(key_event)
@@ -49,7 +49,7 @@ void demo_key_entry(void)
   key_init(key_mode); 
 
   if (key_mode == 1) {    
-      key_registercb(key_val_handle, NULL);
+      key_registercb(key_event_handle, NULL);
   }
   
   while (1)
@@ -57,9 +57,8 @@ void demo_key_entry(void)
       if (key_mode == 0) {
           key = KEY_Scan(0); 
       
-          key_val_handle(key, NULL);
-          delay_ms(10); 
-          
+          key_event_handle(key, NULL);
+          delay_ms(10);          
       } else {
           
           key_poll();

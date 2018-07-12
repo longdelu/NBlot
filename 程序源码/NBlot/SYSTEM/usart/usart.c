@@ -1,7 +1,6 @@
 #include "usart.h"
 #include "delay.h"
  
-
 //////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F429开发板
@@ -64,20 +63,20 @@ void HAL_UART1_MspInit(UART_HandleTypeDef *huart)
     //GPIO端口设置
     GPIO_InitTypeDef GPIO_Initure;
     
-    if(huart->Instance==USART1)//如果是串口1，进行串口1 MSP初始化
+    if(huart->Instance==USART1)                //如果是串口1，进行串口1 MSP初始化
     {
-        __HAL_RCC_GPIOA_CLK_ENABLE();            //使能GPIOA时钟
-        __HAL_RCC_USART1_CLK_ENABLE();            //使能USART1时钟
+        __HAL_RCC_GPIOA_CLK_ENABLE();          //使能GPIOA时钟
+        __HAL_RCC_USART1_CLK_ENABLE();         //使能USART1时钟
     
         GPIO_Initure.Pin=GPIO_PIN_9;            //PA9
-        GPIO_Initure.Mode=GPIO_MODE_AF_PP;        //复用推挽输出
-        GPIO_Initure.Pull=GPIO_PULLUP;            //上拉
-        GPIO_Initure.Speed=GPIO_SPEED_FAST;        //高速
-        GPIO_Initure.Alternate=GPIO_AF7_USART1;    //复用为USART1
-        HAL_GPIO_Init(GPIOA,&GPIO_Initure);           //初始化PA9
+        GPIO_Initure.Mode=GPIO_MODE_AF_PP;      //复用推挽输出
+        GPIO_Initure.Pull=GPIO_PULLUP;          //上拉
+        GPIO_Initure.Speed=GPIO_SPEED_FAST;     //高速
+        GPIO_Initure.Alternate=GPIO_AF7_USART1; //复用为USART1
+        HAL_GPIO_Init(GPIOA,&GPIO_Initure);     //初始化PA9
 
         GPIO_Initure.Pin=GPIO_PIN_10;            //PA10
-        HAL_GPIO_Init(GPIOA,&GPIO_Initure);           //初始化PA10
+        HAL_GPIO_Init(GPIOA,&GPIO_Initure);      //初始化PA10
     
     }
 
@@ -110,7 +109,6 @@ void uart1_init(u32 bound)
         HAL_NVIC_SetPriority(USART1_IRQn,5,0);            //抢占优先级5，子优先级0
 #endif        
 }
-
 
 
 

@@ -1,7 +1,7 @@
 
 /**
   *
-  * @file           : demo_led_entry.c
+  * @file           : demo_timer_entry.c
   * @brief          : 板载LED灯以500MS为周期进行闪烁
   */
 /* Includes ------------------------------------------------------------------*/
@@ -24,7 +24,7 @@ void demo_timer_timing_entry(void)
 
     while (1)
     { 
-      delay_ms(100);	  
+       delay_ms(100);
     }
   /* USER CODE END 3 */
 

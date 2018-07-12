@@ -146,21 +146,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 }
 
 
-//**************************************
-// fn : KEY_RegisterCb
-//
-// brief : 注册按钮事件回调
-//
-// param : cb -> 处理按钮事件函数指针
-//
-// return : none
+//注册按钮事件回调
 void key_registercb(key_cb cb, void *p_arg)
 {
-  if(cb != 0)
-  {
-    key_check_press.pFkey_cb = cb;
-    key_check_press.p_arg    = p_arg;
-  }
+    if(cb != 0)
+    {
+        key_check_press.key_cb = cb;
+        key_check_press.p_arg  = p_arg;
+    }
 }
 
 
@@ -220,8 +213,8 @@ void key_poll(void)
   }
   
   //如果真的有按钮按下，则执行回调函数
-  if(key_event && key_check_press.pFkey_cb)
+  if(key_event && key_check_press.key_cb)
   {
-    key_check_press.pFkey_cb(key_event, key_check_press.p_arg);
+    key_check_press.key_cb(key_event, key_check_press.p_arg);
   }
 }
