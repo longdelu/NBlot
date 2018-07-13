@@ -17,8 +17,8 @@
 
 
 //定义sim7020数据收发描述结构体
-static struct sim7020_recv  sim7020_recv_desc;
-static struct sim7020_send  sim7020_send_desc;
+static struct sim7020_recv  g_sim7020_recv_desc;
+static struct sim7020_send  g_sim7020_send_desc;
 
 //定义用于保存当前正在执行的AT指令的述结构体
 static at_cmd_info_t g_at_cmd;
@@ -36,6 +36,10 @@ static sim020_firmware_info_t   g_firmware_info;
 static int  __sim7020_uart_data_tx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);
 static int  __sim7020_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);
 static void __uart_event_cb_handle(void *p_arg);
+
+//sim7020接收数据
+//sim7020_handle   sim7020_handle设备句柄
+static int sim7020_data_recv(sim7020_handle_t sim7020_handle);
 
 static struct sim7020_drv_funcs drv_funcs = {
     
@@ -64,30 +68,54 @@ void sim7020_event_clr (sim7020_handle_t sim7020_handle, int sim7020_event)
 
 static void __uart_event_cb_handle (void *p_arg)
 {    
-    uart_dev_t *p_uart_dev = (uart_dev_t *)p_arg; 
+    sim7020_handle_t  sim7020_handle = (sim7020_handle_t)p_arg; 
+    
+    uart_dev_t       *p_uart_dev     = sim7020_handle->p_uart_dev;
     
     if (p_uart_dev->uart_event & UART_NONE_EVENT) {
         
     } 
 
     if (p_uart_dev->uart_event & UART_TX_EVENT) {
-        printf("tx data ok\r\n"); 
-        lpuart_event_clr(p_uart_dev, UART_TX_EVENT); 
+                
+        printf("uart tx data ok\r\n");        
+        
     }
 
     if (p_uart_dev->uart_event & UART_RX_EVENT) {
+                
+        g_sim7020_recv_desc.len = uart_ring_buf_avail_len(p_uart_dev);
+
+        
+        //从缓冲区当中读取数据
+        if (g_sim7020_recv_desc.len > 0)
+        {
+            sim7020_data_recv(sim7020_handle ) ;
+        }
+                                                   
+        lpuart_event_clr(p_uart_dev, UART_TX_EVENT); 
+
         printf("rx data ok\r\n");
         
         lpuart_event_clr(p_uart_dev, UART_RX_EVENT); 
     } 
 
     if (p_uart_dev->uart_event & UART_TX_TIMEOUT_EVENT) {
-        printf("tx data timeout\r\n");
+        
         
         lpuart_event_clr(p_uart_dev, UART_TX_TIMEOUT_EVENT); 
     } 
 
     if (p_uart_dev->uart_event & UART_RX_TIMEOUT_EVENT) {
+        
+        g_sim7020_recv_desc.len = uart_ring_buf_avail_len(p_uart_dev);
+
+        if (g_sim7020_recv_desc.len > 0)
+        {
+            sim7020_data_recv(sim7020_handle ) ;
+        }
+                                                         
+        
         printf("rx data timeout\r\n");
         
         lpuart_event_clr(p_uart_dev, UART_RX_TIMEOUT_EVENT); 
@@ -104,12 +132,15 @@ void sim7020_event_poll(sim7020_handle_t sim7020_handle)
         
     } 
 
-    if (sim7020_handle->sim7020_event & SIM7020_RECV_EVENT) {                       
+    if (sim7020_handle->sim7020_event & SIM7020_RECV_EVENT) {
+        
         printf("sim7020 recv data ok\r\n"); 
+        
         sim7020_event_clr(sim7020_handle, SIM7020_RECV_EVENT); 
     }
 
     if (sim7020_handle->sim7020_event & SIM7020_TIMEOUT_EVENT) {
+        
         printf("timeout\r\n");
         
         sim7020_event_clr(sim7020_handle, SIM7020_TIMEOUT_EVENT); 
@@ -298,11 +329,15 @@ static int  __sim7020_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, 
 {  
     int ret = 0;
     
+    (void)Timeout;
+    
     sim7020_handle_t  sim7020_handle = (sim7020_handle_t)p_arg;
     
-    uart_handle_t uart_handle = sim7020_handle->p_uart_dev; 
+    uart_handle_t uart_handle = sim7020_handle->p_uart_dev;
+
+    uart_ring_buf_read(uart_handle, pData, size);    
     
-    ret = uart_data_rx_int(uart_handle, pData, size, Timeout); 
+//    ret = uart_data_rx_int(uart_handle, pData, size, Timeout); 
 
     return ret;    
 }
@@ -358,36 +393,36 @@ static int cmd_generate(at_cmdhandle cmd_handle)
     {
        return cmdLen;
     }
-    memset(sim7020_send_desc.buf,0,NB_UART_SEND_BUF_MAX_LEN);
-    sim7020_send_desc.len = 0;
+    memset(g_sim7020_send_desc.buf,0,NB_UART_SEND_BUF_MAX_LEN);
+    g_sim7020_send_desc.len = 0;
 
     if(cmd_handle->property == CMD_TEST)
     {
-        cmdLen = snprintf(sim7020_send_desc.buf,NB_UART_SEND_BUF_MAX_LEN,
+        cmdLen = snprintf(g_sim7020_send_desc.buf,NB_UART_SEND_BUF_MAX_LEN,
                          "%s=?\r\n",
                          cmd_handle->p_atcmd);
     }    
     else if(cmd_handle->property == CMD_READ)
     {
-        cmdLen = snprintf(sim7020_send_desc.buf,NB_UART_SEND_BUF_MAX_LEN,
+        cmdLen = snprintf(g_sim7020_send_desc.buf,NB_UART_SEND_BUF_MAX_LEN,
                           "%s?\r\n",
                           cmd_handle->p_atcmd);
     }
     else if(cmd_handle->property == CMD_EXCUTE)
     {
-        cmdLen = snprintf(sim7020_send_desc.buf,NB_UART_SEND_BUF_MAX_LEN,
+        cmdLen = snprintf(g_sim7020_send_desc.buf,NB_UART_SEND_BUF_MAX_LEN,
                           "%s\r\n",
                           cmd_handle->p_atcmd);    
     }
 
     else if(cmd_handle->property == CMD_SET)
     {
-        cmdLen = snprintf(sim7020_send_desc.buf,NB_UART_SEND_BUF_MAX_LEN,
+        cmdLen = snprintf(g_sim7020_send_desc.buf,NB_UART_SEND_BUF_MAX_LEN,
                       "%s=%s\r\n",
                       cmd_handle->p_atcmd,cmd_handle->p_atcmd_arg);    
     }
     
-    sim7020_send_desc.len = cmdLen;
+    g_sim7020_send_desc.len = cmdLen;
     
     return cmdLen;
 }
@@ -573,7 +608,7 @@ static int sim7020_at_cmd_send(sim7020_handle_t sim7020_handle, at_cmdhandle cmd
     strLen = cmd_generate(cmd_handle);
 
     ret = sim7020_handle->p_drv_funcs->sim7020_send_data(sim7020_handle, 
-                                                   (uint8_t*)sim7020_send_desc.buf, 
+                                                   (uint8_t*)g_sim7020_send_desc.buf, 
                                                    strLen,                                                    
                                                    cmd_handle->max_timeout);
     
@@ -582,23 +617,20 @@ static int sim7020_at_cmd_send(sim7020_handle_t sim7020_handle, at_cmdhandle cmd
 
 //sim7020接收数据
 //sim7020_handle   sim7020_handle设备句柄
-//cmd_handle       将要发送指令信息句柄
-//note 调用该函数前先构造好命令的参数
-static int sim7020_data_recv(sim7020_handle_t sim7020_handle, at_cmdhandle cmd_handle)
+static int sim7020_data_recv(sim7020_handle_t sim7020_handle)
 {
     int strLen = 0;
         
-    if (sim7020_handle == NULL || cmd_handle == NULL)
+    if (sim7020_handle == NULL)
     {
        return -1;
     }
         
-    strLen = cmd_generate(cmd_handle);
 
     sim7020_handle->p_drv_funcs->sim7020_recv_data(sim7020_handle, 
-                                                   (uint8_t*)sim7020_recv_desc.buf, 
-                                                   strLen,                                                                                                     
-                                                   cmd_handle->max_timeout);
+                                                   (uint8_t*)g_sim7020_recv_desc.buf, 
+                                                   g_sim7020_recv_desc.len,                                                                                                     
+                                                   0);
 }
 
 
@@ -612,7 +644,7 @@ sim7020_handle_t sim7020_init(uart_handle_t lpuart_handle)
      g_sim7020_dev.sim702_status = &g_sim702_status;    
     
      /* 注册sim7020串口收发事件回调函数 */
-     lpuart_event_registercb(lpuart_handle, __uart_event_cb_handle, lpuart_handle);     
+     lpuart_event_registercb(lpuart_handle, __uart_event_cb_handle, &g_sim7020_dev);     
     
      return &g_sim7020_dev;    
 }

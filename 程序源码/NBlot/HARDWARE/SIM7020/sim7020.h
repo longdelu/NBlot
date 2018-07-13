@@ -268,9 +268,9 @@ struct sim7020_drv_funcs {
 };
 
 
-#define    SIM7020_NONE_EVENT          0x0000           //没有其它事件发生
-#define    SIM7020_RECV_EVENT          0x0001           //收到串口数据事件
-#define    SIM7020_TIMEOUT_EVENT       0x0002           //超时事件
+#define    SIM7020_NONE_EVENT          0x0000           //没有事件发生
+#define    SIM7020_RECV_EVENT          0x0001           //收到回应数据事件
+#define    SIM7020_TIMEOUT_EVENT       0x0002           //命令发送后，得不到回应，产生超时事件
 #define    SIM7020_REG_STA_EVENT       0x0004           //NBIOT网络附着事件
 #define    SIM7020_TCP_RECV_EVENT      0x0008           //TCP接收事件
 #define    SIM7020_UDP_RECV_EVENT      0x0010           //UDP接收事件
