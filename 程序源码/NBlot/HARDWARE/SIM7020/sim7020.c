@@ -92,6 +92,10 @@ static void __uart_event_cb_handle (void *p_arg)
         {
             sim7020_data_recv(sim7020_handle ) ;
         }
+        
+        
+        
+        
                                                    
         lpuart_event_clr(p_uart_dev, UART_TX_EVENT); 
 
@@ -329,6 +333,7 @@ static int  __sim7020_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, 
 {  
     int ret = 0;
     
+    //超时参数保留使用
     (void)Timeout;
     
     sim7020_handle_t  sim7020_handle = (sim7020_handle_t)p_arg;
@@ -466,6 +471,137 @@ static int8_t at_cmd_is_ok(char* buf)
   }
 
   return result;
+}
+
+
+//******************************************************************************
+// fn : addr_adjust
+//
+// brief : 根据异步消息，调整指令响应数据
+//
+// param : 
+//
+// return : TRUE ->表示要执行指令响应，FALSE ->不执行 
+uint8_t addr_adjust(char* buf,char* pStart,uint16_t* plen)
+{
+  uint8_t isAsync = FALSE;
+  char* pEnd = NULL;
+  uint8_t msg_len = 0;
+    
+  //如果是ok在前面，则该指令响应开始位置往后退两步
+  if((pStart - buf )>= 2)
+  {
+      pStart -= 2;
+  }
+  
+  // 每个命令响应，如果有多行，每一行都有一个换行符结束
+  pEnd = strstr(pStart, "\r\n");
+  
+  if(pEnd != NULL)
+  {
+    if(pEnd == pStart)
+    {
+      //寻找还有没有别的换行
+      pEnd = strstr(pStart + 2,"\r\n");
+    }
+       
+    //如果没有，该指令响应就只有换行符
+    if(!pEnd)
+    {
+      *plen = (uint8_t)(pStart - buf);
+      
+       return !!(*plen);
+    }
+    pEnd += 2;  // 每个命令响应的一行结束
+    
+    msg_len = (uint8_t)(pEnd - pStart);
+
+    if(*plen >= msg_len)
+    {
+      *plen -= msg_len;
+      if(*plen == 0)
+      {
+        isAsync = TRUE;
+      }
+      else
+      {
+        if(pStart == buf)
+        {
+          buf += msg_len;
+        }
+      }
+    }
+  }
+  return isAsync;
+}
+//******************************************************************************
+// fn : bc95_AsyncNotification
+//
+// brief : 处理BC95异步返回的通知
+//
+// param : buf-> 消息内容指针
+//         len-> 消息长度
+//
+// return : >0 是异步通知；=0 不是异步通知
+uint8_t bc95_AsyncNotification(char* buf, uint16_t* len)
+{
+  uint8_t isAsync = FALSE;
+  char* position_addr_start = NULL;
+
+  if(position_addr_start = strstr(buf,"+CEREG"))
+  {
+    char* pColon = strchr(position_addr_start,':');
+    if(pColon)
+    {
+      //g_bc95_status.nb95_connection_status = NB_Strtoul(pColon,10);
+      pColon++;
+      g_bc95_status.nb95_register_status = (*pColon - 0x30);
+    }
+    isAsync = addr_adjust(buf,position_addr_start,len);
+    
+    nbset_event(NB_REG_STA_EVENT); 
+    //isAsync =TRUE;
+  }
+  else if(position_addr_start = strstr(buf,"+CSCON"))
+  {
+    char* pColon = strchr(position_addr_start,':');
+    if(pColon)
+    {
+      pColon++;
+      //g_bc95_status.nb95_register_status = NB_Strtoul(pColon,10);
+      g_bc95_status.nb95_connection_status = (*pColon - 0x30);
+    }
+    isAsync = addr_adjust(buf,position_addr_start,len);
+    //isAsync =TRUE;
+  }
+  if(position_addr_start = strstr(buf,"+NSONMI"))
+  {
+    //收到服务器端发来的UDP数据
+    char* pColon = strchr(position_addr_start,':');
+    if(pColon)
+    {
+      pColon++;
+      g_bc95_status.nb95_udp_len.nb_socket_id = NB_Strtoul(pColon,10);
+    }
+    char* pComma = strchr(pColon,',');
+    if(pComma)
+    {
+      pComma++;
+      g_bc95_status.nb95_udp_len.nb_data_len = NB_Strtoul(pComma,10);
+    }
+    
+    isAsync = addr_adjust(buf,position_addr_start,len);
+    //isAsync =TRUE;
+    nbset_event(NB_UDPRECE_EVENT);  
+  }
+  else if(position_addr_start = strstr(buf,"+NNMI"))
+  {
+    isAsync = addr_adjust(buf,position_addr_start,len);
+    //isAsync =TRUE;
+    nbset_event(NB_COAP_RE_EVENT);  
+  }
+  
+  return isAsync;
 }
 
 //产生下一条AT指令
