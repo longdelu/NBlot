@@ -18,15 +18,17 @@
   */
 void demo_uart_poll_entry(void)
 { 
-  uint8_t buf[32];  
+  uint8_t buf[32]; 
+
+  uart_handle_t lpuart_handle = NULL;      
     
-  lpuart1_init(115200);  
+  lpuart_handle = lpuart1_init(115200);  
     
-  uart_data_tx_poll(&hlpuart1, (uint8_t *)"nblot_uart test\r\n", sizeof("nblot_uart test\r\n"), HAL_MAX_DELAY);   
+  uart_data_tx_poll(lpuart_handle, (uint8_t *)"nblot_uart test\r\n", sizeof("nblot_uart test\r\n"), HAL_MAX_DELAY);   
         
-  uart_data_rx_poll(&hlpuart1, buf, sizeof("nblot_uart rx tx test ok") - 1, HAL_MAX_DELAY);   
+  uart_data_rx_poll(lpuart_handle, buf, sizeof("nblot_uart rx tx test ok") - 1, HAL_MAX_DELAY);   
     
-  uart_data_tx_poll(&hlpuart1, buf, sizeof("nblot_uart rx tx test ok") - 1, HAL_MAX_DELAY);
+  uart_data_tx_poll(lpuart_handle, buf, sizeof("nblot_uart rx tx test ok") - 1, HAL_MAX_DELAY);
     
   while (1)
   {

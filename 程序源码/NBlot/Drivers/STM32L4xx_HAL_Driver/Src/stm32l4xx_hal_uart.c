@@ -1189,6 +1189,7 @@ HAL_StatusTypeDef HAL_UART_Receive(UART_HandleTypeDef *huart, uint8_t *pData, ui
 
     /* Computation of UART mask to apply to RDR register */
     UART_MASK_COMPUTATION(huart);
+    
     uhMask = huart->Mask;
 
     /* as long as data have to be received */

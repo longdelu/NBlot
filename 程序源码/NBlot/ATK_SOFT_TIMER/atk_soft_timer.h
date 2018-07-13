@@ -25,6 +25,14 @@ void atk_soft_timer_init (struct atk_soft_timer  *handle,
                           void *p_arg, 
                           uint32_t timeout, 
                           uint32_t repeat);
+                          
+/**
+  * @brief  change the soft timer timeout val
+  * @param  handle: target handle strcut.
+  * @retval 0: succeed. -1: already exist.
+  * @note   the api will add the soft timer into list when change the soft timer timeout val
+  */
+int atk_soft_timer_timeout_change(struct atk_soft_timer *handle, uint32_t timeout);                        
                          
 int  atk_soft_timer_start (struct atk_soft_timer *handle);
 void atk_soft_timer_stop (struct atk_soft_timer  *handle);

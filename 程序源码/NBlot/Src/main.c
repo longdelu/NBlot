@@ -72,14 +72,15 @@ int main(void)
 //    demo_timer_timing_entry();
     
 //    demo_soft_timer_entry();
+        
+//    demo_uart_int_entry();
     
-    
-    demo_uart_int_entry();
+    demo_uart_any_data_len_recv_entry();
     
     while (1)
     {            
        delay_ms(100);                      
-       printf("running");
+       printf("running\r\n");
 
     }
 }

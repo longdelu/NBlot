@@ -123,7 +123,7 @@ void USART1_IRQHandler(void)
         {
             if(USART_RX_STA&0x4000)//接收到了0x0d
             {
-                if(Res!=0x0a)USART_RX_STA=0;//接收错误,重新开始
+                if(Res!=0x0a)USART_RX_STA=0;  //接收错误,重新开始
                 else USART_RX_STA|=0x8000;    //接收完成了 
             }
             else //还没收到0X0D

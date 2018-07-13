@@ -614,6 +614,11 @@
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\sim7020\demo_sim7020_gprs_attach_entry.c</FilePath>
             </File>
+            <File>
+              <FileName>demo_uart_any_data_len_recv_entry .c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\nb_uart\demo_uart_any_data_len_recv_entry .c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

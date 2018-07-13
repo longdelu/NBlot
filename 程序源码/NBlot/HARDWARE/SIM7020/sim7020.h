@@ -262,6 +262,7 @@ struct sim7020_drv_funcs {
     
     //sim7020发送数据
     int (*sim7020_send_data) (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);
+    
     //sim7020接收数据
     int (*sim7020_recv_data) (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);    
 };
