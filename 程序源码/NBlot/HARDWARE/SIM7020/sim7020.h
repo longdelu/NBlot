@@ -120,8 +120,12 @@
 #define BAND_700MHZ_STR          "700"
 
 
+//AT指令响应的最大参数个数
+#define AT_CMD_RESPONSE_PAR_NUM_MAX   16
+
+
 /*
- * cmd 属性枚举
+ * AT指令属性枚举
  */
 typedef enum
 {
@@ -135,9 +139,12 @@ typedef enum
  * AT指令动作行为枚举
  */
 typedef enum
-{   
-  ACTION_ERROR_BUT_NEXT,              //命令执行错误将继续执行下一条指令
-  ACTION_ERROR_AND_TRY                //命令执行错误后进行尝试
+{
+    ACTION_OK_EXIT        = 0X01,              //命令执行成功后将退出 
+    ACTION_OK_AND_NEXT    = 0X02,              //命令执行成功后将执行下一条指令      
+    ACTION_ERROR_BUT_NEXT = 0X04,              //命令执行错误后跳过该命令执行下一条指令
+    ACTION_ERROR_AND_TRY  = 0X08,              //命令执行错误后进行尝试
+    ACTION_ERROR_EXIT     = 0X10               //命令执行错误后将退出    
 }cmd_action_t;
 
 //AT指令结构类型
@@ -149,7 +156,7 @@ typedef struct at_cmd_info
     char*           p_expectres;   // 期望得到回复
     unsigned char   cmd_try;       // 出错尝试次数
     unsigned char   have_tried;    // 已经出次尝试的次数
-    cmd_action_t    cmd_action;    // AT指令行为
+    uint8_t         cmd_action;    // AT指令行为
     uint32_t        max_timeout;   // 最大超时时间
 }at_cmd_info_t;
 
@@ -197,7 +204,7 @@ typedef enum sim7020_sub_status
     SIM7020_SUB_CEREG,
     SIM7020_SUB_CGACT,
     SIM7020_SUB_CGACT_QUERY,    
-    SIM7020_SUB_CGAAT, 
+    SIM7020_SUB_CGATT, 
     SIM7020_SUB_CGATT_QUERY,
     SIM7020_SUB_CSCON,    
     
@@ -214,7 +221,8 @@ typedef enum sim7020_sub_status
     SIM7020_SUB_UDP_CL,
     SIM7020_SUB_UDP_ST,
     SIM7020_SUB_UDP_RE,
-    SIM7020_SUB_END    
+    SIM7020_SUB_END   
+    
 }sim7020_sub_status_t;
 
 
@@ -225,22 +233,28 @@ typedef struct sim7020_status_nest
     sim7020_main_status_t  main_status;         //主阶段
     int                    sub_status;          //子阶段，用于状态嵌套    
     uint8_t                connect_status;
-    uint8_t                register_status;  
-    uint8_t                socket_id;           //指示相应的socket id
-    uint16_t               data_len;            //提示数据长度     
+    uint8_t                register_status; 
+    
 }sim7020_status_nest_t;
+
+
+typedef struct sim7020_socket_info {
+    uint8_t                socket_type;         //指示socket_type的类型
+    uint8_t                socket_id;           //指示相应的socket id
+    uint16_t               data_len;            //提示数据长度   
+}sim7020_socket_info_t;
 
 //SIM7020G固件信息
 typedef struct sim020_firmware_info
-{
+{   char         name[32];
     uint8_t      IMSI[16];
     uint8_t      IMEI[16];      
 }sim020_firmware_info_t;
 
 
 //定义收发数据缓冲区长度
-#define NB_UART_RECE_BUF_MAX_LEN    512
-#define NB_UART_SEND_BUF_MAX_LEN    512
+#define NB_UART_RECE_BUF_MAX_LEN    (RING_BUF_LEN + 1)
+#define NB_UART_SEND_BUF_MAX_LEN    (RING_BUF_LEN + 1)
 
 //接收缓存空间
 typedef struct sim7020_recv
@@ -254,8 +268,8 @@ typedef struct sim7020_send
 {
     char      buf[NB_UART_SEND_BUF_MAX_LEN];    //发送数据缓冲区
     uint16_t  len;                              //有效数据长度
+    
 }sim7020_send_t;
-
 
 //sim7020驱动函数结构体
 struct sim7020_drv_funcs {
@@ -275,36 +289,40 @@ struct sim7020_drv_funcs {
 #define    SIM7020_TCP_RECV_EVENT      0x0008           //TCP接收事件
 #define    SIM7020_UDP_RECV_EVENT      0x0010           //UDP接收事件
 #define    SIM7020_COAP_RECV_EVENT     0X0020           //COAP接收事件
+#define    SIM7020_MQTT_RECV_EVENT     0X0040           //MQTT接收事件
+#define    SIM7020_LWM2M_RECV_EVENT    0X0080           //LWM2M接收事件
 
 
-//sim7020消息id,回调函数中使用
+//sim7020消息id, 回调函数中使用
 typedef enum sim7020_msg_id
 {
-  SIM7020_MSG_NONE,
+    SIM7020_MSG_NONE,
 
-  SIM7020_MSG_INIT,
-  SIM7020_MSG_IMSI,
+    SIM7020_MSG_NBLOT_INIT,
 
-  SIM7020_MSG_MODULE_INFO,
-  SIM7020_MSG_MID,        //制造商ID
-  SIM7020_MSG_MMODEL,     //厂商型号
-  SIM7020_MSG_MREV,       //厂家版本号
-  SIM7020_MSG_BAND,       //工作频段
-  SIM7020_MSG_IMEI,       //移动设备身份码
+    SIM7020_MSG_NBLOT_INFO,
 
-  SIM7020_MSG_SIGN,       //信号强度
-  SIM7020_MSG_REG,
+    SIM7020_MSG_IMSI,
+    SIM7020_MSG_IMEI,       //移动设备身份码    
+    SIM7020_MSG_MID,        //制造商ID
+    SIM7020_MSG_MMODEL,     //厂商型号
+    SIM7020_MSG_MREV,       //厂家版本号
+    SIM7020_MSG_BAND,       //工作频段
 
-  SIM7020_MSG_UDP_CREATE,
-  SIM7020_MSG_UDP_CLOSE,
-  SIM7020_MSG_UDP_SEND,
-  SIM7020_MSG_UDP_RECE,
-    
-  SIM7020_MSG_COAP,
-  SIM7020_MSG_COAP_SEND,
-  SIM7020_MSG_COAP_RECE,
-  
-  SIM7020_MSG_END
+
+    SIM7020_MSG_SIGN,       //信号强度
+    SIM7020_MSG_REG,
+
+    SIM7020_MSG_UDP_CREATE,
+    SIM7020_MSG_UDP_CLOSE,
+    SIM7020_MSG_UDP_SEND,
+    SIM7020_MSG_UDP_RECV,
+
+    SIM7020_MSG_COAP,
+    SIM7020_MSG_COAP_SEND,
+    SIM7020_MSG_COAP_RECV,
+
+    SIM7020_MSG_END
   
 }sim7020_msg_id_t;
 
@@ -358,6 +376,6 @@ void sim7020_event_registercb(sim7020_handle_t sim7020_handle, sim7020_cb cb, vo
 void sim7020_app_status_poll(int *sim702_main_status);
 
 //sim7020事件处理函数
-void sim7020_event_poll (sim7020_handle_t sim7020_handle);
+int sim7020_event_poll (sim7020_handle_t sim7020_handle);
 
 #endif
