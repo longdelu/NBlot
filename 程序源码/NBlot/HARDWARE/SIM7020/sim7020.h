@@ -31,6 +31,8 @@
 #define AT_CGREG       "AT+CGREG"
 #define AT_CGACT       "AT+CGACT"
 #define AT_CGATT       "AT+CGATT"
+#define AT_COPS         "AT+COPS"
+
 #define AT_CSCON       "AT+CSCON"
 #define AT_CLAC        "AT+CLAC"
 
@@ -198,6 +200,7 @@ typedef enum sim7020_sub_status
 {
     SIM7020_SUB_NONE,
     SIM7020_SUB_SYNC,
+    SIM7020_SUB_ATI,
     SIM7020_SUB_CPIN,
     SIM7020_SUB_CSQ,
     SIM7020_SUB_CFUN,
@@ -206,8 +209,10 @@ typedef enum sim7020_sub_status
     SIM7020_SUB_CGACT_QUERY,    
     SIM7020_SUB_CGATT, 
     SIM7020_SUB_CGATT_QUERY,
-    SIM7020_SUB_CSCON,    
-    
+    SIM7020_SUB_COPS_QUERY,
+	
+    SIM7020_SUB_CEREG_QUERY,
+	
     SIM7020_SUB_CIMI,
     SIM7020_SUB_CGSN,
   
@@ -217,6 +222,8 @@ typedef enum sim7020_sub_status
     SIM7020_SUB_CGMM,
     SIM7020_SUB_CGMR,
     SIM7020_SUB_NBAND,
+    
+    SIM7020_SUB_CSCON, 
     SIM7020_SUB_UDP_CR,
     SIM7020_SUB_UDP_CL,
     SIM7020_SUB_UDP_ST,
@@ -230,10 +237,13 @@ typedef enum sim7020_sub_status
 //sim7020 状态信息
 typedef struct sim7020_status_nest
 {
-    sim7020_main_status_t  main_status;         //主阶段
-    int                    sub_status;          //子阶段，用于状态嵌套    
-    uint8_t                connect_status;
-    uint8_t                register_status; 
+    sim7020_main_status_t  main_status;         //命令运行主阶段
+    int                    sub_status;          //命令运行子阶段，用于状态嵌套    
+    uint8_t                connect_status;      //链接的状态
+    uint8_t                connect_type;        //链接的类型
+    int8_t                 rssi;                //信号的质量	
+		
+    uint8_t                register_status;     //网络注册
     
 }sim7020_status_nest_t;
 
@@ -301,6 +311,8 @@ typedef enum sim7020_msg_id
     SIM7020_MSG_NBLOT_INIT,
 
     SIM7020_MSG_NBLOT_INFO,
+    
+    SIM7020_MSG_REG,
 
     SIM7020_MSG_IMSI,
     SIM7020_MSG_IMEI,       //移动设备身份码    
@@ -311,7 +323,7 @@ typedef enum sim7020_msg_id
 
 
     SIM7020_MSG_SIGN,       //信号强度
-    SIM7020_MSG_REG,
+    
 
     SIM7020_MSG_UDP_CREATE,
     SIM7020_MSG_UDP_CLOSE,
@@ -343,7 +355,14 @@ typedef struct sim7020_dev
     void                     *p_arg;
 
     //事件标记
-    int                       sim7020_event; 
+    int                       sim7020_event;
+    
+    //sim7020指令执行状态信息
+    at_cmd_info_t            *p_sim702_cmd; 
+
+
+    //sim7020指令执行状态信息
+    sim7020_socket_info_t    *p_socket_info;    
 
     //sim7020状态信息
     sim7020_status_nest_t    *sim702_status;
