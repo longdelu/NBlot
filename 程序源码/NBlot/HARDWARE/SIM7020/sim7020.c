@@ -261,11 +261,11 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         }         
         else
         {
-              //理论上不会运行到这里, 可能收到了一堆乱码
-              next_cmd = sim7020_response_handle(sim7020_handle, FALSE);  
-          
-              //清缓存            
-              sim7020_recv_buf_reset();          
+//              //理论上不会运行到这里, 可能收到了一堆乱码
+//              next_cmd = sim7020_response_handle(sim7020_handle, FALSE);  
+//          
+//              //清缓存            
+//              sim7020_recv_buf_reset();          
 
         }            
         
@@ -336,7 +336,9 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
             //复位状态标志
             sim7020_status_reset();
         }
-    }        
+    }
+
+    return 0;    
 }
 
 //sim7020 状态处理函数
@@ -1373,11 +1375,11 @@ int sim7020_nblot_init (sim7020_handle_t sim7020_handle)
         return SIM7020_ERROR;
     }
 
-    at_cmd_param_init(&g_at_cmd, AT_ATI, NULL, CMD_EXCUTE, 3000);
+    at_cmd_param_init(&g_at_cmd, AT_SYNC, NULL, CMD_EXCUTE, 3000);
 
     //进入SIM7020_NBLOT_INIT状态
     g_sim7020_status.main_status = SIM7020_NBLOT_INIT;
-    g_sim7020_status.sub_status  = SIM7020_SUB_ATI;
+    g_sim7020_status.sub_status  = SIM7020_SUB_SYNC;
 
     sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
 
