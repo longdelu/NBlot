@@ -374,8 +374,6 @@ typedef struct sim7020_dev
 //sim7020设备句柄
 typedef sim7020_dev_t *sim7020_handle_t;
 
-
-
 //设置sim7020事件
 void sim7020_event_set (sim7020_handle_t sim7020_handle, int sim7020_event);
 
@@ -389,12 +387,15 @@ void sim7020_event_clr (sim7020_handle_t sim7020_handle, int sim7020_event);
 sim7020_handle_t sim7020_init(uart_handle_t lpuart_handle);
 
 //注册sim7020事件回调处理函数
-void sim7020_event_registercb(sim7020_handle_t sim7020_handle, sim7020_cb cb, void *p_arg);
+void sim7020_event_registercb (sim7020_handle_t sim7020_handle, sim7020_cb cb, void *p_arg);
 
 //sim7020应用状态处理函数
-void sim7020_app_status_poll(int *sim702_main_status);
+void sim7020_app_status_poll (sim7020_handle_t sim7020_handle, int *sim702_main_status);
 
 //sim7020事件处理函数
 int sim7020_event_poll (sim7020_handle_t sim7020_handle);
+
+//sim7020 nblot初始化及完成网络注册
+int sim7020_nblot_init (sim7020_handle_t sim7020_handle);
 
 #endif

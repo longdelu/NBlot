@@ -22,12 +22,12 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
     {
         case SIM7020_MSG_NBLOT_INIT:
         {
-          printf("\r\nINIT=%s\r\n",msg);
+          printf("init=%s\r\n",msg);
             
           if(*msg == 'S')
           {
            
-           
+             printf("init sucsess\r\n");
           }
           
         }
@@ -136,9 +136,10 @@ void demo_sim7020_gprs_attach_entry(void)
     delay_ms(10000);
              
     while (1)
-    {            
+    {   
+        uart_event_poll(lpuart_handle);         
         sim7020_event_poll(sim7020_handle);
-        sim7020_app_status_poll(&sm7020_main_status);
+        sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);
     }
 }
 

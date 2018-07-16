@@ -281,13 +281,17 @@ uart_dev_t *lpuart1_init (u32 bound)
     else
     {
         uart_dev.p_uart_ring_buff  = NULL;   
-    }  
+    }
+
+
+    //禁能串口
+     __HAL_UART_DISABLE(&hlpuart1);    
 
     __HAL_UART_DISABLE_IT(&hlpuart1, UART_IT_TXE);  //禁止发送中断 
     __HAL_UART_DISABLE_IT(&hlpuart1,UART_IT_TC);    //禁能发送完成中断   
     
     //清除rx中断标记
-    __HAL_UART_CLEAR_IT(&hlpuart1, UART_FLAG_RXNE);  
+    __HAL_UART_SEND_REQ(&hlpuart1, UART_RXDATA_FLUSH_REQUEST);
       
     //清除ilde中断标记
     __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_IDLEF); 
@@ -301,8 +305,9 @@ uart_dev_t *lpuart1_init (u32 bound)
     HAL_NVIC_EnableIRQ(LPUART1_IRQn);                //使能USART1中断通道
     HAL_NVIC_SetPriority(LPUART1_IRQn,3,3);          //抢占优先级3，子优先级3
     
-    
-    
+    //使能串口
+     __HAL_UART_ENABLE(&hlpuart1);   
+       
     return  &uart_dev;   
 }
 

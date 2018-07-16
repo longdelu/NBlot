@@ -13,6 +13,7 @@
 //Copyright(C) 广州市星翼电子科技有限公司 2009-2019
 //All rights reserved
 //********************************************************************************
+
 //定义sim7020数据收发描述结构体
 static struct sim7020_recv  g_sim7020_recv_desc;
 static struct sim7020_send  g_sim7020_send_desc;
@@ -101,6 +102,7 @@ void sim7020_event_clr (sim7020_handle_t sim7020_handle, int sim7020_event)
     sim7020_handle->sim7020_event ^= sim7020_event;
 }
 
+//串口事件回调处理函数
 static void __uart_event_cb_handle (void *p_arg)
 {    
     sim7020_handle_t  sim7020_handle = (sim7020_handle_t)p_arg; 
@@ -331,7 +333,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
 
 //sim7020 状态处理函数
 //sim7020_main_status；sim7020所处的主状态阶段
-void sim7020_app_status_poll(int  *sim7020_main_status)
+void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim7020_main_status)
 {    
     switch(*sim7020_main_status)
     {
@@ -344,6 +346,8 @@ void sim7020_app_status_poll(int  *sim7020_main_status)
     case SIM7020_NBLOT_INIT:
       {
         printf("sim7020 init start\r\n");
+                
+        sim7020_nblot_init(sim7020_handle);        
 
         *sim7020_main_status = SIM7020_END;
       }
@@ -355,6 +359,7 @@ void sim7020_app_status_poll(int  *sim7020_main_status)
 
          *sim7020_main_status = SIM7020_END;
       }
+            
       break;
       
     case SIM7020_SIGN:
@@ -1319,7 +1324,7 @@ sim7020_handle_t sim7020_init(uart_handle_t lpuart_handle)
 }
 
 //注册sim7020事件回调函数
-void sim7020_event_registercb(sim7020_handle_t sim7020_handle, sim7020_cb cb, void *p_arg)
+void sim7020_event_registercb (sim7020_handle_t sim7020_handle, sim7020_cb cb, void *p_arg)
 {  
     if(cb != 0)
     {
@@ -1328,12 +1333,13 @@ void sim7020_event_registercb(sim7020_handle_t sim7020_handle, sim7020_cb cb, vo
     }
 }
 
-int sim7020_nblot_init(sim7020_handle_t sim7020_handle)
+//sim7020 nblot初始化及完成网络注册
+int sim7020_nblot_init (sim7020_handle_t sim7020_handle)
 {
     
     if (g_sim7020_status.main_status != SIM7020_NONE)
     {
-      return SIM7020_ERROR;
+        return SIM7020_ERROR;
     }
 
     at_cmd_param_init(&g_at_cmd, AT_ATI, NULL,CMD_EXCUTE, 2000);

@@ -75,7 +75,9 @@ int main(void)
         
 //    demo_uart_int_entry();
     
-    demo_uart_any_data_len_recv_entry();
+//    demo_uart_any_data_len_recv_entry();
+    
+    demo_sim7020_gprs_attach_entry();
     
     while (1)
     {            
@@ -100,6 +102,7 @@ void _Error_Handler(char *file, int line)
   {
       
   }
+	
   /* USER CODE END Error_Handler_Debug */
 }
 

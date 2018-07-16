@@ -101,7 +101,6 @@ int atk_soft_timer_start(struct atk_soft_timer *handle)
     //加入链表元素使用临界区保护
     INTX_DISABLE();
     
-
     //元素添加在链表尾部，从左往右链表长度增加
     handle->next = head_handle;
     
