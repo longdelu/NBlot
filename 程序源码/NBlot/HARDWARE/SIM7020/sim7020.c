@@ -226,7 +226,9 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         
         else if(cmd_is_pass == FALSE)
         {              
-                         
+              
+              next_cmd = sim7020_response_handle(sim7020_handle, FALSE);     
+          
               if (g_at_cmd.cmd_action & ACTION_ERROR_AND_TRY) { 
                                     
                   printf("%s cmd is failed and try\r\n", g_at_cmd.p_atcmd);
@@ -254,7 +256,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
 
               } 
 
-              next_cmd = sim7020_response_handle(sim7020_handle, FALSE);              
+          
             
               //清缓存            
               sim7020_recv_buf_reset();
@@ -945,12 +947,11 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
       
         //转换成10进制数字
         uint8_t lqi =strtoul(pColon,0, 10);
+      
+        printf("rssi = %d\r\n",lqi); 
         //运算取得每个数值对应的dbm范围
         int8_t rssi = -110 + (lqi << 1);
-        uint8_t len = snprintf(buf[0],10,"%d",rssi);
-        *(buf[0]+len) = 0;
-        g_sim7020_status.rssi = rssi;
-        //sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_SIGN,len,buf[0]);        
+        g_sim7020_status.rssi = rssi;       
         break;
     }  
             
@@ -1250,8 +1251,6 @@ uint8_t sim7020_response_handle (sim7020_handle_t sim7020_handle, uint8_t cmd_re
             //代表命令执行成功后退出
              g_at_cmd.cmd_action = ACTION_OK_EXIT;
              
-            //复位状态标志
-            sim7020_status_reset();
         }
     }
     else
@@ -1270,8 +1269,6 @@ uint8_t sim7020_response_handle (sim7020_handle_t sim7020_handle, uint8_t cmd_re
                //代表命令执行错误后退出
                 g_at_cmd.cmd_action = ACTION_ERROR_EXIT;
                 
-                //复位状态标志
-                sim7020_status_reset();
             }
         }
         else if (!(g_at_cmd.cmd_action & ACTION_ERROR_EXIT))  
