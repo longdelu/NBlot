@@ -24,6 +24,7 @@
  * AT命令常量定义区域
  */
 #define AT_SYNC        "AT"
+#define AT_CMEE        "AT+CMEE"
 #define AT_ATI         "ATI"
 #define AT_CPIN        "AT+CPIN"
 #define AT_CSQ         "AT+CSQ"
@@ -31,7 +32,7 @@
 #define AT_CGREG       "AT+CGREG"
 #define AT_CGACT       "AT+CGACT"
 #define AT_CGATT       "AT+CGATT"
-#define AT_COPS         "AT+COPS"
+#define AT_COPS        "AT+COPS"
 
 #define AT_CSCON       "AT+CSCON"
 #define AT_CLAC        "AT+CLAC"
@@ -170,6 +171,8 @@ typedef at_cmd_info_t *at_cmdhandle;
 #define   SIM7020_OK            0
 #define   SIM7020_ERROR        -1
 #define   SIM7020_TIMEOUT      -2
+#define   SIM7020_ERROR_RETRY  -3
+#define   SIM7020_ERROR_NEXT   -4
 
 //sim7020主状态定义，app可以使用该信息
 typedef enum sim7020_main_status
@@ -200,6 +203,7 @@ typedef enum sim7020_sub_status
 {
     SIM7020_SUB_NONE,
     SIM7020_SUB_SYNC,
+    SIM7020_SUB_CMEE,    
     SIM7020_SUB_ATI,
     SIM7020_SUB_CPIN,
     SIM7020_SUB_CSQ,
@@ -210,9 +214,9 @@ typedef enum sim7020_sub_status
     SIM7020_SUB_CGATT, 
     SIM7020_SUB_CGATT_QUERY,
     SIM7020_SUB_COPS_QUERY,
-	
+    
     SIM7020_SUB_CEREG_QUERY,
-	
+    
     SIM7020_SUB_CIMI,
     SIM7020_SUB_CGSN,
   
@@ -241,8 +245,8 @@ typedef struct sim7020_status_nest
     int                    sub_status;          //命令运行子阶段，用于状态嵌套    
     uint8_t                connect_status;      //链接的状态
     uint8_t                connect_type;        //链接的类型
-    int8_t                 rssi;                //信号的质量	
-		
+    int8_t                 rssi;                //信号的质量    
+        
     uint8_t                register_status;     //网络注册
     
 }sim7020_status_nest_t;
@@ -290,7 +294,6 @@ struct sim7020_drv_funcs {
     //sim7020接收数据
     int (*sim7020_recv_data) (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);    
 };
-
 
 #define    SIM7020_NONE_EVENT          0x0000           //没有事件发生
 #define    SIM7020_RECV_EVENT          0x0001           //收到回应数据事件
@@ -359,7 +362,6 @@ typedef struct sim7020_dev
     
     //sim7020指令执行状态信息
     at_cmd_info_t            *p_sim702_cmd; 
-
 
     //sim7020指令执行状态信息
     sim7020_socket_info_t    *p_socket_info;    

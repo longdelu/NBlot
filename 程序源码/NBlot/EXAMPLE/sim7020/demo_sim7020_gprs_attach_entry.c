@@ -11,6 +11,8 @@
 #include "sim7020.h"
 #include "stm32l4xx_hal.h"
 
+
+
 //sim7020消息事件处理函数
 static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, int len, char *msg)
 { 
@@ -23,13 +25,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         case SIM7020_MSG_NBLOT_INIT:
         {
           printf("init=%s\r\n",msg);
-            
-          if(*msg == 'S')
-          {
-           
-             printf("init sucsess\r\n");
-          }
-          
+                     
         }
         break;
 
@@ -133,7 +129,7 @@ void demo_sim7020_gprs_attach_entry(void)
     sim7020_event_registercb(sim7020_handle, __sim7020_event_cb_handler, sim7020_handle);
     
     //sim7020上电需要等待10s
-    delay_ms(10000);
+//    delay_ms(10000);
              
     while (1)
     {   
