@@ -42,7 +42,7 @@ static int  __sim7020_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, 
 static void __uart_event_cb_handle(void *p_arg);
 
 //判读发送的AT指令执行结果
-static int8_t at_cmd_is_ok(char* buf);
+static int8_t at_cmd_result_parse(char* buf);
 
 //指令响应结果处理
 uint8_t sim7020_response_handle (sim7020_handle_t sim7020_handle, uint8_t cmd_response);
@@ -136,31 +136,42 @@ static void __uart_event_cb_handle (void *p_arg)
         lpuart_event_clr(p_uart_dev, UART_RX_EVENT); 
     } 
 
-    //发生发送超时事件，说明指令有可能没有发送出去
+    //发生发送超时事件，说明指令有可能没有发送出去，或者发送过程中出错
     //或者模块工作异常，没有回应命令的数据
     if (p_uart_dev->uart_event & UART_TX_TIMEOUT_EVENT) {
         
-        printf("sim7020 tx timeout %s", g_sim7020_send_desc.buf);        
+        printf("sim7020 tx timeout %s", g_sim7020_send_desc.buf);  
+
+        sim7020_event_set(sim7020_handle, SIM7020_TIMEOUT_EVENT);
+      
         lpuart_event_clr(p_uart_dev, UART_TX_TIMEOUT_EVENT); 
     } 
 
-    //此事件理论上不会发生
+    //如果使用非超时成帧，此事件理论上不会发生
     if (p_uart_dev->uart_event & UART_RX_TIMEOUT_EVENT) {
         
         g_sim7020_recv_desc.len = uart_ring_buf_avail_len(p_uart_dev);
+              
 
-        if (g_sim7020_recv_desc.len > 0)
+        if (g_sim7020_dev.frame_format == 1) 
         {
-            
-            sim7020_data_recv(sim7020_handle, 0);
-            
-            //产生异步事件等待处理
-            sim7020_notify(sim7020_handle, g_sim7020_recv_desc.buf);
-        }
-        
-        printf("sim7020 rx timeout %s\r\n", g_sim7020_recv_desc.buf);        
-        
-        lpuart_event_clr(p_uart_dev, UART_RX_TIMEOUT_EVENT); 
+            if (g_sim7020_recv_desc.len > 0)
+            {
+                
+                sim7020_data_recv(sim7020_handle, 0);
+                
+                //产生异步事件等待处理
+                sim7020_notify(sim7020_handle, g_sim7020_recv_desc.buf);
+            }
+                                        
+       //不在超时成帧的状态下，代表的确发生了超时事件      
+       } else {
+         
+           sim7020_event_set(sim7020_handle, SIM7020_TIMEOUT_EVENT);
+       }
+       
+       printf("sim7020 rx timeout %s\r\n", g_sim7020_recv_desc.buf);   
+       lpuart_event_clr(p_uart_dev, UART_RX_TIMEOUT_EVENT);
     }            
 }
 
@@ -183,9 +194,10 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         
     if (sim7020_handle->sim7020_event & SIM7020_RECV_EVENT) {
         
-        cmd_is_pass = at_cmd_is_ok(g_sim7020_recv_desc.buf);
-                
-        if (cmd_is_pass >= 0) 
+        cmd_is_pass = at_cmd_result_parse(g_sim7020_recv_desc.buf);
+        
+        //如果命令响应结果正确      
+        if (cmd_is_pass == AT_CMD_RESULT_OK) 
         {            
             //提取AT指令返回的参数,在使用strok期间，不允许改变缓冲区的内容，中间出现再多的\r\n，也只会当做一个来处理
             while((at_response_par[index] = strtok(p_revc_buf_tmp,"\r\n")) != NULL)
@@ -201,16 +213,21 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
 
             if(index == 0)
             {
-                //清缓存            
-                sim7020_recv_buf_reset();
+                //数据解析出错，重新发送该命令
+                next_cmd = sim7020_response_handle(sim7020_handle, FALSE);
               
+                //清缓存            
+                sim7020_recv_buf_reset();                            
+                                        
+                sim7020_event_clr(sim7020_handle, SIM7020_RECV_EVENT); 
+                                       
                 //未收到正确的数据帧
-                return  -1;
+                return  SIM7020_ERROR;
             }            
                                    
         }
         
-        if(cmd_is_pass == TRUE)
+        if(cmd_is_pass == AT_CMD_RESULT_OK)
         {
             
               printf("%s cmd excute ok \r\n\r\n", g_at_cmd.p_atcmd);
@@ -224,7 +241,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
               sim7020_recv_buf_reset();
         }
         
-        else if(cmd_is_pass == FALSE)
+        else if(cmd_is_pass == AT_CMD_RESULT_ERROR)
         {              
               
               next_cmd = sim7020_response_handle(sim7020_handle, FALSE);     
@@ -255,18 +272,28 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
                   sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], FALSE);                  
 
               } 
-
                       
               //清缓存            
               sim7020_recv_buf_reset();
-        }         
-        else
+        } 
+
+        else if (cmd_is_pass == AT_CMD_RESULT_CONTINUE)
         {
-//              //理论上不会运行到这里, 可能收到了一堆乱码
-//              next_cmd = sim7020_response_handle(sim7020_handle, FALSE);  
-//          
-//              //清缓存            
-//              sim7020_recv_buf_reset();          
+            //命令未执行完成，正常情况下，收到的的是命令回显, 接下来的还是当前命令响应数据的接收, 重新启动接收超时               
+            atk_soft_timer_timeout_change(&sim7020_handle->p_uart_dev->uart_rx_timer, 500);
+
+        }       
+        else 
+        {
+          
+            //传输出错，延时一段时间，防止还有数据过来，这些数据都是垃圾数据
+            delay_ms(1000);          
+                                    
+            //理论上不会运行到这里, 可能收到了一堆乱码
+            next_cmd = sim7020_response_handle(sim7020_handle, FALSE);  
+        
+            //清缓存            
+            sim7020_recv_buf_reset();          
 
         }            
         
@@ -282,7 +309,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
       
         printf("%s cmd not repsonse or send failed\r\n", g_at_cmd.p_atcmd);
         
-       //通知上层应用，此动作执行失败后跳过该命令执行
+        //通知上层应用，此动作执行超时
         sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_TIMEOUT);                          
         
         //超时处理        
@@ -292,6 +319,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
     } 
 
     if (sim7020_handle->sim7020_event & SIM7020_REG_STA_EVENT) {
+      
         printf("reg ok\r\n");
         
         at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char *)&g_sim7020_status.register_status;        
@@ -333,6 +361,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         {
             sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
         }
+        
         else
         {
             //代表该主状态下所有的子状态命令已经完在了
@@ -343,7 +372,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         }
     }
 
-    return 0;    
+    return SIM7020_OK;    
 }
 
 //sim7020 状态处理函数
@@ -607,44 +636,65 @@ static int cmd_generate(at_cmdhandle cmd_handle)
 //判断at指令是否发送成功
 //返回值如果是-1，则接收到的数据可能为乱码
 //返回值如果是0， 指令通过，如果是1，指令出错
-static int8_t at_cmd_is_ok(char* buf)
+static int8_t at_cmd_result_parse(char* buf)
 {
-  int8_t result = -1;
-     
-  if(g_at_cmd.p_expectres == NULL)
-  {
-    if (strstr(buf,"OK"))
+    int8_t result = -1;
+       
+    if(g_at_cmd.p_expectres == NULL)
     {
-        result = TRUE;
+        if (strstr(buf,"\r\nOK\r\n"))
+        {
+            result = AT_CMD_RESULT_OK;
+        }
+        else if (strstr(buf,"\r\nERROR\r\n"))
+        {
+            result = AT_CMD_RESULT_ERROR;
+          
+        } else if (strstr(buf,g_at_cmd.p_atcmd)) {
+          
+           //是命令的回显
+           result = AT_CMD_RESULT_CONTINUE;
+          
+        } else {
+          
+           //乱码
+           result = AT_CMD_RESULT_RANDOM_CODE;
+        }
     }
-    else if (strstr(buf,"ERROR"))
+    else
     {
-        result = FALSE;
+        if (strstr(buf,"\r\nOK\r\n"))
+        {
+            //与得到的期望值一致
+            if(strstr(buf,g_at_cmd.p_expectres))
+            {
+                result = AT_CMD_RESULT_OK;
+            }
+            else
+            {
+                result = AT_CMD_RESULT_ERROR;
+            }
+            
+        }
+        else if(strstr(buf,"\r\nERROR\r\n"))
+        {
+            //ERROR
+            result = AT_CMD_RESULT_ERROR;
+        }
+         
+        else if (strstr(buf, g_at_cmd.p_atcmd)) {
+          
+             result = AT_CMD_RESULT_CONTINUE;
+          
+        } else {
+          
+             //乱码
+             result = AT_CMD_RESULT_RANDOM_CODE;      
+          
+        }    
     }
-  }
-  else
-  {
-    if(strstr(buf,"OK"))
-    {
-      //与得到的期望值一致
-      if(strstr(buf,g_at_cmd.p_expectres))
-      {
-          result = TRUE;
-      }
-      else
-      {
-          result = FALSE;
-      }
-        
-    }
-    else if(strstr(buf,"ERROR"))
-    {
-        // ERROR
-        result = FALSE;
-    } 
-  }
 
-  return result;
+    return result;
 }
 
 
@@ -1344,7 +1394,7 @@ static int sim7020_at_cmd_send(sim7020_handle_t sim7020_handle, at_cmdhandle cmd
         
     if (sim7020_handle == NULL || cmd_handle == NULL)
     {
-       return -1;
+       return SIM7020_ERROR;
     }
         
     strLen = cmd_generate(cmd_handle);
@@ -1365,7 +1415,7 @@ static int sim7020_data_recv(sim7020_handle_t sim7020_handle, uint32_t timeout)
         
     if (sim7020_handle == NULL)
     {
-       return -1;
+       return SIM7020_ERROR;
     }
         
 
@@ -1391,7 +1441,9 @@ sim7020_handle_t sim7020_init(uart_handle_t lpuart_handle)
      g_sim7020_dev.p_sim702_cmd  = &g_at_cmd;    
      g_sim7020_dev.p_socket_info = g_socket_info;
      g_sim7020_dev.firmware_info = &g_firmware_info;
-     g_sim7020_dev.sim702_status = &g_sim7020_status;    
+     g_sim7020_dev.sim702_status = &g_sim7020_status;
+
+     g_sim7020_dev.frame_format  = 0;  
     
      /* 注册sim7020串口收发事件回调函数 */
      lpuart_event_registercb(lpuart_handle, __uart_event_cb_handle, &g_sim7020_dev);     

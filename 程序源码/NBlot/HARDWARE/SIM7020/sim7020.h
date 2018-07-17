@@ -164,8 +164,16 @@ typedef struct at_cmd_info
     uint32_t        max_timeout;   // 最大超时时间
 }at_cmd_info_t;
 
+
 //声明AT cmd结构指针类型
 typedef at_cmd_info_t *at_cmdhandle;
+
+
+//指令执行结果
+#define AT_CMD_RESULT_OK           0
+#define AT_CMD_RESULT_ERROR        1
+#define AT_CMD_RESULT_CONTINUE     -5
+#define AT_CMD_RESULT_RANDOM_CODE  -6
 
 
 //错误代码定义 
@@ -244,7 +252,7 @@ typedef enum sim7020_sub_status
 typedef struct sim7020_status_nest
 {
     sim7020_main_status_t  main_status;         //命令运行主阶段
-    int                    sub_status;          //命令运行子阶段，用于状态嵌套    
+    int                    sub_status;          //命令运行子阶段，用于状态嵌套  
     uint8_t                connect_status;      //链接的状态
     uint8_t                connect_type;        //链接的类型
     int8_t                 rssi;                //信号的质量    
@@ -299,7 +307,7 @@ struct sim7020_drv_funcs {
 
 #define    SIM7020_NONE_EVENT          0x0000           //没有事件发生
 #define    SIM7020_RECV_EVENT          0x0001           //收到回应数据事件
-#define    SIM7020_TIMEOUT_EVENT       0x0002           //命令发送后，得不到回应，产生超时事件
+#define    SIM7020_TIMEOUT_EVENT       0x0002           //命令发送时出错产生超时事件或发送后得不到回应，产生超时事件
 #define    SIM7020_REG_STA_EVENT       0x0004           //NBIOT网络附着事件
 #define    SIM7020_TCP_RECV_EVENT      0x0008           //TCP接收事件
 #define    SIM7020_UDP_RECV_EVENT      0x0010           //UDP接收事件
@@ -370,8 +378,13 @@ typedef struct sim7020_dev
 
     //sim7020状态信息
     sim7020_status_nest_t    *sim702_status;
+  
     //sim7020固件信息
-    sim020_firmware_info_t   *firmware_info;      
+    sim020_firmware_info_t   *firmware_info; 
+
+    //帧格式，超时成帧或者ILDE成帧
+    uint8_t                   frame_format;  
+  
              
 }sim7020_dev_t;
 

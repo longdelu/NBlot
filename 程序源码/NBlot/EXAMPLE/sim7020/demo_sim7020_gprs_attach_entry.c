@@ -129,7 +129,7 @@ void demo_sim7020_gprs_attach_entry(void)
     sim7020_event_registercb(sim7020_handle, __sim7020_event_cb_handler, sim7020_handle);
     
     //sim7020上电需要等待10s
-//    delay_ms(10000);
+    delay_ms(1000);
              
     while (1)
     {   
