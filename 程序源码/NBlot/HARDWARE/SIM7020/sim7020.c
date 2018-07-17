@@ -193,7 +193,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
 //    memcpy(tmp_buf,g_sim7020_recv_desc.buf, 512); 
         
     if (sim7020_handle->sim7020_event & SIM7020_RECV_EVENT) {
-        
+           
         cmd_is_pass = at_cmd_result_parse(g_sim7020_recv_desc.buf);
         
         //如果命令响应结果正确      
@@ -281,16 +281,21 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         {
             //命令未执行完成，正常情况下，收到的的是命令回显, 接下来的还是当前命令响应数据的接收, 重新启动接收超时               
             atk_soft_timer_timeout_change(&sim7020_handle->p_uart_dev->uart_rx_timer, 500);
-
+          
         }       
         else 
         {
-          
+            //理论上不会运行到这里,         
             //传输出错，延时一段时间，防止还有数据过来，这些数据都是垃圾数据
-            delay_ms(1000);          
+
+            if (g_sim7020_recv_desc.len > 0) {          
                                     
-            //理论上不会运行到这里, 可能收到了一堆乱码
-            next_cmd = sim7020_response_handle(sim7020_handle, FALSE);  
+               // next_cmd = sim7020_response_handle(sim7020_handle, FALSE); 
+            }              
+          
+            printf("the err buf %s\r\n",g_sim7020_recv_desc.buf);
+
+            printf("the err buf len %d\r\n",g_sim7020_recv_desc.len);             
         
             //清缓存            
             sim7020_recv_buf_reset();          
@@ -301,20 +306,21 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
     }
 
     if (sim7020_handle->sim7020_event & SIM7020_TIMEOUT_EVENT) {
-        
-                
-        sim7020_recv_buf_reset();
-      
+                          
         at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = "cmd not repsonse or send failed\r\n";
       
         printf("%s cmd not repsonse or send failed\r\n", g_at_cmd.p_atcmd);
         
         //通知上层应用，此动作执行超时
-        sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_TIMEOUT);                          
+        sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_TIMEOUT);   
+          
+        sim7020_recv_buf_reset();      
         
         //超时处理        
         next_cmd = sim7020_response_handle(sim7020_handle, FALSE);
-                                    
+      
+        sim7020_event_clr(sim7020_handle, SIM7020_RECV_EVENT); 
+                                          
         sim7020_event_clr(sim7020_handle, SIM7020_TIMEOUT_EVENT); 
     } 
 
@@ -805,7 +811,9 @@ static uint8_t at_cmd_next (void)
         case SIM7020_SUB_ATI:
           
             at_cmd_param_init(&g_at_cmd, AT_ATI, NULL, CMD_EXCUTE, 3000);
-        
+            g_at_cmd.p_expectres = "SIM";         //设置期望回复消息，如果指令执行完成
+                                                  //没有与期望的消息匹配，则认为出错
+                                                  //并进行出错尝试           
             break;
                       
         //查询NB卡状态是否准备好    

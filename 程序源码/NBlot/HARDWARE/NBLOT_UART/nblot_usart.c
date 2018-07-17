@@ -333,9 +333,11 @@ static void __lpuart_rx_timeout_cb (void *p_arg)
 #endif //endif    UART_ANY_DATA_LEN_RECV
     
     //reset the lphuart->RxState
-    lphuart->RxState= HAL_UART_STATE_READY;  
-    
-         
+    lphuart->RxState= HAL_UART_STATE_READY; 
+
+    //清垃圾数据
+    READ_REG(lphuart->Instance->RDR);
+             
     //清除溢出中断标记
     __HAL_UART_CLEAR_IT(&hlpuart1,UART_CLEAR_OREF); 
                                
