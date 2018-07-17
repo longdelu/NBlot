@@ -24,6 +24,13 @@ void demo_sim7020_tcpip_entry(void);
 void demo_sim7020_gprs_attach_entry(void);
 
 /**
+  * @brief  The demo sim7020 nblot info get application entry point.
+  *
+  * @retval None
+  */
+void demo_sim7020_nblot_info_get_entry(void);
+
+/**
   * @}
   */
 

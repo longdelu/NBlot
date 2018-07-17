@@ -35,18 +35,19 @@
 #define AT_COPS        "AT+COPS"
 #define AT_CGCONTRDP   "AT+CGCONTRDP"
 
-#define AT_CSCON       "AT+CSCON"
-#define AT_CLAC        "AT+CLAC"
 
-#define AT_CGPADDR     "AT+CGPADDR"
-#define AT_COPS        "AT+COPS"
+
+
 #define AT_CGMI        "AT+CGMI"
 #define AT_CGMM        "AT+CGMM"
 #define AT_CGMR        "AT+CGMR"
-
 #define AT_CIMI        "AT+CIMI"
 #define AT_CGSN        "AT+CGSN"
+#define AT_CBAND       "AT+CBAND"
 
+#define AT_CSCON       "AT+CSCON"
+#define AT_CLAC        "AT+CLAC"
+#define AT_CGPADDR     "AT+CGPADDR"
 #define AT_CGDCONT     "AT+CGDCONT"
 #define AT_CCLK        "AT+CCLK"
 #define AT_CPSMS       "AT+CPSMS"
@@ -66,6 +67,7 @@
 #define AT_CSODCP     "AT+CSODCP"
 #define AT_CRTDCP     "AT+CRTDCP"
 */
+
 #define AT_NMGS       "AT+NMGS"
 #define AT_NMGR       "AT+NMGR"
 #define AT_NNMI       "AT+NNMI"
@@ -86,7 +88,6 @@
 #define AT_NSOCL      "AT+NSOCL"  
       
 #define  AT_NPING          "AT+NPING"
-#define  AT_NBAND          "AT+NBAND"
 #define  AT_NLOGLEVEL      "AT+NLOGLEVEL"
 #define  AT_NCONFIG        "AT+NCONFIG"
 #define  AT_NATSPEED       "AT+NATSPEED"
@@ -189,7 +190,7 @@ typedef enum sim7020_main_status
     SIM7020_NONE,
     SIM7020_NBLOT_INIT,   // 初始化操作
     SIM7020_NBLOT_INFO,   // 获取 NB 模块厂商及固件，频段等信息
-    SIM7020_SIGN,         // 获取信号质量
+    SIM7020_SIGNAL,       // 获取信号质量
     SIM7020_UDP_CR,       // 创建 UDP
     SIM7020_UDP_CL,       // 关闭 UDP
     SIM7020_TCP_CR,       // 创建 TCP
@@ -224,19 +225,20 @@ typedef enum sim7020_sub_status
     SIM7020_SUB_CGATT, 
     SIM7020_SUB_CGATT_QUERY,
     SIM7020_SUB_COPS_QUERY,
-    SIM7020_SUB_CGCONTRDP_QUERY,    
-    SIM7020_SUB_CEREG_QUERY,
-    
-    SIM7020_SUB_CIMI,
-    SIM7020_SUB_CGSN,
+    SIM7020_SUB_CGCONTRDP_QUERY,
   
-    SIM7020_SUB_NSMI,
-    SIM7020_SUB_NNMI,
+    SIM7020_SUB_CEREG_QUERY,
+  
     SIM7020_SUB_CGMI,
     SIM7020_SUB_CGMM,
     SIM7020_SUB_CGMR,
-    SIM7020_SUB_NBAND,
-    
+    SIM7020_SUB_CIMI,
+    SIM7020_SUB_CGSN,  
+    SIM7020_SUB_CBAND,
+    SIM7020_SUB_NSMI,
+    SIM7020_SUB_NNMI,
+
+ 
     SIM7020_SUB_CSCON, 
     SIM7020_SUB_UDP_CR,
     SIM7020_SUB_UDP_CL,
@@ -326,14 +328,14 @@ typedef enum sim7020_msg_id
     SIM7020_MSG_NBLOT_INFO,
     
     SIM7020_MSG_REG,
-
+  
+    SIM7020_MSG_IMEI,       //移动设备身份码   
     SIM7020_MSG_IMSI,
-    SIM7020_MSG_IMEI,       //移动设备身份码    
-    SIM7020_MSG_MID,        //制造商ID
-    SIM7020_MSG_MMODEL,     //厂商型号
-    SIM7020_MSG_MREV,       //厂家版本号
+  
+    SIM7020_MSG_MID,        //产商ID
+    SIM7020_MSG_MMODEL,     //模块型号
+    SIM7020_MSG_MREV,       //软件版本号
     SIM7020_MSG_BAND,       //工作频段
-
 
     SIM7020_MSG_SIGN,       //信号强度
     
@@ -384,8 +386,7 @@ typedef struct sim7020_dev
 
     //帧格式，超时成帧或者ILDE成帧
     uint8_t                   frame_format;  
-  
-             
+               
 }sim7020_dev_t;
 
 //sim7020设备句柄
@@ -414,5 +415,11 @@ int sim7020_event_poll (sim7020_handle_t sim7020_handle);
 
 //sim7020 nblot初始化及完成网络注册
 int sim7020_nblot_init (sim7020_handle_t sim7020_handle);
+
+//获取NB模块的信息
+int sim7020_nblot_info_get(sim7020_handle_t sim7020_handle);
+
+//获取NB模块的信号质量
+int sim7020_nblot_signal_get(sim7020_handle_t sim7020_handle);
 
 #endif

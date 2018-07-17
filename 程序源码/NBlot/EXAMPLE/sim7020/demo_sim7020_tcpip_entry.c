@@ -64,10 +64,10 @@ void demo_sim7020_tcpip_entry(void)
 
     while (1)
     {
-     uart_event_poll(lpuart_handle);
-      
-     LED0_Toggle;  
-     delay_ms(100);  
+       uart_event_poll(lpuart_handle);
+        
+       LED0_Toggle;  
+       delay_ms(100);  
     }
 }
 

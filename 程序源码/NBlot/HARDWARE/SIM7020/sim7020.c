@@ -290,7 +290,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
 
             if (g_sim7020_recv_desc.len > 0) {          
                                     
-               // next_cmd = sim7020_response_handle(sim7020_handle, FALSE); 
+                next_cmd = sim7020_response_handle(sim7020_handle, FALSE); 
             }              
           
             printf("the err buf %s\r\n",g_sim7020_recv_desc.buf);
@@ -331,15 +331,14 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char *)&g_sim7020_status.register_status;        
           
         //通知上层应用网络注册结果
-        sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], FALSE);        
+        sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], TRUE);        
 
         //处理决定是否执行下一条命令        
-        next_cmd = sim7020_response_handle(sim7020_handle, FALSE);
+        next_cmd = sim7020_response_handle(sim7020_handle, TRUE);
         
         sim7020_event_clr(sim7020_handle,   SIM7020_REG_STA_EVENT); 
     }
     
-
     if (sim7020_handle->sim7020_event & SIM7020_TCP_RECV_EVENT) {
         printf("tcp recv ok\r\n");
         
@@ -359,15 +358,15 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         sim7020_event_clr(sim7020_handle, SIM7020_COAP_RECV_EVENT); 
     }
 
-    
+    //命令还是next
     if(next_cmd)
     {
         //执行下一条命令
-        if(at_cmd_next())
+        if (at_cmd_next())
         {
             sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
         }
-        
+        //返回FALSE表示子进程已经结束了
         else
         {
             //代表该主状态下所有的子状态命令已经完在了
@@ -375,7 +374,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
 
             //复位状态标志
             sim7020_status_reset();
-        }
+        }     
     }
 
     return SIM7020_OK;    
@@ -406,13 +405,16 @@ void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim7020_main_
     case SIM7020_NBLOT_INFO:
       {
          printf("sim7020 get signal start\r\n");
+        
+        
+         sim7020_nblot_info_get(sim7020_handle);
 
          *sim7020_main_status = SIM7020_END;
       }
             
       break;
       
-    case SIM7020_SIGN:
+    case SIM7020_SIGNAL:
       {
         printf("sim7020 module info start\r\n");
         *sim7020_main_status = SIM7020_END;
@@ -707,24 +709,34 @@ static int8_t at_cmd_result_parse(char* buf)
 //处理sim7020事件通知
 static uint8_t sim7020_notify (sim7020_handle_t sim7020_handle, char *buf)
 {
-   char *target_pos_start = strstr(buf, "+CEREG");
+   char *target_pos_start = NULL;
     
-   if((target_pos_start = strstr(buf, "+CEREG")))
+   if((target_pos_start = strstr(buf, "+CGREG:")) != NULL)
     {
         char *p_colon = strchr(target_pos_start,':');
       
         if (p_colon)
         {
-            p_colon = p_colon + 3;
+            p_colon = p_colon + 4;
             
             //该命令后面直接跟的网络注册状态的信息，用字符来表示的，要转换成数字        
             g_sim7020_status.register_status = (*p_colon - '0');
         }
+        
+        //产生注册事件
+        if (g_sim7020_status.register_status == 1) {
 
-        sim7020_event_set(sim7020_handle, SIM7020_REG_STA_EVENT);
+            sim7020_event_set(sim7020_handle, SIM7020_REG_STA_EVENT);
+        }
+        else 
+        {
+            
+            //如果收到回复，其它是命令响应的数据
+            sim7020_event_set(sim7020_handle, SIM7020_RECV_EVENT);  
+        }
     }
     
-    else if((target_pos_start = strstr(buf,"+CSONMI")))
+    else if((target_pos_start = strstr(buf,"+CSONMI")) != NULL)
     {
         //收到服务器端发来的SOCKET包数据
         char* p_colon = strchr(target_pos_start,':');
@@ -754,13 +766,13 @@ static uint8_t sim7020_notify (sim7020_handle_t sim7020_handle, char *buf)
     } 
     
     //收到Coap数据包
-    else if((target_pos_start = strstr(buf,"+CCOAPNMI")))
+    else if((target_pos_start = strstr(buf,"+CCOAPNMI")) != NULL)
     {
 
         sim7020_event_set(sim7020_handle, SIM7020_COAP_RECV_EVENT);  
     }      
     
-    else if((target_pos_start = strstr(buf,"+CLMOBSERVE")))
+    else if((target_pos_start = strstr(buf,"+CLMOBSERVE")) != NULL)
     {
 
         sim7020_event_set(sim7020_handle, SIM7020_LWM2M_RECV_EVENT);  
@@ -768,7 +780,7 @@ static uint8_t sim7020_notify (sim7020_handle_t sim7020_handle, char *buf)
     } 
 
     //收到MQTT数据包    
-    else if ((target_pos_start = strstr(buf,"+CMQPUB")))
+    else if ((target_pos_start = strstr(buf,"+CMQPUB")) != NULL)
     {
         
         sim7020_event_set(sim7020_handle, SIM7020_MQTT_RECV_EVENT);  
@@ -830,7 +842,7 @@ static uint8_t at_cmd_next (void)
         //查询射频模块信号质量   
         case SIM7020_SUB_CSQ:
           {
-             at_cmd_param_init(&g_at_cmd, AT_CSQ, NULL, CMD_EXCUTE, 2000);
+             at_cmd_param_init(&g_at_cmd, AT_CSQ, NULL, CMD_EXCUTE, 3000);
           }
           break;
 
@@ -930,45 +942,86 @@ static uint8_t at_cmd_next (void)
                     
         default: 
           
+          //强制表示子进程结束
           g_sim7020_status.sub_status = SIM7020_SUB_END;
         
           return FALSE;
-                  
-          break;   
+                   
          }
     }
+    
     else if (g_sim7020_status.main_status == SIM7020_NBLOT_INFO)
     {
         g_sim7020_status.sub_status++;
       
         if (g_sim7020_status.sub_status == SIM7020_SUB_END)
         {
-          return FALSE;
+            return FALSE;
         }
+        
         switch(g_sim7020_status.sub_status)
         {
+          
+        case  SIM7020_SUB_CGMI:
+          
+          {
+            at_cmd_param_init(&g_at_cmd,AT_CGMI,NULL,CMD_EXCUTE,3000);
+          }
+          break;
+
+                   
         case SIM7020_SUB_CGMM:
           {
-            at_cmd_param_init(&g_at_cmd,AT_CGMM,NULL,CMD_EXCUTE,2000);
+            at_cmd_param_init(&g_at_cmd,AT_CGMM,NULL,CMD_EXCUTE,3000);
           }
           break;
           
         case SIM7020_SUB_CGMR:
           {
-            at_cmd_param_init(&g_at_cmd,AT_CGMR,NULL,CMD_EXCUTE,2000);
+            at_cmd_param_init(&g_at_cmd,AT_CGMR,NULL,CMD_EXCUTE,3000);
           }
           break;
           
-        case SIM7020_SUB_NBAND:
+        case SIM7020_SUB_CIMI:
           {
-            at_cmd_param_init(&g_at_cmd,AT_NBAND,NULL,CMD_READ,2000);
+            at_cmd_param_init(&g_at_cmd,AT_CIMI,NULL,CMD_EXCUTE,3000);
           }
           break;
+
+        case SIM7020_SUB_CGSN:
+          {
+            at_cmd_param_init(&g_at_cmd, AT_CGSN, NULL, CMD_EXCUTE, 3000);
+            
+            //设置期望回复消息为络
+            //如果指令执行完成,没有与期望的消息匹配                                            
+            //则认为出错，并进行出错尝试               
+            g_at_cmd.p_expectres = "CGSN";
+          }
+          break;             
+          
+          
+        case SIM7020_SUB_CBAND:
+          {
+            at_cmd_param_init(&g_at_cmd,AT_CBAND,NULL,CMD_READ,3000);
+            //设置期望回复消息为络
+            //如果指令执行完成,没有与期望的消息匹配                                            
+            //则认为出错，并进行出错尝试               
+            g_at_cmd.p_expectres = "CBAND";
+          }
+          break;
+          
+        default: 
+          
+          //强制表示子进程结束
+          g_sim7020_status.sub_status = SIM7020_SUB_END;
+        
+          return FALSE;          
+        
         }
     }
-    else if (g_sim7020_status.main_status == SIM7020_SIGN)
+    else if (g_sim7020_status.main_status == SIM7020_SIGNAL)
     {
-        g_sim7020_status.sub_status++;
+        g_sim7020_status.sub_status = SIM7020_SUB_END;
         return FALSE;
     } 
     else  
@@ -1043,9 +1096,9 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     }  
             
     
-//    case SIM7020_SUB_CFUN:
-//        break;
-//    
+    case SIM7020_SUB_CFUN:
+        break;
+    
 
     case SIM7020_SUB_CEREG:
         
@@ -1061,20 +1114,20 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
 //        break;
 //    
 //    
-//    case SIM7020_SUB_CGACT_QUERY:
-//        
-//        break;
-//    
-//        
-//    case SIM7020_SUB_CGATT:
-//        
-//        break;
-//    
-//    
-//    case SIM7020_SUB_CGATT_QUERY:
-//        
-//        break;
-//    
+    case SIM7020_SUB_CGACT_QUERY:
+        
+        break;
+    
+        
+    case SIM7020_SUB_CGATT:
+        
+        break;
+    
+    
+    case SIM7020_SUB_CGATT_QUERY:
+        
+        break;
+    
     case SIM7020_SUB_COPS_QUERY:
         
         break;  
@@ -1103,14 +1156,36 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     case SIM7020_SUB_CEREG_QUERY:
 
       sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_REG, 1, buf[0]);
+    
       break;        
         
+                 
+    case SIM7020_SUB_CGMI:
+      {
+        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_MID, strlen(buf[0]), buf[0]);
+      }
+      break;
+      
+    case SIM7020_SUB_CGMM:
+      {
+        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_MMODEL,strlen(buf[0]),buf[0]);
+      }
+      break;
+      
+    case SIM7020_SUB_CGMR:
+      {
+
+         sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_MREV,strlen(buf[0]),buf[0]);
         
+      }
+      break;
+      
+      
     case SIM7020_SUB_CIMI:
       {
         memcpy(g_firmware_info.IMSI,buf[0],15);
         g_firmware_info.IMSI[15] = 0;
-//        sim7020_handle->sim7020_cb((sim7020_msg_id_t)SIM7020_MSG_CIMI,strlen(buf[0]),buf[0]);
+        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_IMSI,strlen(buf[0]),buf[0]);
       }
       break;
       
@@ -1121,44 +1196,21 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
         if(pColon)
         {
           pColon++;
-//          memcpy(g_firmware_info,pColon,15);
+          memcpy(g_firmware_info.IMEI ,pColon,15);
           g_firmware_info.IMEI[15] = 0;
-//          sim7020_handle->sim7020_cb((sim7020_msg_id_t)SIM7020_MSG_CGSN,15,(char*)g_firmware_info.nb95_IMEI);
+          sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_IMEI,15,(char*)g_firmware_info.IMEI);
         }
       }
-      break;        
-        
-    case SIM7020_SUB_CGMI:
-      {
-//        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_CGMI,strlen(buf[0]),buf[0]);
-      }
-      break;
+      break;            
       
-    case SIM7020_SUB_CGMM:
+    case SIM7020_SUB_CBAND:
       {
-//        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_CGMM,strlen(buf[0]),buf[0]);
-      }
-      break;
-      
-    case SIM7020_SUB_CGMR:
-      {
-        char* pComma = strchr(buf[0],',');
-        if(pComma)
-        {
-          pComma++;
-//          sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_CGMR,strlen(pComma),pComma);
-        }
-      }
-      break;
-      
-    case SIM7020_SUB_NBAND:
-      {
-        char* pColon = strchr(buf[0],':');
-        char* pFreq = NULL;
+        char *pColon = strchr(buf[0],':');
+        char *pFreq = NULL;
         if(pColon)
         {
           pColon++;
-          uint8_t hz_id =BAND_900MHZ_ID;
+          uint8_t hz_id = strtoul(pColon,0,10);
           if(hz_id == BAND_850MHZ_ID)
           {
             //850MHZ
@@ -1186,12 +1238,12 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
 
     case SIM7020_SUB_END:
       {
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_NBLOT_INFO,1,"S");
+        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_NBLOT_INFO, 1, "S");
       }
       break;
     }
   }
-  else if(g_sim7020_status.main_status == SIM7020_SIGN)
+  else if(g_sim7020_status.main_status == SIM7020_SIGNAL)
   {
     if(g_sim7020_status.sub_status == 1)
     {
@@ -1487,6 +1539,50 @@ int sim7020_nblot_init (sim7020_handle_t sim7020_handle)
     sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
 
     return SIM7020_OK;
+}
+
+
+
+//获取NB模块的信息
+int sim7020_nblot_info_get(sim7020_handle_t sim7020_handle)
+{
+
+    if (g_sim7020_status.main_status != SIM7020_NONE)
+    {
+        return SIM7020_ERROR;
+    }
+    
+    
+    at_cmd_param_init(&g_at_cmd, AT_CGREG, NULL, CMD_READ, 3000);
+
+    //进入SIM7020_NBLOT_INFO状态
+    g_sim7020_status.main_status = SIM7020_NBLOT_INFO;
+    g_sim7020_status.sub_status  = SIM7020_SUB_CEREG_QUERY;
+
+    sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
+    
+    return SUCCESS;
+}
+
+
+//获取NB模块的信号质量
+int sim7020_nblot_signal_get(sim7020_handle_t sim7020_handle)
+{
+
+    if (g_sim7020_status.main_status != SIM7020_NONE)
+    {
+        return SIM7020_ERROR;
+    }
+        
+    at_cmd_param_init(&g_at_cmd, AT_CSQ, NULL, CMD_EXCUTE, 3000);
+
+    //进入SIM7020_SIGNAL状态
+    g_sim7020_status.main_status = SIM7020_SIGNAL;
+    g_sim7020_status.sub_status  = SIM7020_SUB_CSQ;
+
+    sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
+    
+    return SUCCESS;
 }
 
    

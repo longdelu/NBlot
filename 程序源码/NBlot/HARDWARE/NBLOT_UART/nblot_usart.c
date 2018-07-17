@@ -354,10 +354,14 @@ static void __lpuart_rx_timeout_cb (void *p_arg)
     __HAL_UART_SEND_REQ(lphuart, UART_RXDATA_FLUSH_REQUEST);
     
     //清除ilde中断标记
-    __HAL_UART_CLEAR_IT(lphuart, UART_FLAG_IDLE); 
+    __HAL_UART_CLEAR_IT(lphuart, UART_CLEAR_IDLEF); 
 
     //重新开启接收中断 
-    __HAL_UART_ENABLE_IT(&hlpuart1, UART_IT_RXNE);    
+    __HAL_UART_ENABLE_IT(&hlpuart1, UART_IT_RXNE);  
+    
+
+    //发声超时事件时，不可能再产生接收事件了
+    lpuart_event_clr(p_lpuart_dev, UART_RX_EVENT);  
        
     //设置串口接收超时事件
     lpuart_event_set(p_lpuart_dev, UART_RX_TIMEOUT_EVENT);    
