@@ -767,24 +767,22 @@ static uint8_t at_cmd_next (void)
                                                   //并进行出错尝试              
           }
           break;
+                    
           
         //查询射频模块信号质量   
         case SIM7020_SUB_CSQ:
           {
              at_cmd_param_init(&g_at_cmd, AT_CSQ, NULL, CMD_EXCUTE, 2000);
-             g_at_cmd.p_expectres = "+CSQ";        //设置期望回复消息，如果指令执行完成
-                                                  //没有与期望的消息匹配，则认为出错
-                                                  //并进行出错尝试 
           }
           break;
 
         //使能模块射频信号,响应等待的最长时间为10S      
-        case SIM7020_SUB_CFUN:                                   
-          {
-            at_cmd_param_init(&g_at_cmd, AT_CFUN,"1",CMD_SET, 11000);
-          }
-          
-          break;
+//        case SIM7020_SUB_CFUN:                                   
+//          {
+//            at_cmd_param_init(&g_at_cmd, AT_CFUN,"1",CMD_SET, 11000);
+//          }
+//          
+//          break;
           
         // 使能NBlot网络注册   
         case SIM7020_SUB_CEREG:
@@ -793,20 +791,20 @@ static uint8_t at_cmd_next (void)
           }
           break;  
           
-        //先禁能PDN， 命令在150S之内会有回应     
-        case SIM7020_SUB_CGACT_DISABLE:
-          {
-            at_cmd_param_init(&g_at_cmd, AT_CGACT,"0,1",CMD_SET, 151000);
-          }
-          break;          
-    
-          
-        //再使能PDN， 命令在150S之内会有回应，不先禁能的话，再使能状态执行执命令会出错     
-        case SIM7020_SUB_CGACT:
-          {
-            at_cmd_param_init(&g_at_cmd, AT_CGACT,"1,1",CMD_SET, 151000);
-          }
-          break;
+//        //先禁能PDN， 命令在150S之内会有回应     
+//        case SIM7020_SUB_CGACT_DISABLE:
+//          {
+//            at_cmd_param_init(&g_at_cmd, AT_CGACT,"0,1",CMD_SET, 151000);
+//          }
+//          break;          
+//    
+//          
+//        //再使能PDN， 命令在150S之内会有回应，不先禁能的话，再使能状态执行执命令会出错     
+//        case SIM7020_SUB_CGACT:
+//          {
+//            at_cmd_param_init(&g_at_cmd, AT_CGACT,"1,1",CMD_SET, 151000);
+//          }
+//          break;
         
         //查询PDN激活信息          
         case SIM7020_SUB_CGACT_QUERY:
@@ -819,24 +817,24 @@ static uint8_t at_cmd_next (void)
           break;          
                
           
-        //使能网络附着,最大响应时间不详      
-        case SIM7020_SUB_CGATT:
-          {
-            at_cmd_param_init(&g_at_cmd, AT_CGATT, "1", CMD_SET, 3000);
-          }
-          break;
+//        //使能网络附着,最大响应时间不详      
+//        case SIM7020_SUB_CGATT:
+//          {
+//            at_cmd_param_init(&g_at_cmd, AT_CGATT, "1", CMD_SET, 3000);
+//          }
+//          break;
 
-        //查询网络附着信息,最大响应时间不详       
-        case SIM7020_SUB_CGATT_QUERY:
-          {
-            at_cmd_param_init(&g_at_cmd, AT_CGATT, NULL, CMD_READ, 3000);
-            
-            //设置期望回复消息，如果指令执行完成
-            //没有与期望的消息匹配，则认为出错                                             
-            //并进行出错尝试               
-            g_at_cmd.p_expectres = "CGATT: 1";     
-          }
-          break;
+//        //查询网络附着信息,最大响应时间不详       
+//        case SIM7020_SUB_CGATT_QUERY:
+//          {
+//            at_cmd_param_init(&g_at_cmd, AT_CGATT, NULL, CMD_READ, 3000);
+//            
+//            //设置期望回复消息，如果指令执行完成
+//            //没有与期望的消息匹配，则认为出错                                             
+//            //并进行出错尝试               
+//            g_at_cmd.p_expectres = "CGATT: 1";     
+//          }
+//          break;
           
         //查询是否是使用NBlot网络,最大响应时间不详       
         case SIM7020_SUB_COPS_QUERY:
@@ -850,11 +848,24 @@ static uint8_t at_cmd_next (void)
           }
           break;
           
+ 
+        //查询分配的APN信息及IP地址     
+        case SIM7020_SUB_CGCONTRDP_QUERY:
+          {
+            at_cmd_param_init(&g_at_cmd, AT_CGCONTRDP, NULL, CMD_EXCUTE, 3000);
+               
+          }
+          break;
+                    
+          
         //查询NBlot网络是否注册,最大响应时间不详       
         case SIM7020_SUB_CEREG_QUERY:
           {
-            at_cmd_param_init(&g_at_cmd, AT_CGREG, NULL, CMD_READ, 3000);
-            
+            at_cmd_param_init(&g_at_cmd, AT_CGREG, NULL, CMD_READ, 3000); 
+            //设置期望回复消息为络
+            //如果指令执行完成,没有与期望的消息匹配                                            
+            //则认为出错，并进行出错尝试               
+            g_at_cmd.p_expectres = "CGREG: 1,1";              
 
           }
           break;
@@ -974,9 +985,9 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     }  
             
     
-    case SIM7020_SUB_CFUN:
-        break;
-    
+//    case SIM7020_SUB_CFUN:
+//        break;
+//    
 
     case SIM7020_SUB_CEREG:
         
@@ -984,12 +995,12 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
         break;
     
     
-    case SIM7020_SUB_CGACT_DISABLE:
-           
-    
-    case SIM7020_SUB_CGACT:
-        
-        break;
+//    case SIM7020_SUB_CGACT_DISABLE:
+//           
+//    
+//    case SIM7020_SUB_CGACT:
+//        
+//        break;
     
     
     case SIM7020_SUB_CGACT_QUERY:
@@ -997,18 +1008,31 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
         break;
     
         
-    case SIM7020_SUB_CGATT:
-        
-        break;
+//    case SIM7020_SUB_CGATT:
+//        
+//        break;
+//    
+//    
+//    case SIM7020_SUB_CGATT_QUERY:
+//        
+//        break;
     
-    
-    case SIM7020_SUB_CGATT_QUERY:
+    case SIM7020_SUB_COPS_QUERY:
         
-        break;
+        break;  
+
+    case SIM7020_SUB_CGCONTRDP_QUERY:
+        
+        break;       
        
     case SIM7020_SUB_END:
         
         sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_NBLOT_INIT,1,"S");
+    
+        break;
+    
+    default:
+      
         break;
     }
   }
