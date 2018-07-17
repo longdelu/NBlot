@@ -11,38 +11,137 @@
 #include "sim7020.h"
 #include "stm32l4xx_hal.h"
 
-void uart_int_callback_handle(void *p_arg)
-{     
-    uart_dev_t *p_uart_dev = (uart_dev_t *)p_arg; 
+//sim7020消息事件处理函数
+static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, int len, char *msg)
+{ 
+    sim7020_handle_t sim7020_handle = (sim7020_handle_t)p_arg; 
     
-    if (p_uart_dev->uart_event & UART_NONE_EVENT) {
-        
-    } 
+    (void)sim7020_handle;
+    
+    switch(msg_id)
+    {
+        case SIM7020_MSG_NBLOT_INIT:
+        {
+          printf("init=%s\r\n",msg);
+                     
+        }
+        break;
 
-    if (p_uart_dev->uart_event & UART_TX_EVENT) {
-        printf("tx data ok\r\n"); 
-        lpuart_event_clr(p_uart_dev, UART_TX_EVENT); 
-    }
-
-    if (p_uart_dev->uart_event & UART_RX_EVENT) {
-        printf("rx data ok\r\n");
+        case SIM7020_MSG_IMSI:
+        {
+           printf("\r\nIMSI=%s\r\n",msg);
+        }
+        break;
         
-        lpuart_event_clr(p_uart_dev, UART_RX_EVENT); 
-    } 
-
-    if (p_uart_dev->uart_event & UART_TX_TIMEOUT_EVENT) {
-        printf("tx data timeout\r\n");
+        case SIM7020_MSG_REG:
+        {
+            if (*msg == 1)
+            {
+              
+                printf("\r\n reg status is ok\r\n");
+            }
+            
+            else
+            {
+                printf("\r\n reg status is failed\r\n");
+            }
+              
+              
+        }
+        break;
         
-        lpuart_event_clr(p_uart_dev, UART_TX_TIMEOUT_EVENT); 
-    } 
-
-    if (p_uart_dev->uart_event & UART_RX_TIMEOUT_EVENT) {
-        printf("rx data timeout\r\n");
+        case SIM7020_MSG_SIGN:
+      
+        break;
         
-        lpuart_event_clr(p_uart_dev,UART_RX_TIMEOUT_EVENT); 
-    }            
+        case SIM7020_MSG_NBLOT_INFO:
+          
+        {
+          printf("info get=%s\r\n",msg);
+                     
+        }
+
+        break;
+
+        case SIM7020_MSG_BAND:
+             printf("\r\nFreq=%s\r\n",msg);
+        break;
+        
+        //产商ID
+        case SIM7020_MSG_MID:
+        {
+            printf("\r\nMID=%s\r\n",msg);
+        }
+        break;
+        
+        //模块型号
+        case SIM7020_MSG_MMODEL:
+        {
+            printf("\r\nMMODEL=%s\r\n",msg);
+        }
+        break;        
+
+        //软件版本号
+        case SIM7020_MSG_MREV:
+        {
+            printf("\r\nMREV=%s\r\n",msg);
+        }
+        break;        
+        
+        case SIM7020_MSG_IMEI:
+        {
+            printf("\r\nIMEI=%s\r\n",msg);
+        }
+        break;
+        
+        case SIM7020_MSG_UDP_CREATE:
+        {
+          printf("\r\nUDP_CR=%s\r\n",msg);
+        }
+        break;
+        
+        case SIM7020_MSG_UDP_CLOSE:
+        {
+          printf("\r\nUDP_CL=%s\r\n",msg);
+        }
+        break;
+        
+        case SIM7020_MSG_UDP_SEND:
+        {
+          printf("\r\nUDP_SEND=%s\r\n",msg);
+        }
+        break;
+        
+        case SIM7020_MSG_UDP_RECV:
+        {
+          printf("\r\nUDP_RECE=%s\r\n",msg);
+        }
+        break;
+        
+        case SIM7020_MSG_COAP:
+        {
+          printf("\r\nCOAP=%s\r\n",msg);
+        }
+        break;
+        
+        case SIM7020_MSG_COAP_SEND:
+        {
+          printf("\r\nCOAP_SENT=%s\r\n",msg);
+        }
+        break;
+
+        case SIM7020_MSG_COAP_RECV:
+        {
+            printf("\r\nCOAP_RECE=%s\r\n",msg);
+        }
+        break;
+
+        default :
+        {
+            break;
+        }
+    }             
 }
-
 
 /**
   * @brief  The uart poll application entry point.
@@ -51,23 +150,26 @@ void uart_int_callback_handle(void *p_arg)
   */
 void demo_sim7020_tcpip_entry(void)
 { 
-    uint8_t buf[32];  
+    int sm7020_main_status =  SIM7020_NBLOT_INFO;
+        
+    uart_handle_t lpuart_handle = NULL; 
 
-    uart_handle_t lpuart_handle = NULL;  
+    sim7020_handle_t  sim7020_handle = NULL;   
 
     lpuart_handle = lpuart1_init(115200);  
+    
+    sim7020_handle = sim7020_init(lpuart_handle);
      
-    lpuart_event_registercb(lpuart_handle, uart_int_callback_handle, lpuart_handle);  
-
-    uart_data_rx_int(lpuart_handle,  buf, sizeof("nblot_uart rx tx test ok\r\n") - 1, 20000); 
-    uart_data_tx_poll(lpuart_handle, buf, sizeof("nblot_uart rx tx test ok\r\n") - 1, 20000);    
-
+    sim7020_event_registercb(sim7020_handle, __sim7020_event_cb_handler, sim7020_handle);
+    
+    //sim7020上电需要等待10s
+    delay_ms(1000);
+             
     while (1)
-    {
-       uart_event_poll(lpuart_handle);
-        
-       LED0_Toggle;  
-       delay_ms(100);  
+    {   
+        uart_event_poll(lpuart_handle);         
+        sim7020_event_poll(sim7020_handle);
+        sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);
     }
 }
 

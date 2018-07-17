@@ -19,7 +19,7 @@ static struct sim7020_recv  g_sim7020_recv_desc;
 static struct sim7020_send  g_sim7020_send_desc;
 
 //定义用于保存当前正在执行的AT指令的述结构体
-static at_cmd_info_t g_at_cmd;
+static at_cmd_info_t g_at_cmd;                                              
 
 //定义sim7020设备结构体
 static struct sim7020_dev       g_sim7020_dev;
@@ -1021,6 +1021,7 @@ static uint8_t at_cmd_next (void)
     }
     else if (g_sim7020_status.main_status == SIM7020_SIGNAL)
     {
+        
         g_sim7020_status.sub_status = SIM7020_SUB_END;
         return FALSE;
     } 
@@ -1245,7 +1246,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
   }
   else if(g_sim7020_status.main_status == SIM7020_SIGNAL)
   {
-    if(g_sim7020_status.sub_status == 1)
+    if(g_sim7020_status.sub_status == SIM7020_SUB_END)
     {
       char* pColon = strchr(buf[0],':');
       pColon++;
@@ -1582,6 +1583,102 @@ int sim7020_nblot_signal_get(sim7020_handle_t sim7020_handle)
 
     sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
     
+    return SUCCESS;
+}
+
+
+//创建tcpudp socket
+int sim7020_nblot_tcpudp_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type)
+{
+
+    if (g_sim7020_status.main_status != SIM7020_NONE)
+    {
+        return SIM7020_ERROR;
+    }
+        
+    at_cmd_param_init(&g_at_cmd, AT_CSQ, NULL, CMD_EXCUTE, 3000);
+
+    //进入SIM7020_SIGNAL状态
+    g_sim7020_status.main_status = SIM7020_SIGNAL;
+    g_sim7020_status.sub_status  = SIM7020_SUB_CSQ;
+
+    sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
+    
+    return SUCCESS;
+}
+
+
+//关闭tcpudp socket
+int sim7020_nblot_tcpudp_close(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type)
+{
+
+    if (g_sim7020_status.main_status != SIM7020_NONE)
+    {
+        return SIM7020_ERROR;
+    }
+        
+    at_cmd_param_init(&g_at_cmd, AT_CSQ, NULL, CMD_EXCUTE, 3000);
+
+    //进入SIM7020_SIGNAL状态
+    g_sim7020_status.main_status = SIM7020_SIGNAL;
+    g_sim7020_status.sub_status  = SIM7020_SUB_CSQ;
+
+    sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
+    
+    return SUCCESS;
+}
+
+
+//
+int sim7020_nblot_tcpudp_send(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type)
+{
+  
+    if (g_sim7020_status.main_status != SIM7020_NONE)
+    {
+        return SIM7020_ERROR;
+    }
+  
+    //判断SOCKET ID 是否正确
+    if (g_socket_info[0].socket_id  < '0' || g_bc95_status.nb95_udp_id[0] > '5' )
+    {
+        return FAIL;
+    }
+  
+    uint16_t max_len = (NB_UART_SEND_BUF_MAX_LEN - 40) >> 1;
+    uint16_t str_len = 0;
+
+    char  buf[NB_UART_SEND_BUF_MAX_LEN - 40];
+    memset(buf,0,NB_UART_SEND_BUF_MAX_LEN - 40);
+
+    if(len > max_len)
+    {
+      str_len  = max_len;
+    }
+    else
+    {
+      str_len = len;
+    }
+
+    uint16_t msg_len = snprintf(buf,NB_UART_SEND_BUF_MAX_LEN-40,"%s,%s,%s,%d,",
+                                            g_bc95_status.nb95_udp_id,
+                                            REMOTE_SERVER_IP,
+                                            REMOTE_SERVER_PORT,
+                                            str_len);
+
+    for(uint16_t i = 0 ; i < str_len ; i++)
+    {
+      sprintf(&buf[msg_len + (i << 1)],"%02X",(uint8)msg[i]);
+    }
+
+    cmd_param_init(&g_at_cmd,AT_NSOST,buf,CMD_SET);
+    g_at_cmd.max_timeout = 2000;
+
+    //更改NBiot操作进程，进入Close UDP状态
+    g_nb_state.state = PROCESS_UDP_ST;
+    g_nb_state.sub_state = 1;
+
+    NB_SendCmd(hw_handle,&g_at_cmd);
+
     return SUCCESS;
 }
 

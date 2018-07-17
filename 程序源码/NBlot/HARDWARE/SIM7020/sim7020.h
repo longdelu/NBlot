@@ -17,12 +17,10 @@
 //Copyright(C) 正点原子 2009-2019
 //All rights reserved
 //********************************************************************************
-//V1.0修改说明 
+//V1.0 第一次应用 
 //////////////////////////////////////////////////////////////////////////////////  
 
-/*
- * AT命令常量定义区域
- */
+//初始化及网络注册相关命令
 #define AT_SYNC        "AT"
 #define AT_CMEE        "AT+CMEE"
 #define AT_ATI         "ATI"
@@ -36,8 +34,7 @@
 #define AT_CGCONTRDP   "AT+CGCONTRDP"
 
 
-
-
+//信息查询相关命令
 #define AT_CGMI        "AT+CGMI"
 #define AT_CGMM        "AT+CGMM"
 #define AT_CGMR        "AT+CGMR"
@@ -45,7 +42,12 @@
 #define AT_CGSN        "AT+CGSN"
 #define AT_CBAND       "AT+CBAND"
 
-#define AT_CSCON       "AT+CSCON"
+//TCP/UDP相关命令
+#define AT_CSOC        "AT+CSOC"
+#define AT_CSOCON      "AT+CSOCON" 
+#define AT_CSOSEND     "AT+CSOSEND"
+#define AT_CSOCL       "AT+CSOCL" 
+
 #define AT_CLAC        "AT+CLAC"
 #define AT_CGPADDR     "AT+CGPADDR"
 #define AT_CGDCONT     "AT+CGDCONT"
@@ -170,19 +172,24 @@ typedef struct at_cmd_info
 typedef at_cmd_info_t *at_cmdhandle;
 
 
+//通用错误代码定义 
+#define   SIM7020_OK                  0
+#define   SIM7020_ERROR              -1
+
+
 //指令执行结果
-#define AT_CMD_RESULT_OK           0
-#define AT_CMD_RESULT_ERROR        1
-#define AT_CMD_RESULT_CONTINUE     -5
-#define AT_CMD_RESULT_RANDOM_CODE  -6
+#define   AT_CMD_RESULT_OK            0
+#define   AT_CMD_RESULT_ERROR         1
+#define   AT_CMD_RESULT_CONTINUE     -5
+#define   AT_CMD_RESULT_RANDOM_CODE  -6
+
+//指令出错处理
+#define   SIM7020_ERROR_TIMEOUT      -2
+#define   SIM7020_ERROR_RETRY        -3
+#define   SIM7020_ERROR_NEXT         -4
 
 
-//错误代码定义 
-#define   SIM7020_OK               0
-#define   SIM7020_ERROR           -1
-#define   SIM7020_ERROR_TIMEOUT   -2
-#define   SIM7020_ERROR_RETRY     -3
-#define   SIM7020_ERROR_NEXT      -4
+
 
 //sim7020主状态定义，app可以使用该信息
 typedef enum sim7020_main_status
@@ -269,6 +276,17 @@ typedef struct sim7020_socket_info {
     uint8_t                socket_id;           //指示相应的socket id
     uint16_t               data_len;            //提示数据长度   
 }sim7020_socket_info_t;
+
+//链接类
+typedef enum sim7020_connect_type {
+  
+   SIM7020_TCP,         
+   SIM7020_UDP,         
+   SIM7020_HTTP,        
+   SIM7020_COAP,        
+   SIM7020_MQTT,        
+    
+}sim7020_connect_type_t;
 
 //SIM7020G固件信息
 typedef struct sim020_firmware_info

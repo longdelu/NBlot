@@ -12,7 +12,6 @@
 #include "stm32l4xx_hal.h"
 
 
-
 //sim7020消息事件处理函数
 static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, int len, char *msg)
 { 
