@@ -168,11 +168,11 @@ typedef at_cmd_info_t *at_cmdhandle;
 
 
 //错误代码定义 
-#define   SIM7020_OK            0
-#define   SIM7020_ERROR        -1
-#define   SIM7020_TIMEOUT      -2
-#define   SIM7020_ERROR_RETRY  -3
-#define   SIM7020_ERROR_NEXT   -4
+#define   SIM7020_OK               0
+#define   SIM7020_ERROR           -1
+#define   SIM7020_ERROR_TIMEOUT   -2
+#define   SIM7020_ERROR_RETRY     -3
+#define   SIM7020_ERROR_NEXT      -4
 
 //sim7020主状态定义，app可以使用该信息
 typedef enum sim7020_main_status
@@ -209,6 +209,7 @@ typedef enum sim7020_sub_status
     SIM7020_SUB_CSQ,
     SIM7020_SUB_CFUN,
     SIM7020_SUB_CEREG,
+    SIM7020_SUB_CGACT_DISABLE,
     SIM7020_SUB_CGACT,
     SIM7020_SUB_CGACT_QUERY,    
     SIM7020_SUB_CGATT, 

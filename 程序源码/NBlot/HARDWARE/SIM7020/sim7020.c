@@ -249,15 +249,14 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
                   
               } else {
                   
-                  at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = "over max try, but failed \r\n";
+                  at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = "over max try, but failed\r\n";
                   
                   //通知上层应用，此动作执行失败后跳过该命令执行
                   sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], FALSE);                  
 
               } 
 
-          
-            
+                      
               //清缓存            
               sim7020_recv_buf_reset();
         }         
@@ -278,9 +277,13 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         
                 
         sim7020_recv_buf_reset();
+      
+        at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = "cmd not repsonse or send failed\r\n";
+      
+        printf("%s cmd not repsonse or send failed\r\n", g_at_cmd.p_atcmd);
         
        //通知上层应用，此动作执行失败后跳过该命令执行
-        sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], FALSE);                          
+        sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_TIMEOUT);                          
         
         //超时处理        
         next_cmd = sim7020_response_handle(sim7020_handle, FALSE);
@@ -788,23 +791,33 @@ static uint8_t at_cmd_next (void)
           {
             at_cmd_param_init(&g_at_cmd, AT_CGREG, "1", CMD_SET, 3000);
           }
-          break;      
+          break;  
           
-        //使能PDN， 命令在150S之内会有回应     
+        //先禁能PDN， 命令在150S之内会有回应     
+        case SIM7020_SUB_CGACT_DISABLE:
+          {
+            at_cmd_param_init(&g_at_cmd, AT_CGACT,"0,1",CMD_SET, 151000);
+          }
+          break;          
+    
+          
+        //再使能PDN， 命令在150S之内会有回应，不先禁能的话，再使能状态执行执命令会出错     
         case SIM7020_SUB_CGACT:
           {
             at_cmd_param_init(&g_at_cmd, AT_CGACT,"1,1",CMD_SET, 151000);
           }
           break;
-               
+        
+        //查询PDN激活信息          
         case SIM7020_SUB_CGACT_QUERY:
           {
-            at_cmd_param_init(&g_at_cmd, AT_CGATT, NULL, CMD_READ, 151000);
+            at_cmd_param_init(&g_at_cmd, AT_CGACT, NULL, CMD_READ, 151000);
             g_at_cmd.p_expectres = "+CGACT: 1,1"; //设置期望回复消息，如果指令执行完成
                                                   //没有与期望的消息匹配，则认为出错
                                                   //并进行出错尝试
           }
-          break;
+          break;          
+               
           
         //使能网络附着,最大响应时间不详      
         case SIM7020_SUB_CGATT:
@@ -821,7 +834,7 @@ static uint8_t at_cmd_next (void)
             //设置期望回复消息，如果指令执行完成
             //没有与期望的消息匹配，则认为出错                                             
             //并进行出错尝试               
-            g_at_cmd.p_expectres = "CGATT:1";     
+            g_at_cmd.p_expectres = "CGATT: 1";     
           }
           break;
           
@@ -904,10 +917,15 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
       return;
   }
   
-  if ((is_ok == SIM7020_ERROR_RETRY) || (is_ok == SIM7020_ERROR_NEXT)) {    
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)g_sim7020_status.main_status, strlen(buf[0]), buf[0]);    
+  if ((is_ok == SIM7020_ERROR_RETRY) || 
+      (is_ok == SIM7020_ERROR_NEXT)  ||
+      (is_ok == SIM7020_ERROR_TIMEOUT)) {
+        
+      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)g_sim7020_status.main_status, strlen(buf[0]), buf[0]);  
+        
       return;      
-  }    
+  }
+      
   //出错，则上报此流程执行失败
   else if(is_ok == FALSE)
   {
@@ -964,6 +982,10 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
         
     
         break;
+    
+    
+    case SIM7020_SUB_CGACT_DISABLE:
+           
     
     case SIM7020_SUB_CGACT:
         
