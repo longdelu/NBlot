@@ -70,51 +70,51 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         //产商ID
         case SIM7020_MSG_MID:
         {
-            printf("\r\nMID=%s\r\n",msg);
+            printf("\r\nmid=%s\r\n",msg);
         }
         break;
         
         //模块型号
         case SIM7020_MSG_MMODEL:
         {
-            printf("\r\nMMODEL=%s\r\n",msg);
+            printf("\r\nmmodel=%s\r\n",msg);
         }
         break;        
 
         //软件版本号
         case SIM7020_MSG_MREV:
         {
-            printf("\r\nMREV=%s\r\n",msg);
+            printf("\r\nmrev=%s\r\n",msg);
         }
         break;        
         
         case SIM7020_MSG_IMEI:
         {
-            printf("\r\nIMEI=%s\r\n",msg);
+            printf("\r\nimei=%s\r\n",msg);
         }
         break;
         
-        case SIM7020_MSG_UDP_CREATE:
+        case SIM7020_MSG_TCPUDP_CREATE:
         {
-          printf("\r\nUDP_CR=%s\r\n",msg);
+          printf("\r\n tcpudp create and connect, the socket_id=%d\r\n",*msg);
         }
         break;
         
-        case SIM7020_MSG_UDP_CLOSE:
+        case SIM7020_MSG_TCPUDP_CLOSE:
         {
-          printf("\r\nUDP_CL=%s\r\n",msg);
+          printf("\r\ntcpudp close=%s\r\n",msg);
         }
         break;
         
-        case SIM7020_MSG_UDP_SEND:
+        case SIM7020_MSG_TCPUDP_SEND:
         {
-          printf("\r\nUDP_SEND=%s\r\n",msg);
+          printf("\r\nudp_send=%s\r\n",msg);
         }
         break;
         
-        case SIM7020_MSG_UDP_RECV:
+        case SIM7020_MSG_TCPUDP_RECV:
         {
-          printf("\r\nUDP_RECE=%s\r\n",msg);
+          printf("\r\nudp_recv=%s\r\n",msg);
         }
         break;
         

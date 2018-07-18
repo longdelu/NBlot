@@ -95,25 +95,25 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         }
         break;
         
-        case SIM7020_MSG_UDP_CREATE:
+        case SIM7020_MSG_TCPUDP_CREATE:
         {
           printf("\r\nUDP_CR=%s\r\n",msg);
         }
         break;
         
-        case SIM7020_MSG_UDP_CLOSE:
+        case SIM7020_MSG_TCPUDP_CLOSE:
         {
           printf("\r\nUDP_CL=%s\r\n",msg);
         }
         break;
         
-        case SIM7020_MSG_UDP_SEND:
+        case SIM7020_MSG_TCPUDP_SEND:
         {
           printf("\r\nUDP_SEND=%s\r\n",msg);
         }
         break;
         
-        case SIM7020_MSG_UDP_RECV:
+        case SIM7020_MSG_TCPUDP_RECV:
         {
           printf("\r\nUDP_RECE=%s\r\n",msg);
         }

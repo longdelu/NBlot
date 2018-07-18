@@ -107,12 +107,11 @@
 #define CMD_OK_RES              "OK"
 
 #define REMOTE_SERVER_IP        "115.29.240.46"
-#define REMOTE_SERVER_PORT      "6000"
-
+#define REMOTE_COAP_PORT        "5683"
+#define REMOTE_UDP_PORT         "6000"
+#define REMOTE_TCP_PORT         "9000"
 
 #define REMOTE_COAP_INFO        "115.29.240.46,5683"
-
-#define LOCAL_UDP_SET           "DGRAM,17,10000,1"
 
 #define BAND_850MHZ_ID           5
 #define BAND_850MHZ_STR          "850"
@@ -175,7 +174,7 @@ typedef at_cmd_info_t *at_cmdhandle;
 //通用错误代码定义 
 #define   SIM7020_OK                  0
 #define   SIM7020_ERROR              -1
-
+#define   SIM7020_NOTSUPPORT         -2
 
 //指令执行结果
 #define   AT_CMD_RESULT_OK            0
@@ -198,14 +197,10 @@ typedef enum sim7020_main_status
     SIM7020_NBLOT_INIT,   // 初始化操作
     SIM7020_NBLOT_INFO,   // 获取 NB 模块厂商及固件，频段等信息
     SIM7020_SIGNAL,       // 获取信号质量
-    SIM7020_UDP_CR,       // 创建 UDP
-    SIM7020_UDP_CL,       // 关闭 UDP
-    SIM7020_TCP_CR,       // 创建 TCP
-    SIM7020_TCP_CL,       // 关闭 TCP
-    SIM7020_UDP_SEND,     // 利用已经创建的UDP发送数据
-    SIM7020_UDP_RECV,     // UDP接收信息
-    SIM7020_TCP_SEND,     // 利用已经创建的TCP发送数据
-    SIM7020_TCP_RECV,     // TCP接收信息    
+    SIM7020_TCPUDP_CR,    // 创建 TCP/UDP
+    SIM7020_TCPUDP_CL,    // 关闭 TCP/UDP
+    SIM7020_TCPUDP_SEND,  // 利用已经创建的TCP/UDP发送数据
+    SIM7020_TCPUDP_RECV,  // TCP/UDP接收信息 
     SIM7020_CoAP_SEVER,   // CoAP远程地址设置与获取
     SIM7020_CoAP_SEND,    //  发送消息
     SIM7020_CoAP_RECV,    // CoAP返回信息
@@ -229,7 +224,7 @@ typedef enum sim7020_sub_status
 //    SIM7020_SUB_CGACT_DISABLE,
 //    SIM7020_SUB_CGACT,
     SIM7020_SUB_CGACT_QUERY,    
-    SIM7020_SUB_CGATT, 
+    SIM7020_SUB_CGATT,    
     SIM7020_SUB_CGATT_QUERY,
     SIM7020_SUB_COPS_QUERY,
     SIM7020_SUB_CGCONTRDP_QUERY,
@@ -245,12 +240,12 @@ typedef enum sim7020_sub_status
     SIM7020_SUB_NSMI,
     SIM7020_SUB_NNMI,
 
- 
-    SIM7020_SUB_CSCON, 
-    SIM7020_SUB_UDP_CR,
-    SIM7020_SUB_UDP_CL,
-    SIM7020_SUB_UDP_ST,
-    SIM7020_SUB_UDP_RE,
+    SIM7020_SUB_TCPUDP_CR,
+    SIM7020_SUB_TCPUDP_CONNECT, 
+    SIM7020_SUB_TCPUDP_SEND,
+    SIM7020_SUB_TCPUDP_RECV,  // TCP/UDP接收信息 
+    SIM7020_SUB_TCPUDP_CL,
+    
     SIM7020_SUB_END   
     
 }sim7020_sub_status_t;
@@ -264,8 +259,7 @@ typedef struct sim7020_status_nest
     int                    sub_status;          //命令运行子阶段，用于状态嵌套  
     uint8_t                connect_status;      //链接的状态
     uint8_t                connect_type;        //链接的类型
-    int8_t                 rssi;                //信号的质量    
-        
+    int8_t                 rssi;                //信号的质量            
     uint8_t                register_status;     //网络注册
     
 }sim7020_status_nest_t;
@@ -280,7 +274,7 @@ typedef struct sim7020_socket_info {
 //链接类
 typedef enum sim7020_connect_type {
   
-   SIM7020_TCP,         
+   SIM7020_TCP  = 1,         
    SIM7020_UDP,         
    SIM7020_HTTP,        
    SIM7020_COAP,        
@@ -297,20 +291,20 @@ typedef struct sim020_firmware_info
 
 
 //定义收发数据缓冲区长度
-#define NB_UART_RECE_BUF_MAX_LEN    (RING_BUF_LEN + 1)
-#define NB_UART_SEND_BUF_MAX_LEN    (RING_BUF_LEN + 1)
+#define SIM7020_RECV_BUF_MAX_LEN    (RING_BUF_LEN + 1)
+#define SIM7020_SEND_BUF_MAX_LEN    (RING_BUF_LEN + 1)
 
 //接收缓存空间
 typedef struct sim7020_recv
 {
-    char      buf[NB_UART_RECE_BUF_MAX_LEN];    //接收数据缓冲区
+    char      buf[SIM7020_RECV_BUF_MAX_LEN];    //接收数据缓冲区
     uint16_t  len;                              //有效数据长度
 }sim7020_recv_t;
 
 //接收缓存空间
 typedef struct sim7020_send
 {
-    char      buf[NB_UART_SEND_BUF_MAX_LEN];    //发送数据缓冲区
+    char      buf[SIM7020_SEND_BUF_MAX_LEN];    //发送数据缓冲区
     uint16_t  len;                              //有效数据长度
     
 }sim7020_send_t;
@@ -358,10 +352,10 @@ typedef enum sim7020_msg_id
     SIM7020_MSG_SIGN,       //信号强度
     
 
-    SIM7020_MSG_UDP_CREATE,
-    SIM7020_MSG_UDP_CLOSE,
-    SIM7020_MSG_UDP_SEND,
-    SIM7020_MSG_UDP_RECV,
+    SIM7020_MSG_TCPUDP_CREATE,
+    SIM7020_MSG_TCPUDP_CLOSE,
+    SIM7020_MSG_TCPUDP_SEND,
+    SIM7020_MSG_TCPUDP_RECV,
 
     SIM7020_MSG_COAP,
     SIM7020_MSG_COAP_SEND,

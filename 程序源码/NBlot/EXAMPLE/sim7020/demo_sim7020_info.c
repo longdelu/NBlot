@@ -12,6 +12,9 @@
 #include "stm32l4xx_hal.h"
 
 
+int sm7020_main_status =  SIM7020_NBLOT_INFO;
+sim7020_handle_t  sim7020_handle = NULL;  
+
 //sim7020消息事件处理函数
 static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, int len, char *msg)
 { 
@@ -59,6 +62,8 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
           
         {
           printf("info get=%s\r\n",msg);
+          
+          sm7020_main_status =  SIM7020_SIGNAL;
                      
         }
 
@@ -95,25 +100,25 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         }
         break;
         
-        case SIM7020_MSG_UDP_CREATE:
+        case SIM7020_MSG_TCPUDP_CREATE:
         {
           printf("\r\nUDP_CR=%s\r\n",msg);
         }
         break;
         
-        case SIM7020_MSG_UDP_CLOSE:
+        case SIM7020_MSG_TCPUDP_CLOSE:
         {
           printf("\r\nUDP_CL=%s\r\n",msg);
         }
         break;
         
-        case SIM7020_MSG_UDP_SEND:
+        case SIM7020_MSG_TCPUDP_SEND:
         {
           printf("\r\nUDP_SEND=%s\r\n",msg);
         }
         break;
         
-        case SIM7020_MSG_UDP_RECV:
+        case SIM7020_MSG_TCPUDP_RECV:
         {
           printf("\r\nUDP_RECE=%s\r\n",msg);
         }
@@ -152,12 +157,9 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
   */
 void demo_sim7020_nblot_info_get_entry(void)
 { 
-    int sm7020_main_status =  SIM7020_NBLOT_INFO;
-        
+       
     uart_handle_t lpuart_handle = NULL; 
-
-    sim7020_handle_t  sim7020_handle = NULL;   
-
+ 
     lpuart_handle = lpuart1_init(115200);  
     
     sim7020_handle = sim7020_init(lpuart_handle);
