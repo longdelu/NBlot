@@ -1166,7 +1166,7 @@ static uint8_t at_cmd_next (void)
     
             //这个函数的返回值为想要格式化写入的长度，并会在字符串结束后面自动加入结束字符
             uint16_t tcpudp_cn_len = snprintf(buf,
-                                        sizeof(buf) -1,"%d,%s,%s,",                                          
+                                        sizeof(buf) -1,"%d,%s,%s",                                          
                                         g_socket_info[0].socket_id,
                                         p_remote_port,                                         
                                         REMOTE_SERVER_IP);
@@ -1920,7 +1920,6 @@ int sim7020_nblot_tcpudp_send_hex(sim7020_handle_t sim7020_handle, int len, char
     //构建TCP/UDP数据发送命令，最大响应时间不详
     at_cmd_param_init(&g_at_cmd, AT_CSOSEND, buf, CMD_SET, 3000);
     
-
     //进入tcp/udp数据发送状态
     g_sim7020_status.main_status = SIM7020_TCPUDP_SEND;
     g_sim7020_status.sub_status  = SIM7020_SUB_TCPUDP_SEND;

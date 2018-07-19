@@ -106,12 +106,12 @@
 
 #define CMD_OK_RES              "OK"
 
-#define REMOTE_SERVER_IP        "115.29.240.46"
+#define REMOTE_SERVER_IP        "\"115.29.240.46\""
 #define REMOTE_COAP_PORT        "5683"
 #define REMOTE_UDP_PORT         "6000"
 #define REMOTE_TCP_PORT         "9000"
 
-#define REMOTE_COAP_INFO        "115.29.240.46,5683"
+#define REMOTE_COAP_INFO        "\"115.29.240.46,5683\""
 
 #define BAND_850MHZ_ID           5
 #define BAND_850MHZ_STR          "850"
