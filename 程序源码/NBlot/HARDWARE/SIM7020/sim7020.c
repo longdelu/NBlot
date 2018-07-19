@@ -1550,7 +1550,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     {
       char *data_buf = g_socket_info[0].data_offest; 
 
-      printf("data_buf = %s", data_buf);      
+//      printf("data_buf = %s", data_buf);      
            
       sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_RECV,strlen(data_buf),data_buf);
       

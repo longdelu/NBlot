@@ -111,29 +111,29 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         
         case SIM7020_MSG_TCPUDP_CREATE:
         {
-          printf("\r\n%s create and connect\r\n",msg);
-          sm7020_main_status = SIM7020_TCPUDP_SEND;
+            printf("\r\n%smsg create and connect\r\n",msg);
+            sm7020_main_status = SIM7020_TCPUDP_SEND;
         }
         break;
         
         case SIM7020_MSG_TCPUDP_CLOSE:
         {
-          printf("\r\nmsg tcpudp close=%s\r\n",msg);
+            printf("\r\nmsg tcpudp close=%s\r\n",msg);
         }
         break;
         
         case SIM7020_MSG_TCPUDP_SEND:
         {
-          printf("\r\nmsg tcp udp_send=%s\r\n",msg);
+            printf("\r\nmsg tcp udp_send=%s\r\n",msg);
           
         }
         break;
         
         case SIM7020_MSG_TCPUDP_RECV:
         {
-          printf("\r\nmsg udp recv=%s\r\n",msg);
+            printf("\r\nmsg udp recv=%s\r\n",msg);
           
-          sm7020_main_status = SIM7020_TCPUDP_CL;
+            sm7020_main_status = SIM7020_TCPUDP_CL;
         }
         break;
         
