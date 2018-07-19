@@ -373,7 +373,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         sim7020_event_clr(sim7020_handle, SIM7020_COAP_RECV_EVENT); 
     }
 
-    //命令还是next
+    //根据事件及状态判断是否需要执行下一条命令
     if(next_cmd)
     {
         //执行下一条命令
@@ -432,7 +432,7 @@ void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim7020_main_
       
     case SIM7020_SIGNAL:
       {
-        printf("sim7020 module info start\r\n");
+        printf("sim7020 rssi(db) start\r\n");
         
         sim7020_nblot_signal_get(sim7020_handle);
         
@@ -537,26 +537,71 @@ static int  __sim7020_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, 
     return ret;    
 }
 
-//将1个字符转换为16进制数字
+//将1个字符转换为10进制数字
 //chr:字符,0~9/A~F/a~F
-//返回值:chr对应的16进制数值
+//返回值:chr对应的10进制数值
 u8 sim7020_chr2hex(u8 chr)
 {
-    if(chr>='0'&&chr<='9')return chr-'0';
-    if(chr>='A'&&chr<='F')return (chr-'A'+10);
-    if(chr>='a'&&chr<='f')return (chr-'a'+10); 
-    return 0;
+    if(chr>='0'&&chr<='9')
+    {
+      return chr - '0';
+    }
+    else if(chr>='A'&&chr<='F')
+    {
+      return (chr-'A'+10);
+    }
+    else if(chr>='a'&&chr<='f')
+    {
+      return (chr-'a'+10); 
+    }
+    else
+    {
+      
+    }
+                
 }
+
+
+
+
 
 //将1个16进制数字转换为字符
 //hex:16进制数字,0~15;
 //返回值:字符
 u8 sim7020_hex2chr(u8 hex)
 {
-    if(hex<=9)return hex+'0';
-    if(hex>=10&&hex<=15)return (hex-10+'A'); 
+    if(hex<=9)
+    {
+      return hex+'0';
+    }
+    else if(hex>=10&&hex<=15)
+    {
+      return (hex-10+'A'); 
+    }
+    else 
+    {
+        
+    }      
+    
     return '0';
 }
+
+
+////将十六进制字符串转成数字
+//uint16_t sim7020_hexstr2num(char* str)
+//{
+//  uint16_t i = 0;
+//  uint8_t tmp = 0;
+//  uint8_t tmp1 = 0;
+//  
+//  uint16_t len = strlen(str);
+//  
+//  
+//  
+//  
+//  return (i >> 1);
+//}
+
 
 
 //sim7020 at指令初始化
@@ -723,22 +768,36 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
     {
         //收到服务器端发来TCP/UDP数据
         char *p_colon = strchr(target_pos_start,':');
+      
+        uint8_t socket_id = 0;
         
+        //得到是哪个socket收到数据
         if(p_colon)
         {
           p_colon++;
-          g_socket_info[0].socket_id = strtoul(p_colon,0,10);
-        }
-        
+          socket_id = strtoul(p_colon,0,10);
+          g_socket_info[0].data_offest = p_colon - target_pos_start;
+        }               
         //得到收到的数据长度
-        char* pComma = strchr(p_colon,',');
+        char *pComma = strchr(p_colon,',');
 
         if(pComma)
         {
           pComma++;
+          g_socket_info[0].data_offest = pComma - p_colon;
           g_socket_info[0].data_len = strtoul(pComma,0,10);
         }
         
+       
+        //得到有效数据的起始地址
+        char *p_data_offest = strchr(pComma,',');
+
+        if(p_data_offest)
+        {
+          p_data_offest++;
+          g_socket_info[0].data_offest += p_data_offest- pComma;
+        }
+               
         if (g_socket_info[0].socket_type == 2) {
 
            sim7020_event_set(sim7020_handle, SIM7020_UDP_RECV_EVENT); 
@@ -756,7 +815,39 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         
         sim7020_status_set(SIM7020_TCPUDP_RECV,SIM7020_SUB_TCPUDP_RECV);
         
-    } 
+    }
+
+   else if((target_pos_start = strstr(buf,"+CSOERR")) != NULL)
+    {
+        //收到服务器端发来TCP/UDP错误码
+        char *p_colon = strchr(target_pos_start,':');
+      
+        uint8_t socket_id = 0;
+      
+        int8_t socket_err = 0;
+        
+        //得到是哪个socket收到数据
+        if(p_colon)
+        {
+          p_colon++;
+          socket_id = strtoul(p_colon,0,10);
+        }
+        
+        //得到收到的socket错误码
+        char *pComma = strchr(p_colon,',');
+
+        if(pComma)
+        {
+          pComma++;
+          socket_err = strtoul(pComma,0,10);          
+          g_socket_info[0].socket_errcode = socket_err; 
+        }
+        
+         
+        sim7020_event_set(sim7020_handle, SIM7020_SOCKET_ERR_EVENT); 
+        sim7020_status_set(SIM7020_SOCKET_ERR, SIM7020_SUB_SOCKET_ERR);
+        
+    }     
     
     //收到Coap数据包
     else if((target_pos_start = strstr(buf,"+CCOAPNMI")) != NULL)
@@ -1077,9 +1168,16 @@ static uint8_t at_cmd_next (void)
     } else if (g_sim7020_status.main_status == SIM7020_TCPUDP_CL) {
       
         g_sim7020_status.sub_status = SIM7020_SUB_END;
+      
+        return FALSE;    
+      
+    }  else if (g_sim7020_status.main_status == SIM7020_TCPUDP_SEND) {
+      
+        g_sim7020_status.sub_status = SIM7020_SUB_END;
+      
         return FALSE;     
     }
-    
+        
     else   
     {
       
@@ -1134,8 +1232,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     case SIM7020_SUB_CPIN:
         
       break;
-    
-    
+      
     case SIM7020_SUB_CSQ:
     {
         char *p_colon = strchr(buf[0],':');
@@ -1144,21 +1241,18 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
         //转换成10进制数字
         uint8_t lqi =strtoul(p_colon,0, 10);
       
-        printf("rssi = %d\r\n",lqi); 
         //运算取得每个数值对应的dbm范围
         int8_t rssi = -110 + (lqi << 1);
         g_sim7020_status.rssi = rssi;       
         break;
     }  
-            
-    
+              
     case SIM7020_SUB_CFUN:
         break;
     
 
     case SIM7020_SUB_CEREG:
-        
-    
+            
         break;
     
     
@@ -1301,20 +1395,42 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
   }
   else if(g_sim7020_status.main_status == SIM7020_SIGNAL)
   {
-    if(g_sim7020_status.sub_status == SIM7020_SUB_END)
+    switch(g_sim7020_status.sub_status) 
+    { 
+    case SIM7020_SUB_CSQ:
     {
-      char* p_colon = strchr(buf[0],':');
-      p_colon++;
-      //转换成10进制数字
-      uint8_t lqi =strtoul(p_colon,0, 10);
-      //运算取得每个数值对应的dbm范围
-      int8_t rssi = -110 + (lqi << 1);
-      uint8_t len = snprintf(buf[0],10,"%d",rssi);
-      *(buf[0]+len) = 0;
+        char *p_colon = strchr(buf[0],':');
+        if (p_colon != NULL) 
+        {
+             
+          p_colon++;
+          //转换成10进制数字
+          uint8_t lqi =strtoul(p_colon,0, 10);
+          //运算取得每个数值对应的dbm范围
+          int8_t rssi = -110 + (lqi << 1);
+          uint8_t len = snprintf(buf[0],10,"%d",rssi);
+          *(buf[0]+len) = 0;
+          
+          g_sim7020_status.rssi = rssi;
+          
+          sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CSQ,len,buf[0]);
+          
+        }
       
-      g_sim7020_status.rssi = rssi;
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_SIGN,len,buf[0]);
+        break;
+    } 
+      
+    case SIM7020_SUB_END:
+    {
+        sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_SIGNAL,1,"S");
+        break;
     }
+    
+    default:
+      
+        break;
+    }
+    
 
   }
   else if(g_sim7020_status.main_status == SIM7020_TCPUDP_CR)
@@ -1328,7 +1444,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
         
       p_colon++;
 
-      //转换成10进制数字
+      //转换成10进制数字,得到当前创建的socket id
       g_socket_info[0].socket_id =strtoul(p_colon,0, 10);
                 
 
@@ -1337,24 +1453,35 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
       
     case SIM7020_SUB_TCPUDP_CONNECT:
       {
-
-      char *p_colon = strchr(buf[0],':');
         
-      p_colon++;
-
-      //转换成10进制数字
-      g_socket_info[0].socket_id =strtoul(p_colon,0, 10);
+              
+         g_sim7020_status.connect_status = 1;  
         
         
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_TCPUDP_CREATE, 1, (char *)&g_socket_info[0].socket_id);
                 
-
       }
       break;
       
     case SIM7020_SUB_END:
       {
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_TCPUDP_CREATE,1,"S");
+              
+         char *p_buf_tmep = NULL;
+              
+         g_sim7020_status.connect_status = 1;  
+        
+        
+         if (g_socket_info[0].socket_type == SIM7020_TCP)
+         {
+             p_buf_tmep = "tcp create ok";
+         }
+        
+         else 
+         {   
+             p_buf_tmep = "udp create ok";
+         } 
+                                                       
+         sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_TCPUDP_CREATE, strlen(p_buf_tmep), p_buf_tmep);
+                
       }
       break;
     }
@@ -1363,8 +1490,9 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
   {
     if(g_sim7020_status.sub_status == SIM7020_SUB_END)
     {
-  
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_SIGN, sizeof("tcp/udp close\r\n"),"tcp/udp close\r\n");
+      g_sim7020_status.connect_status = 0;  
+      
+      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_CLOSE, sizeof("tcp/udp close\r\n"),"tcp/udp close\r\n");
     }
   } 
    
@@ -1377,38 +1505,45 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
         sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_TCPUDP_SEND,1,"S");
       }
       break;
+      
+    default:
+      
+      break;
     }
   }
   else if(g_sim7020_status.main_status == SIM7020_TCPUDP_RECV)
   {
-    if(g_sim7020_status.sub_status == 1)
+    if(g_sim7020_status.sub_status == SIM7020_SUB_TCPUDP_RECV)
     {
-      //
-      char* param[6];
-      uint16_t index = 0;
-      char* tmp_buf = buf[0];
-      while((param[index] = strtok(tmp_buf,",")) != NULL)
-      {
-        index++;
-        tmp_buf = NULL;
-        if(index >= 6)
-        {
-          break;
-        }
-      }
-      if(index != 6)
-      {
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_TCPUDP_RECV,1,"F");
-        return;
-      }
+      char *data_buf = &g_sim7020_recv_desc.buf[g_socket_info[0].data_len]; 
+
+      printf("data_buf = %s", data_buf);      
+           
+      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_RECV,strlen(data_buf),data_buf);
       
-      tmp_buf = param[4];
-      index =  0; //NB_HexStrToNum(tmp_buf);
-      
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_RECV,index,tmp_buf);
+      //复位状态标志
+      sim7020_status_reset();
     }
     
   }
+  
+  else if(g_sim7020_status.main_status == SIM7020_SOCKET_ERR)
+  {
+    if(g_sim7020_status.sub_status == SIM7020_SUB_SOCKET_ERR)
+    {
+
+
+      printf("the socket err, the err code is %d\r\n", g_socket_info[0].socket_errcode); 
+ 
+          
+      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_RECV, 2, "F");
+      
+      //复位状态标志
+      sim7020_status_reset();
+    }
+    
+  }
+  
   else if(g_sim7020_status.main_status == SIM7020_CoAP_SEVER)
   {
     if(g_sim7020_status.sub_status == 1)
@@ -1715,8 +1850,8 @@ int sim7020_nblot_tcpudp_close(sim7020_handle_t sim7020_handle, sim7020_connect_
 }
 
 
-//
-int sim7020_nblot_tcpudp_send(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type)
+//以hex数据格式发送数据
+int sim7020_nblot_tcpudp_send_hex(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type)
 {
   
     if (g_sim7020_status.main_status != SIM7020_NONE)
@@ -1739,10 +1874,15 @@ int sim7020_nblot_tcpudp_send(sim7020_handle_t sim7020_handle, int len, char *ms
 
     uint16_t msg_len = snprintf(buf,
                                 str_len,
-                                "%s,",
-                                (char*)&g_socket_info[0].socket_id);
+                                "%s,%d,",
+                                (char*)&g_socket_info[0].socket_id, 
+                                len);
+                                
+    for(uint16_t i = 0 ; i < len ; i++)
+    {
+        sprintf(&buf[msg_len + (i << 1)],"%02X",(uint8_t)msg[i]);
+    }                             
  
-
     //构建TCP/UDP数据发送命令，最大响应时间不详
     at_cmd_param_init(&g_at_cmd, AT_CSOSEND, buf, CMD_SET, 3000);
     
@@ -1756,7 +1896,47 @@ int sim7020_nblot_tcpudp_send(sim7020_handle_t sim7020_handle, int len, char *ms
     return SIM7020_OK;
 }
 
-   
+//以字符串格式发送数据
+int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type)
+{
+  
+    if (g_sim7020_status.main_status != SIM7020_NONE)
+    {
+        return SIM7020_ERROR;
+    }
+  
+    //判断SOCKET ID 是否正确
+    if (g_socket_info[0].socket_id  < '0' || g_socket_info[0].socket_id > '5' )
+    {
+        return SIM7020_ERROR;
+    }
+  
+    uint16_t str_len = (SIM7020_SEND_BUF_MAX_LEN - 40) ;
+
+
+    char  buf[SIM7020_SEND_BUF_MAX_LEN - 40];
+    memset(buf,0,SIM7020_SEND_BUF_MAX_LEN - 40);
+
+
+    uint16_t msg_len = snprintf(buf,
+                                str_len,
+                                "%s,%s,",
+                                (char*)&g_socket_info[0].socket_id, 
+                                msg);
+                                
+                          
+    //构建TCP/UDP数据发送命令，最大响应时间不详
+    at_cmd_param_init(&g_at_cmd, AT_CSOSEND, buf, CMD_SET, 3000);
+    
+
+    //进入tcp/udp数据发送状态
+    g_sim7020_status.main_status = SIM7020_TCPUDP_SEND;
+    g_sim7020_status.sub_status  = SIM7020_SUB_TCPUDP_SEND;
+
+    sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
+
+    return SIM7020_OK;
+}   
 
 
 

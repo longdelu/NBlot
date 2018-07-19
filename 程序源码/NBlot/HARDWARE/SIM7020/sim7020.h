@@ -201,6 +201,7 @@ typedef enum sim7020_main_status
     SIM7020_TCPUDP_CL,    // 关闭 TCP/UDP
     SIM7020_TCPUDP_SEND,  // 利用已经创建的TCP/UDP发送数据
     SIM7020_TCPUDP_RECV,  // TCP/UDP接收信息 
+    SIM7020_SOCKET_ERR,   // SOCKET连接发生错误
     SIM7020_CoAP_SEVER,   // CoAP远程地址设置与获取
     SIM7020_CoAP_SEND,    //  发送消息
     SIM7020_CoAP_RECV,    // CoAP返回信息
@@ -244,6 +245,7 @@ typedef enum sim7020_sub_status
     SIM7020_SUB_TCPUDP_CONNECT, 
     SIM7020_SUB_TCPUDP_SEND,
     SIM7020_SUB_TCPUDP_RECV,  // TCP/UDP接收信息 
+    SIM7020_SUB_SOCKET_ERR,   // SOCKET连接发生错误    
     SIM7020_SUB_TCPUDP_CL,
     
     SIM7020_SUB_END   
@@ -268,6 +270,8 @@ typedef struct sim7020_status_nest
 typedef struct sim7020_socket_info {
     uint8_t                socket_type;         //指示socket_type的类型
     uint8_t                socket_id;           //指示相应的socket id
+    uint8_t                socket_errcode;      //指示相应的socket错误码 
+    uint16_t               data_offest;         //数据缓冲区起始地址所在偏移
     uint16_t               data_len;            //提示数据长度   
 }sim7020_socket_info_t;
 
@@ -328,7 +332,7 @@ struct sim7020_drv_funcs {
 #define    SIM7020_COAP_RECV_EVENT     0X0020           //COAP接收事件
 #define    SIM7020_MQTT_RECV_EVENT     0X0040           //MQTT接收事件
 #define    SIM7020_LWM2M_RECV_EVENT    0X0080           //LWM2M接收事件
-
+#define    SIM7020_SOCKET_ERR_EVENT    0x0100           //SOCKET发生错误事件
 
 //sim7020消息id, 回调函数中使用
 typedef enum sim7020_msg_id
@@ -348,8 +352,9 @@ typedef enum sim7020_msg_id
     SIM7020_MSG_MMODEL,     //模块型号
     SIM7020_MSG_MREV,       //软件版本号
     SIM7020_MSG_BAND,       //工作频段
-
-    SIM7020_MSG_SIGN,       //信号强度
+  
+    SIM7020_MSG_CSQ,        
+    SIM7020_MSG_SIGNAL,     //信号强度
     
 
     SIM7020_MSG_TCPUDP_CREATE,
@@ -433,5 +438,27 @@ int sim7020_nblot_info_get(sim7020_handle_t sim7020_handle);
 
 //获取NB模块的信号质量
 int sim7020_nblot_signal_get(sim7020_handle_t sim7020_handle);
+
+
+//创建tcpudp 
+int sim7020_nblot_tcpudp_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type);
+
+
+//关闭tcpudp
+int sim7020_nblot_tcpudp_close(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type);
+
+
+//以hex数据格式发送数据
+int sim7020_nblot_tcpudp_send_hex(sim7020_handle_t sim7020_handle, 
+                                  int len, 
+                                  char *msg, 
+                                  sim7020_connect_type_t type);
+
+//以字符串格式发送数据
+int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle, 
+                                  int len, 
+                                  char *msg, 
+                                  sim7020_connect_type_t type);
+
 
 #endif

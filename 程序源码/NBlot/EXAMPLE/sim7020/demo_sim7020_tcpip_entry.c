@@ -50,8 +50,11 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         }
         break;
         
-        case SIM7020_MSG_SIGN:
-      
+        case SIM7020_MSG_SIGNAL:
+        {         
+          printf("rssi=%sdbm\r\n",msg);
+        }
+              
         break;
         
         case SIM7020_MSG_NBLOT_INFO:
@@ -108,7 +111,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         
         case SIM7020_MSG_TCPUDP_SEND:
         {
-          printf("\r\nudp_send=%s\r\n",msg);
+          printf("\r\ntcpudp_send=%s\r\n",msg);
         }
         break;
         
