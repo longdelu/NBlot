@@ -39,6 +39,14 @@ int fputc(int ch, FILE *f)
     USART1->TDR = (u8) ch;      
     return ch;
 }
+
+//__use_no_semihosting was requested, but _ttywrch was 
+void _ttywrch(int ch)
+{
+    ch = ch;
+}
+
+
 #endif 
 
 #if EN_USART1_RX   //如果使能了接收

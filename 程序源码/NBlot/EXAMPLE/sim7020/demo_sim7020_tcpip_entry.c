@@ -118,20 +118,20 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         
         case SIM7020_MSG_TCPUDP_CLOSE:
         {
-          printf("\r\ntcpudp close=%s\r\n",msg);
+          printf("\r\nmsg tcpudp close=%s\r\n",msg);
         }
         break;
         
         case SIM7020_MSG_TCPUDP_SEND:
         {
-          printf("\r\ntcpudp_send=%s\r\n",msg);
+          printf("\r\nmsg tcp udp_send=%s\r\n",msg);
           
         }
         break;
         
         case SIM7020_MSG_TCPUDP_RECV:
         {
-          printf("\r\nudp_recv=%s\r\n",msg);
+          printf("\r\nmsg udp recv=%s\r\n",msg);
           
           sm7020_main_status = SIM7020_TCPUDP_CL;
         }
@@ -139,19 +139,19 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         
         case SIM7020_MSG_COAP:
         {
-          printf("\r\nCOAP=%s\r\n",msg);
+          printf("\r\nmsg COAP=%s\r\n",msg);
         }
         break;
         
         case SIM7020_MSG_COAP_SEND:
         {
-          printf("\r\nCOAP_SENT=%s\r\n",msg);
+          printf("\r\nmsg COAP_SENT=%s\r\n",msg);
         }
         break;
 
         case SIM7020_MSG_COAP_RECV:
         {
-            printf("\r\nCOAP_RECE=%s\r\n",msg);
+            printf("\r\nmsg COAP_RECEV=%s\r\n",msg);
         }
         break;
 

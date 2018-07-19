@@ -366,12 +366,18 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
     
     if (sim7020_handle->sim7020_event & SIM7020_TCP_RECV_EVENT) {
         printf("tcp recv ok\r\n");
+      
+        //通知上层应用网络注册结果
+        sim7020_msg_send(sim7020_handle, NULL, TRUE);     
         
         sim7020_event_clr(sim7020_handle,SIM7020_TCP_RECV_EVENT); 
     }
 
     if (sim7020_handle->sim7020_event & SIM7020_UDP_RECV_EVENT) {
         printf("udp recv ok\r\n");
+      
+        //通知上层应用网络注册结果
+        sim7020_msg_send(sim7020_handle, NULL, TRUE);    
         
         sim7020_event_clr(sim7020_handle, SIM7020_UDP_RECV_EVENT); 
     }
@@ -780,68 +786,64 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
 
             sim7020_event_set(sim7020_handle, SIM7020_REG_STA_EVENT);
         }
+        
         else 
         {
             
             //如果收到回复，但不为0，代表没有注册，产生注册类事件
             sim7020_event_set(sim7020_handle, SIM7020_RECV_EVENT);  
         }
-    }
-    
+    }    
     else if((target_pos_start = strstr(buf,"+CSONMI")) != NULL)
     {
         //收到服务器端发来TCP/UDP数据
-        char *p_colon = strchr(target_pos_start,':');
+        char *p_colon = strchr(target_pos_start, ':');
       
         int8_t socket_id = 0;
         
         //得到是哪个socket收到数据
-        if(p_colon)
+        if (p_colon)
         {
-          p_colon++;
-          socket_id = strtoul(p_colon,0,10);
-          g_socket_info[0].data_offest = p_colon - target_pos_start;
-        }               
+            p_colon++;
+            socket_id = strtoul(p_colon,0,10);
+        } 
+        
         //得到收到的数据长度
         char *pComma = strchr(p_colon,',');
 
-        if(pComma)
+        if (pComma)
         {
-          pComma++;
-          g_socket_info[0].data_offest = pComma - p_colon;
-          g_socket_info[0].data_len = strtoul(pComma,0,10);
-        }
-        
+            pComma++;
+            g_socket_info[0].data_len = strtoul(pComma,0,10);
+        }     
        
         //得到有效数据的起始地址
         char *p_data_offest = strchr(pComma,',');
 
-        if(p_data_offest)
+        if (p_data_offest)
         {
-          p_data_offest++;
-          g_socket_info[0].data_offest += p_data_offest- pComma;
+            p_data_offest++;
+            g_socket_info[0].data_offest = p_data_offest;
         }
                
-        if (g_socket_info[0].socket_type == 2) {
-
-           sim7020_event_set(sim7020_handle, SIM7020_UDP_RECV_EVENT); 
-            
+        if (g_socket_info[0].socket_type == 2) 
+        {
+            sim7020_event_set(sim7020_handle, SIM7020_UDP_RECV_EVENT);             
         } 
-        else if (g_socket_info[0].socket_type == SIM7020_TCP) {
+        
+        else if (g_socket_info[0].socket_type == SIM7020_TCP)
+        {
 
-           sim7020_event_set(sim7020_handle, SIM7020_TCP_RECV_EVENT); 
+            sim7020_event_set(sim7020_handle, SIM7020_TCP_RECV_EVENT); 
         } 
         else 
         {
             //其它，默认产生接收事件
             sim7020_event_set(sim7020_handle, SIM7020_RECV_EVENT);            
-        }
-        
-        sim7020_status_set(SIM7020_TCPUDP_RECV,SIM7020_SUB_TCPUDP_RECV);
-        
-    }
-
-   else if((target_pos_start = strstr(buf,"+CSOERR")) != NULL)
+        }       
+        sim7020_status_set(SIM7020_TCPUDP_RECV, SIM7020_SUB_TCPUDP_RECV);        
+    }  
+    else if((target_pos_start = strstr(buf,"+CSOERR")) != NULL)
     {
         //收到服务器端发来TCP/UDP错误码
         char *p_colon = strchr(target_pos_start,':');
@@ -851,52 +853,46 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         int8_t socket_err = 0;
         
         //得到是哪个socket收到数据
-        if(p_colon)
+        if (p_colon)
         {
-          p_colon++;
-          socket_id = strtoul(p_colon,0,10);
+            p_colon++;          
+            socket_id = strtoul(p_colon,0,10);
         }
         
         //得到收到的socket错误码
         char *pComma = strchr(p_colon,',');
-
+        
         if(pComma)
         {
           pComma++;
-          socket_err = strtoul(pComma,0,10);          
+          socket_err = strtoul(pComma, 0, 10);          
           g_socket_info[0].socket_errcode = socket_err; 
         }
-        
-         
+                
         sim7020_event_set(sim7020_handle, SIM7020_SOCKET_ERR_EVENT); 
         sim7020_status_set(SIM7020_SOCKET_ERR, SIM7020_SUB_SOCKET_ERR);
         
-    }     
-    
+    }         
     //收到Coap数据包
     else if((target_pos_start = strstr(buf,"+CCOAPNMI")) != NULL)
     {
-
         sim7020_event_set(sim7020_handle, SIM7020_COAP_RECV_EVENT);  
-    }      
-    
+    }          
     else if((target_pos_start = strstr(buf,"+CLMOBSERVE")) != NULL)
     {
-        sim7020_event_set(sim7020_handle, SIM7020_LWM2M_RECV_EVENT);  
-        
+        sim7020_event_set(sim7020_handle, SIM7020_LWM2M_RECV_EVENT);          
     } 
 
     //收到MQTT数据包    
     else if ((target_pos_start = strstr(buf,"+CMQPUB")) != NULL)
     {        
         sim7020_event_set(sim7020_handle, SIM7020_MQTT_RECV_EVENT);  
-    }
+    }    
     else 
     {
         //如果收到回复，其它是命令响应的数据
         sim7020_event_set(sim7020_handle, SIM7020_RECV_EVENT);  
-    }        
-
+    }    
     return 0;
 }
 
@@ -1172,7 +1168,7 @@ static uint8_t at_cmd_next (void)
                                         p_remote_port,                                         
                                         REMOTE_SERVER_IP);
                                         
-            printf("tcpudp_cn_len = %d\r\n", tcpudp_cn_len);
+           // printf("tcpudp_cn_len = %d\r\n", tcpudp_cn_len);
             
             //最大响应时间不详                                        
             at_cmd_param_init(&g_at_cmd,AT_CSOCON, buf, CMD_SET, 3000);
@@ -1522,14 +1518,13 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
          if (g_socket_info[0].socket_type == SIM7020_TCP)
          {
              p_buf_tmep = "tcp close";
-         }
-        
+         }         
          else 
          {   
              p_buf_tmep = "udp close";
          } 
       
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
+         sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
      }
   } 
    
@@ -1539,7 +1534,8 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     {
     case SIM7020_SUB_TCPUDP_SEND:
       {
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_TCPUDP_SEND,1,"S");
+        char *p_buf_tmep = g_sim7020_send_desc.buf;
+        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_TCPUDP_SEND,strlen(p_buf_tmep),p_buf_tmep);
       }
       break;
       
@@ -1552,7 +1548,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
   {
     if(g_sim7020_status.sub_status == SIM7020_SUB_TCPUDP_RECV)
     {
-      char *data_buf = &g_sim7020_recv_desc.buf[g_socket_info[0].data_len]; 
+      char *data_buf = g_socket_info[0].data_offest; 
 
       printf("data_buf = %s", data_buf);      
            
@@ -1718,8 +1714,8 @@ static int sim7020_data_recv(sim7020_handle_t sim7020_handle, uint32_t timeout)
 
     ret = sim7020_handle->p_drv_funcs->sim7020_recv_data(sim7020_handle, 
                                                          (uint8_t*)g_sim7020_recv_desc.buf, 
-                                                         g_sim7020_recv_desc.len,                                                                                                     
-                                                         timeout);
+                                                          g_sim7020_recv_desc.len,                                                                                                     
+                                                          timeout);
     
     //在后面添加字符串结束符
     g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]=0;
@@ -1871,9 +1867,23 @@ int sim7020_nblot_tcpudp_close(sim7020_handle_t sim7020_handle, sim7020_connect_
         return SIM7020_ERROR;
     }
     
+       
     (void)type;
+    
+    //最大数据长度为有效数据加上头部
+
+
+    char  buf[5];
+    
+    memset(buf, 0, sizeof(buf));
+    
+    
+    uint16_t msg_len = snprintf(buf,
+                                sizeof(buf),
+                                "%d",
+                                g_socket_info[0].socket_id);
         
-    at_cmd_param_init(&g_at_cmd, AT_CSQ, NULL, CMD_EXCUTE, 3000);
+    at_cmd_param_init(&g_at_cmd, AT_CSOCL, buf, CMD_SET, 3000);
 
     //进入tcp/udp关闭状态
     g_sim7020_status.main_status = SIM7020_TCPUDP_CL;
@@ -1900,17 +1910,18 @@ int sim7020_nblot_tcpudp_send_hex(sim7020_handle_t sim7020_handle, int len, char
         return SIM7020_ERROR;
     }
   
-    uint16_t str_len = (SIM7020_SEND_BUF_MAX_LEN - 40) ;
+    //最大数据长度为有效数据加上头部
+    uint16_t str_len = (SIM7020_SEND_BUF_MAX_LEN - 20) ;
 
-
-    char  buf[SIM7020_SEND_BUF_MAX_LEN - 40];
-    memset(buf,0,SIM7020_SEND_BUF_MAX_LEN - 40);
+    char  buf[(SIM7020_SEND_BUF_MAX_LEN - 20)];
+    
+    memset(buf, 0, str_len);
 
 
     uint16_t msg_len = snprintf(buf,
                                 str_len,
-                                "%s,%d,",
-                                (char*)&g_socket_info[0].socket_id, 
+                                "%d,%d,",
+                                 g_socket_info[0].socket_id, 
                                 len);
                                 
     for(uint16_t i = 0 ; i < len ; i++)
@@ -1953,15 +1964,15 @@ int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle, int len, char
     
     memset(buf, 0, str_len);
 
-//    uint16_t msg_len = snprintf(buf,
-//                                str_len,
-//                                "%d,%d,%s,%s,%s",
-//                                 g_socket_info[0].socket_id,
-//                                 0,
-//                                 "\"",                                  
-//                                msg,
-//                                "\"");
-//                                
+    uint16_t msg_len = snprintf(buf,
+                                str_len,
+                                "%d,%d,%s%s%s",
+                                 g_socket_info[0].socket_id,
+                                 0,
+                                 "\"",                                  
+                                msg,
+                                "\"");
+                                
                           
     //构建TCP/UDP数据发送命令，最大响应时间不详
     at_cmd_param_init(&g_at_cmd, AT_CSOSEND, buf, CMD_SET, 3000);

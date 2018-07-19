@@ -271,7 +271,7 @@ typedef struct sim7020_socket_info {
     uint8_t                socket_type;         //指示socket_type的类型
     int8_t                 socket_id;           //指示相应的socket id
     uint8_t                socket_errcode;      //指示相应的socket错误码 
-    uint16_t               data_offest;         //数据缓冲区起始地址所在偏移
+    char                  *data_offest;         //数据缓冲区起始地址所在偏移地址
     uint16_t               data_len;            //提示数据长度   
 }sim7020_socket_info_t;
 
