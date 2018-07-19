@@ -20,6 +20,17 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
     
     switch(msg_id)
     {
+        case SIM7020_MSG_RETRY:
+          printf("%s cmd error and retry\r\n",msg);      
+        break;
+        
+        case SIM7020_MSG_FAIL:
+        {
+          printf("%s cmd failed\r\n",msg);
+          
+          break;                     
+        }
+        
         case SIM7020_MSG_NBLOT_INIT:
         {
           printf("init=%s\r\n",msg);
@@ -45,8 +56,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
             {
                 printf("\r\n reg status is failed\r\n");
             }
-              
-              
+                           
         }
         break;
         
@@ -99,7 +109,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         
         case SIM7020_MSG_TCPUDP_CREATE:
         {
-          printf("\r\n tcpudp create and connect, the socket_id=%d\r\n",*msg);
+          printf("\r\n %s create and connect\r\n",msg);
         }
         break;
         
@@ -153,7 +163,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
   */
 void demo_sim7020_tcpip_entry(void)
 { 
-    int sm7020_main_status =  SIM7020_NBLOT_INFO;
+    int sm7020_main_status = SIM7020_TCPUDP_CR;
         
     uart_handle_t lpuart_handle = NULL; 
 

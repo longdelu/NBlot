@@ -186,7 +186,7 @@ typedef at_cmd_info_t *at_cmdhandle;
 #define   SIM7020_ERROR_TIMEOUT      -2
 #define   SIM7020_ERROR_RETRY        -3
 #define   SIM7020_ERROR_NEXT         -4
-
+#define   SIM7020_ERROR_CONTINUE     -5
 
 
 
@@ -365,6 +365,10 @@ typedef enum sim7020_msg_id
     SIM7020_MSG_COAP,
     SIM7020_MSG_COAP_SEND,
     SIM7020_MSG_COAP_RECV,
+    
+    SIM7020_MSG_RETRY,
+    
+    SIM7020_MSG_FAIL,    
 
     SIM7020_MSG_END
   
