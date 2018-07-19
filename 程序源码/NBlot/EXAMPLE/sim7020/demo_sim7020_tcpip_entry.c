@@ -11,6 +11,8 @@
 #include "sim7020.h"
 #include "stm32l4xx_hal.h"
 
+static int sm7020_main_status = SIM7020_TCPUDP_CR;
+
 //sim7020消息事件处理函数
 static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, int len, char *msg)
 { 
@@ -109,7 +111,8 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         
         case SIM7020_MSG_TCPUDP_CREATE:
         {
-          printf("\r\n %s create and connect\r\n",msg);
+          printf("\r\n%s create and connect\r\n",msg);
+          sm7020_main_status = SIM7020_TCPUDP_SEND;
         }
         break;
         
@@ -122,12 +125,15 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         case SIM7020_MSG_TCPUDP_SEND:
         {
           printf("\r\ntcpudp_send=%s\r\n",msg);
+          
         }
         break;
         
         case SIM7020_MSG_TCPUDP_RECV:
         {
           printf("\r\nudp_recv=%s\r\n",msg);
+          
+          sm7020_main_status = SIM7020_TCPUDP_CL;
         }
         break;
         
@@ -162,9 +168,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
   * @retval None
   */
 void demo_sim7020_tcpip_entry(void)
-{ 
-    int sm7020_main_status = SIM7020_TCPUDP_CR;
-        
+{         
     uart_handle_t lpuart_handle = NULL; 
 
     sim7020_handle_t  sim7020_handle = NULL;   

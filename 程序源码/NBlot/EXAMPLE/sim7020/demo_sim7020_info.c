@@ -12,8 +12,8 @@
 #include "stm32l4xx_hal.h"
 
 
-int sm7020_main_status =  SIM7020_NBLOT_INFO;
-sim7020_handle_t  sim7020_handle = NULL;  
+static int sm7020_main_status =  SIM7020_NBLOT_INFO;
+static sim7020_handle_t  sim7020_handle = NULL;  
 
 //sim7020消息事件处理函数
 static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, int len, char *msg)

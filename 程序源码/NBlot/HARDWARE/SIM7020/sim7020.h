@@ -269,7 +269,7 @@ typedef struct sim7020_status_nest
 
 typedef struct sim7020_socket_info {
     uint8_t                socket_type;         //指示socket_type的类型
-    uint8_t                socket_id;           //指示相应的socket id
+    int8_t                 socket_id;           //指示相应的socket id
     uint8_t                socket_errcode;      //指示相应的socket错误码 
     uint16_t               data_offest;         //数据缓冲区起始地址所在偏移
     uint16_t               data_len;            //提示数据长度   

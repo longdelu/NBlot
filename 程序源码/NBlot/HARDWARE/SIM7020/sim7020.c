@@ -577,6 +577,7 @@ u8 sim7020_chr2hex(u8 chr)
     else
     {
       
+      return 0;
     }
                 
 }
@@ -792,7 +793,7 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         //收到服务器端发来TCP/UDP数据
         char *p_colon = strchr(target_pos_start,':');
       
-        uint8_t socket_id = 0;
+        int8_t socket_id = 0;
         
         //得到是哪个socket收到数据
         if(p_colon)
@@ -845,7 +846,7 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         //收到服务器端发来TCP/UDP错误码
         char *p_colon = strchr(target_pos_start,':');
       
-        uint8_t socket_id = 0;
+        int8_t socket_id = 0;
       
         int8_t socket_err = 0;
         
@@ -1893,8 +1894,8 @@ int sim7020_nblot_tcpudp_send_hex(sim7020_handle_t sim7020_handle, int len, char
         return SIM7020_ERROR;
     }
   
-    //判断SOCKET ID 是否正确
-    if (g_socket_info[0].socket_id  < '0' || g_socket_info[0].socket_id > '5' )
+    //判断SOCKET ID是否正确
+    if (g_socket_info[0].socket_id  < 0 || g_socket_info[0].socket_id > 5 )
     {
         return SIM7020_ERROR;
     }
@@ -1938,30 +1939,33 @@ int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle, int len, char
         return SIM7020_ERROR;
     }
   
-    //判断SOCKET ID 是否正确
-    if (g_socket_info[0].socket_id  < '0' || g_socket_info[0].socket_id > '5' )
+    //判断SOCKET ID是否正确
+    if (g_socket_info[0].socket_id  < 0 || g_socket_info[0].socket_id > 5 )
     {
         return SIM7020_ERROR;
     }
-  
-    uint16_t str_len = (SIM7020_SEND_BUF_MAX_LEN - 40) ;
+      
+    //最大数据长度为有效数据加上头部
+    uint16_t str_len = (SIM7020_SEND_BUF_MAX_LEN - 20) ;
 
 
-    char  buf[SIM7020_SEND_BUF_MAX_LEN - 40];
-    memset(buf,0,SIM7020_SEND_BUF_MAX_LEN - 40);
+    char  buf[str_len];
+    
+    memset(buf, 0, str_len);
 
-
-    uint16_t msg_len = snprintf(buf,
-                                str_len,
-                                "%s,%s,",
-                                (char*)&g_socket_info[0].socket_id, 
-                                msg);
-                                
+//    uint16_t msg_len = snprintf(buf,
+//                                str_len,
+//                                "%d,%d,%s,%s,%s",
+//                                 g_socket_info[0].socket_id,
+//                                 0,
+//                                 "\"",                                  
+//                                msg,
+//                                "\"");
+//                                
                           
     //构建TCP/UDP数据发送命令，最大响应时间不详
     at_cmd_param_init(&g_at_cmd, AT_CSOSEND, buf, CMD_SET, 3000);
     
-
     //进入tcp/udp数据发送状态
     g_sim7020_status.main_status = SIM7020_TCPUDP_SEND;
     g_sim7020_status.sub_status  = SIM7020_SUB_TCPUDP_SEND;
