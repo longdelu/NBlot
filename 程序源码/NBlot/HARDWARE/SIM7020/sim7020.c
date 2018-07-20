@@ -1323,7 +1323,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
       
     case SIM7020_SUB_CSQ:
     {
-        char *p_colon = strchr(buf[0],':');
+        char *p_colon = strchr(buf[1],':');
         p_colon++;
       
         //转换成10进制数字
@@ -1393,27 +1393,27 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     //查询网络注册状态    
     case SIM7020_SUB_CEREG_QUERY:
 
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_REG, 1, buf[0]);
+      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_REG, 1, buf[1]);
     
       break;        
         
                  
     case SIM7020_SUB_CGMI:
       {
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_MID, strlen(buf[0]), buf[0]);
+        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_MID, strlen(buf[1]), buf[1]);
       }
       break;
       
     case SIM7020_SUB_CGMM:
       {
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_MMODEL,strlen(buf[0]),buf[0]);
+        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_MMODEL,strlen(buf[1]),buf[1]);
       }
       break;
       
     case SIM7020_SUB_CGMR:
       {
 
-         sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_MREV,strlen(buf[0]),buf[0]);
+         sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_MREV,strlen(buf[1]),buf[1]);
         
       }
       break;
@@ -1421,16 +1421,16 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
       
     case SIM7020_SUB_CIMI:
       {
-        memcpy(g_firmware_info.IMSI,buf[0],15);
+        memcpy(g_firmware_info.IMSI,buf[1],15);
         g_firmware_info.IMSI[15] = 0;
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_IMSI,strlen(buf[0]),buf[0]);
+        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_IMSI,strlen(buf[1]),buf[1]);
       }
       break;
       
     
     case SIM7020_SUB_CGSN:
       {
-        char* p_colon = strchr(buf[0],':');
+        char *p_colon = strchr(buf[1],':');
         if(p_colon)
         {
           p_colon++;
@@ -1443,7 +1443,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
       
     case SIM7020_SUB_CBAND:
       {
-        char *p_colon = strchr(buf[0],':');
+        char *p_colon = strchr(buf[1],':');
         char *pFreq = NULL;
         if(p_colon)
         {
@@ -1487,7 +1487,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     { 
     case SIM7020_SUB_CSQ:
     {
-        char *p_colon = strchr(buf[0],':');
+        char *p_colon = strchr(buf[1],':');
         if (p_colon != NULL) 
         {            
           p_colon++;
@@ -1495,12 +1495,12 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
           uint8_t lqi =strtoul(p_colon,0, 10);
           //运算取得每个数值对应的dbm范围
           int8_t rssi = -110 + (lqi << 1);
-          uint8_t len = snprintf(buf[0],10,"%d",rssi);
-          *(buf[0]+len) = 0;
+          uint8_t len = snprintf(buf[1],10,"%d",rssi);
+          *(buf[1]+len) = 0;
           
           g_sim7020_status.rssi = rssi;
           
-          sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CSQ,len,buf[0]);
+          sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CSQ,len,buf[1]);
           
         }
       
@@ -1518,7 +1518,6 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
         break;
     }
     
-
   }
   else if(g_sim7020_status.main_status == SIM7020_TCPUDP_CR)
   {
@@ -1541,13 +1540,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
       break;
       
     case SIM7020_SUB_TCPUDP_CONNECT:
-      {        
-        char *p_colon = strstr(buf[0], "OK");  
-
-        if (p_colon != NULL) 
-        {                
-            g_sim7020_status.connect_status = 1;  
-        }                                       
+      {                                             
       }
       break;
       

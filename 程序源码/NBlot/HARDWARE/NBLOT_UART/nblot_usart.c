@@ -400,7 +400,7 @@ void LPUART1_IRQHandler(void)
 { 
 
      
-    if ((__HAL_UART_GET_FLAG(&hlpuart1,UART_FLAG_RXNE)!=RESET))  
+    if ((__HAL_UART_GET_IT(&hlpuart1, UART_IT_RXNE)!=RESET))  
     {        
         //把数据写入环形缓冲区
         atk_ring_buf_write(&g_uart_ring_buf, hlpuart1.Instance->RDR);  
@@ -414,10 +414,9 @@ void LPUART1_IRQHandler(void)
     }
     
     //ilde中断产生，代表当前数据帧接收结束
-    if ((__HAL_UART_GET_FLAG(&hlpuart1, UART_FLAG_IDLE)!=RESET))  
+    if ((__HAL_UART_GET_IT(&hlpuart1, UART_IT_IDLE)!=RESET))  
     {
-     
-    
+        
         //如果是空闲中断一开始是使能的
        if (__HAL_UART_GET_IT_SOURCE(&hlpuart1, UART_IT_IDLE)!=RESET) {
            

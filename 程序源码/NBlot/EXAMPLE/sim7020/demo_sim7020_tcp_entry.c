@@ -190,7 +190,7 @@ void demo_sim7020_tcp_entry(void)
     delay_ms(1000);
              
     while (1)
-    {   
+    {                        
         uart_event_poll(lpuart_handle);         
         sim7020_event_poll(sim7020_handle);
         sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);

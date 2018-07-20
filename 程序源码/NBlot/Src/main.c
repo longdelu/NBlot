@@ -79,11 +79,11 @@ int main(void)
     
 //    demo_sim7020_gprs_attach_entry();
     
-//    demo_sim7020_nblot_info_get_entry();
+    demo_sim7020_nblot_info_get_entry();
 
 //    demo_sim7020_udp_entry();
 
-    demo_sim7020_tcp_entry();
+//    demo_sim7020_tcp_entry();
     
     while (1)
     {            
