@@ -310,7 +310,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>4</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -605,9 +605,9 @@
               <FilePath>..\EXAMPLE\nb_uart\demo_uart_int_entry.c</FilePath>
             </File>
             <File>
-              <FileName>demo_sim7020_tcpip_entry.c</FileName>
+              <FileName>demo_uart_any_data_len_recv_entry .c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_tcpip_entry.c</FilePath>
+              <FilePath>..\EXAMPLE\nb_uart\demo_uart_any_data_len_recv_entry .c</FilePath>
             </File>
             <File>
               <FileName>demo_sim7020_gprs_attach_entry.c</FileName>
@@ -615,14 +615,19 @@
               <FilePath>..\EXAMPLE\sim7020\demo_sim7020_gprs_attach_entry.c</FilePath>
             </File>
             <File>
-              <FileName>demo_uart_any_data_len_recv_entry .c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\nb_uart\demo_uart_any_data_len_recv_entry .c</FilePath>
-            </File>
-            <File>
               <FileName>demo_sim7020_info.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\sim7020\demo_sim7020_info.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_sim7020_tcp_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_tcp_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_sim7020_udp_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_udp_entry.c</FilePath>
             </File>
           </Files>
         </Group>

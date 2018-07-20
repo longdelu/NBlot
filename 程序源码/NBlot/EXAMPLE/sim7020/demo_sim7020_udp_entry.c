@@ -1,7 +1,7 @@
 /**
   *
-  * @file           : demo_sim7020_tcpip_entry.c
-  * @brief          : sim7020 tcpip 收发数据实验
+  * @file           : demo_sim7020_udp_entry.c
+  * @brief          : sim7020 udp 收发数据实验
   */
 /* Includes ------------------------------------------------------------------*/
 #include "sys.h"
@@ -111,7 +111,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         
         case SIM7020_MSG_TCPUDP_CREATE:
         {
-            printf("\r\n%smsg create and connect\r\n",msg);
+            printf("\r\n%s msg create and connect\r\n",msg);
             sm7020_main_status = SIM7020_TCPUDP_SEND;
         }
         break;
@@ -163,11 +163,11 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
 }
 
 /**
-  * @brief  The uart poll application entry point.
+  * @brief  The demo sim7020 udp entry entry point.
   *
   * @retval None
   */
-void demo_sim7020_tcpip_entry(void)
+void demo_sim7020_udp_entry(void)
 {         
     uart_handle_t lpuart_handle = NULL; 
 

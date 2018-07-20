@@ -15,7 +15,9 @@ void demo_uart_int_entry(void);
 void demo_uart_any_data_len_recv_entry(void);
 void demo_timer_timing_entry(void);
 void demo_soft_timer_entry(void);
-void demo_sim7020_tcpip_entry(void);
+void demo_sim7020_tcp_entry(void);
+void demo_sim7020_udp_entry(void);
+
 /**
   * @brief  The demo sim7020 gprs attach application entry point.
   *

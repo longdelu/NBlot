@@ -177,14 +177,13 @@ static void __uart_event_cb_handle (void *p_arg)
         if (g_sim7020_dev.frame_format == 1) 
         {
             if (size > 0)
-            {
-                
+            {               
                 sim7020_data_recv(sim7020_handle, (uint8_t*)(&g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]), size, 0);
-                
-                g_sim7020_recv_desc.len = g_sim7020_recv_desc.len + size;
-                
+                                             
                 //产生异步事件等待处理
                 sim7020_event_notify(sim7020_handle, g_sim7020_recv_desc.buf);
+              
+                g_sim7020_recv_desc.len = g_sim7020_recv_desc.len + size;
             }
                                         
        //不在超时成帧的状态下，代表的确发生了超时事件      
@@ -193,7 +192,7 @@ static void __uart_event_cb_handle (void *p_arg)
            sim7020_event_set(sim7020_handle, SIM7020_TIMEOUT_EVENT);
        }
        
-       printf("sim7020 rx timeout %s\r\n", g_sim7020_recv_desc.buf);  
+       printf("sim7020 rx timeout %s\r\n", &g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]);  
        
        lpuart_event_clr(p_uart_dev, UART_RX_TIMEOUT_EVENT);
     }            
@@ -297,8 +296,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
                 
             }
             else 
-            {
-                
+            {                
                 printf("%s cmd is failed and exit\r\n", g_at_cmd.p_atcmd);        
                 at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char*)g_at_cmd.p_atcmd;
                 
@@ -339,33 +337,35 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
 //            printf("the err buf len %d\r\n",g_sim7020_recv_desc.len);             
         
             //清缓存            
-//            sim7020_recv_buf_reset();          
+//            sim7020_recv_buf_reset();  
+          
+          
+
+                //命令未完成
+                return  SIM7020_OK;                      
 
         }            
         
         sim7020_event_clr(sim7020_handle, SIM7020_RECV_EVENT); 
     }
 
-    if (sim7020_handle->sim7020_event & SIM7020_TIMEOUT_EVENT) {
-        
+    if (sim7020_handle->sim7020_event & SIM7020_TIMEOUT_EVENT) 
+    {        
         //超时处理，尝试重发命令        
         next_cmd = sim7020_response_handle(sim7020_handle, FALSE);
       
         //通知上层应用，此动作执行超时
         if (g_at_cmd.cmd_action & ACTION_ERROR_AND_TRY) 
-        {
-            
+        {           
             at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char *)g_at_cmd.p_atcmd;
            
             printf("%s cmd not repsonse or send failed\r\n", g_at_cmd.p_atcmd);
                                
             //通知上层应用，此动作执行失败后跳过该命令执行
-            sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_NEXT);
-            
+            sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_NEXT);            
         } 
         else 
-        {
-            
+        {            
             printf("%s cmd is failed and exit\r\n", g_at_cmd.p_atcmd);        
             at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char*)g_at_cmd.p_atcmd;
             
@@ -385,8 +385,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
     } 
 
     if (sim7020_handle->sim7020_event & SIM7020_REG_STA_EVENT) 
-    {
-      
+    {      
         printf("reg ok\r\n");
         
         at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char *)&g_sim7020_status.register_status;        
@@ -403,20 +402,21 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         sim7020_recv_buf_reset();   
     }
     
-    if (sim7020_handle->sim7020_event & SIM7020_TCP_RECV_EVENT) {
+    if (sim7020_handle->sim7020_event & SIM7020_TCP_RECV_EVENT) 
+    {
         printf("tcp recv ok\r\n");
       
-        //通知上层应用网络注册结果
+        //通知上层应用接收到TCP数据
         sim7020_msg_send(sim7020_handle, NULL, TRUE);     
         
         sim7020_event_clr(sim7020_handle,SIM7020_TCP_RECV_EVENT);
       
        //清除缓存数据    
-        sim7020_recv_buf_reset();  
-      
+        sim7020_recv_buf_reset();       
     }
 
-    if (sim7020_handle->sim7020_event & SIM7020_UDP_RECV_EVENT) {
+    if (sim7020_handle->sim7020_event & SIM7020_UDP_RECV_EVENT) 
+    {
         printf("udp recv ok\r\n");
       
         //通知上层应用网络注册结果
@@ -427,13 +427,25 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         //清除缓存数据    
         sim7020_recv_buf_reset();  
     }
-    
-    if (sim7020_handle->sim7020_event & SIM7020_COAP_RECV_EVENT) {
+        
+    if (sim7020_handle->sim7020_event & SIM7020_COAP_RECV_EVENT) 
+    {
         
         printf("coap recv ok\r\n");
+      
         
         sim7020_event_clr(sim7020_handle, SIM7020_COAP_RECV_EVENT); 
     }
+    
+    if (sim7020_handle->sim7020_event & SIM7020_SOCKET_ERR_EVENT) 
+    {       
+        printf("socket err \r\n");
+      
+        //通知上层应用SOCKET失败了
+        sim7020_msg_send(sim7020_handle, NULL, TRUE);        
+              
+        sim7020_event_clr(sim7020_handle, SIM7020_SOCKET_ERR_EVENT); 
+    }    
 
     //根据事件及状态判断是否需要执行下一条命令
     if(next_cmd)
@@ -483,8 +495,7 @@ void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim7020_main_
     case SIM7020_NBLOT_INFO:
       {
          printf("sim7020 get signal start\r\n");
-        
-        
+                
          sim7020_nblot_info_get(sim7020_handle);
 
          *sim7020_main_status = SIM7020_END;
@@ -506,7 +517,9 @@ void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim7020_main_
       {
         printf("tcp/udp socket creat start\r\n");  
         
-        sim7020_nblot_tcpudp_create(sim7020_handle, SIM7020_UDP);
+//        sim7020_nblot_tcpudp_create(sim7020_handle, SIM7020_UDP);
+        
+        sim7020_nblot_tcpudp_create(sim7020_handle, SIM7020_TCP);
         
         //do nothing
         *sim7020_main_status = SIM7020_END;
@@ -518,7 +531,9 @@ void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim7020_main_
         //do nothing
         printf("tcp/udp socket close start\r\n");  
 
-        sim7020_nblot_tcpudp_close(sim7020_handle, SIM7020_UDP);        
+//        sim7020_nblot_tcpudp_close(sim7020_handle, SIM7020_UDP); 
+
+//        sim7020_nblot_tcpudp_close(sim7020_handle, SIM7020_TCP);        
           
         *sim7020_main_status = SIM7020_END;
       }
@@ -529,7 +544,9 @@ void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim7020_main_
           
         printf("tcp/udp send start\r\n"); 
 
-        sim7020_nblot_tcpudp_send_str(sim7020_handle, sizeof("hello world"), "hello world", SIM7020_UDP);
+//        sim7020_nblot_tcpudp_send_str(sim7020_handle, sizeof("hello world"), "hello world", SIM7020_UDP);
+        
+        sim7020_nblot_tcpudp_send_str(sim7020_handle, sizeof("hello world"), "hello world", SIM7020_TCP);        
         
         //do nothing
         *sim7020_main_status = SIM7020_END;
@@ -537,8 +554,7 @@ void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim7020_main_
       break;
       
     case SIM7020_TCPUDP_RECV:
-      {
-          
+      {         
         printf("tcp/udp recv start\r\n");    
         //do nothing
         *sim7020_main_status = SIM7020_END; 
@@ -604,8 +620,6 @@ static int  __sim7020_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, 
 
     uart_ring_buf_read(uart_handle, pData, size);    
     
-//    ret = uart_data_rx_int(uart_handle, pData, size, Timeout); 
-
     return ret;    
 }
 
@@ -917,9 +931,9 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         }
                 
         sim7020_event_set(sim7020_handle, SIM7020_SOCKET_ERR_EVENT); 
-        sim7020_status_set(SIM7020_SOCKET_ERR, SIM7020_SUB_SOCKET_ERR);
-        
-    }         
+        sim7020_status_set(SIM7020_SOCKET_ERR, SIM7020_SUB_SOCKET_ERR);        
+    }
+    
     //收到Coap数据包
     else if((target_pos_start = strstr(buf,"+CCOAPNMI")) != NULL)
     {
@@ -1475,8 +1489,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     {
         char *p_colon = strchr(buf[0],':');
         if (p_colon != NULL) 
-        {
-             
+        {            
           p_colon++;
           //转换成10进制数字
           uint8_t lqi =strtoul(p_colon,0, 10);
@@ -1514,9 +1527,8 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     case SIM7020_SUB_TCPUDP_CR:
       {
 
-        char *p_colon = strchr(buf[0],':');
-          
-          
+        char *p_colon = strchr(buf[1],':');
+                    
         if (p_colon != NULL) 
         {                
             p_colon++;
@@ -1576,12 +1588,10 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
          else 
          {   
              p_buf_tmep = "udp close";
-         } 
-      
+         }         
          sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
      }
-  } 
-   
+  }   
   else if(g_sim7020_status.main_status == SIM7020_TCPUDP_SEND)
   {
     switch(g_sim7020_status.sub_status)
@@ -1617,17 +1627,18 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
   
   else if(g_sim7020_status.main_status == SIM7020_SOCKET_ERR)
   {
-    if(g_sim7020_status.sub_status == SIM7020_SUB_SOCKET_ERR)
+    if (g_sim7020_status.sub_status == SIM7020_SUB_SOCKET_ERR)
     {
 
+        printf("the socket err, the err code is %d\r\n", g_socket_info[0].socket_errcode); 
+             
+        sim7020_handle->sim7020_cb(sim7020_handle->p_arg,
+                                   (sim7020_msg_id_t)SIM7020_MSG_SOCKET_ERROR, 
+                                    1, 
+                                    (char *)&g_socket_info[0].socket_errcode);
 
-      printf("the socket err, the err code is %d\r\n", g_socket_info[0].socket_errcode); 
- 
-          
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_RECV, 2, "F");
-      
-      //复位状态标志
-      sim7020_status_reset();
+        //复位状态标志
+        sim7020_status_reset();
     }
     
   }
@@ -1938,7 +1949,7 @@ int sim7020_nblot_tcpudp_close(sim7020_handle_t sim7020_handle, sim7020_connect_
         return SIM7020_ERROR;
     }
     
-    printf("close len %d\r\n",msg_len); 
+//    printf("close len %d\r\n",msg_len); 
     
                                     
         
@@ -1950,7 +1961,7 @@ int sim7020_nblot_tcpudp_close(sim7020_handle_t sim7020_handle, sim7020_connect_
 
     sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
     
-    printf("close buf %s", g_sim7020_send_desc.buf);
+//    printf("close buf %s", g_sim7020_send_desc.buf);
     
     return SIM7020_OK;
 }
@@ -2039,7 +2050,7 @@ int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle, int len, char
         return SIM7020_ERROR;
     }
     
-    printf("send buf len %d\r\n",msg_len); 
+//    printf("send buf len %d\r\n",msg_len); 
                                                           
     //构建TCP/UDP数据发送命令，最大响应时间不详
     at_cmd_param_init(&g_at_cmd, AT_CSOSEND, buf, CMD_SET, 3000);
@@ -2051,7 +2062,7 @@ int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle, int len, char
     sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
     
     
-    printf("send buf %s", g_sim7020_send_desc.buf);    
+//    printf("send buf %s", g_sim7020_send_desc.buf);    
 
     return SIM7020_OK;
 }   
