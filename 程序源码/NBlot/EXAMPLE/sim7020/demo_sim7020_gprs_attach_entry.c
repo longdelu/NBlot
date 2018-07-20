@@ -20,8 +20,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
     (void)sim7020_handle;
     
     switch(msg_id)
-    {
-      
+    {      
         case SIM7020_MSG_RETRY:
           printf("%s cmd error and retry\r\n",msg);      
         break; 

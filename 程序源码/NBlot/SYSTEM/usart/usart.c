@@ -41,10 +41,10 @@ int fputc(int ch, FILE *f)
 }
 
 //__use_no_semihosting was requested, but _ttywrch was 
-void _ttywrch(int ch)
-{
-    ch = ch;
-}
+//void _ttywrch(int ch)
+//{
+//    ch = ch;
+//}
 
 
 #endif 

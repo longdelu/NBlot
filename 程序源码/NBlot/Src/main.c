@@ -77,11 +77,11 @@ int main(void)
     
 //    demo_uart_any_data_len_recv_entry();
     
-//    demo_sim7020_gprs_attach_entry();
+    demo_sim7020_gprs_attach_entry();
     
 //    demo_sim7020_nblot_info_get_entry();
 
-    demo_sim7020_tcpip_entry();
+//    demo_sim7020_tcpip_entry();
     
     while (1)
     {            
