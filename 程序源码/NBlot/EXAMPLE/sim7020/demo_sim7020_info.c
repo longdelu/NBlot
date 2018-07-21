@@ -49,23 +49,12 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         break;
         
         case SIM7020_MSG_REG:
-        {
-            if (*msg == 1)
-            {
-              
-                printf("\r\n reg status is ok\r\n");
-            }
-            
-            else
-            {
-                printf("\r\n reg status is failed\r\n");
-            }
-              
-              
+        {       
+             printf("\r\nmsg creg status=%s\r\n", msg);
+                                        
         }
         break;
-          
-        
+                  
         case SIM7020_MSG_CSQ:
           printf("rssi=%sdbm\r\n",msg);      
         break;        
@@ -79,8 +68,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         {
           printf("info get=%s\r\n",msg);
           
-          sm7020_main_status =  SIM7020_SIGNAL;
-                     
+          sm7020_main_status =  SIM7020_SIGNAL;                     
         }
 
         break;

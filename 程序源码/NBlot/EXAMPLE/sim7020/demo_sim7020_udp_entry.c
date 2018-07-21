@@ -48,17 +48,8 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         
         case SIM7020_MSG_REG:
         {
-            if (*msg == 1)
-            {
-              
-                printf("\r\n reg status is ok\r\n");
-            }
-            
-            else
-            {
-                printf("\r\n reg status is failed\r\n");
-            }
-                           
+             printf("\r\nmsg reg status=%s\r\n", msg);
+                                                     
         }
         break;
         

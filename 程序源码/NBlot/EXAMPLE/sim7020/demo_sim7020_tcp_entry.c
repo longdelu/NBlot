@@ -35,36 +35,27 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         
         case SIM7020_MSG_NBLOT_INIT:
         {
-          printf("init=%s\r\n",msg);
+          printf("msg init=%s\r\n",msg);
                      
         }
         break;
 
         case SIM7020_MSG_IMSI:
         {
-           printf("\r\nIMSI=%s\r\n",msg);
+           printf("\r\nmsg imsi=%s\r\n",msg);
         }
         break;
         
         case SIM7020_MSG_REG:
         {
-            if (*msg == 1)
-            {
-              
-                printf("\r\n reg status is ok\r\n");
-            }
-            
-            else
-            {
-                printf("\r\n reg status is failed\r\n");
-            }
-                           
+             printf("\r\nmsg reg status=%s\r\n", msg);
+                                                    
         }
         break;
         
         case SIM7020_MSG_SIGNAL:
         {         
-          printf("rssi=%sdbm\r\n",msg);
+          printf("r\nmsg rssi=%sdbm\r\n",msg);
         }
               
         break;
@@ -72,14 +63,14 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         case SIM7020_MSG_NBLOT_INFO:
           
         {
-          printf("info get=%s\r\n",msg);
+          printf("msg info get=%s\r\n",msg);
                      
         }
 
         break;
 
         case SIM7020_MSG_BAND:
-             printf("\r\nFreq=%s\r\n",msg);
+             printf("\r\nmsg freq=%s\r\n",msg);
         break;
         
         //产商ID
@@ -92,14 +83,14 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         //模块型号
         case SIM7020_MSG_MMODEL:
         {
-            printf("\r\nmmodel=%s\r\n",msg);
+            printf("\r\nmsg mmodel=%s\r\n",msg);
         }
         break;        
 
         //软件版本号
         case SIM7020_MSG_MREV:
         {
-            printf("\r\nmrev=%s\r\n",msg);
+            printf("\r\nmsg mrev=%s\r\n",msg);
         }
         break;        
         
@@ -111,7 +102,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         
         case SIM7020_MSG_TCPUDP_CREATE:
         {
-            printf("\r\n%s msg create and connect\r\n",msg);
+            printf("\r\n%smsg create and connect\r\n",msg);
             sm7020_main_status = SIM7020_TCPUDP_SEND;
         }
         break;
