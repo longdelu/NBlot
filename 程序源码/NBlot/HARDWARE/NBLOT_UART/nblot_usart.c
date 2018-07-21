@@ -339,17 +339,15 @@ static void __lpuart_rx_timeout_cb (void *p_arg)
     READ_REG(lphuart->Instance->RDR);
              
     //清除溢出中断标记
-    __HAL_UART_CLEAR_IT(&hlpuart1,UART_CLEAR_OREF); 
-                               
-   
+    __HAL_UART_CLEAR_IT(lphuart,UART_CLEAR_OREF); 
+                                  
     //清除帧错误中断标记
-    __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_FEF); 
+    __HAL_UART_CLEAR_IT(lphuart, UART_CLEAR_FEF); 
                                
         
     //清除校验中断标记
-    __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_PEF); 
-                                   
-           
+    __HAL_UART_CLEAR_IT(lphuart, UART_CLEAR_PEF); 
+                                              
     //清除接收中断
     __HAL_UART_SEND_REQ(lphuart, UART_RXDATA_FLUSH_REQUEST);
     
@@ -357,9 +355,10 @@ static void __lpuart_rx_timeout_cb (void *p_arg)
     __HAL_UART_CLEAR_IT(lphuart, UART_CLEAR_IDLEF); 
 
     //重新开启接收中断 
-    __HAL_UART_ENABLE_IT(&hlpuart1, UART_IT_RXNE);  
+    __HAL_UART_ENABLE_IT(lphuart, UART_IT_RXNE);  
     
-
+    printf("rx timer happen\r\n");    
+    
     //发声超时事件时，不可能再产生接收事件了
     lpuart_event_clr(p_lpuart_dev, UART_RX_EVENT);  
        
@@ -422,9 +421,29 @@ void LPUART1_IRQHandler(void)
            
            //接收在超时时间内正常完成，停止接收超时  
            atk_soft_timer_stop(&uart_dev.uart_rx_timer);
+         
+//          //清除溢出中断标记
+//          __HAL_UART_CLEAR_IT(&hlpuart1,UART_CLEAR_OREF); 
+//                                        
+//          //清除帧错误中断标记
+//          __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_FEF); 
+//                                     
+//              
+//          //清除校验中断标记
+//          __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_PEF); 
+//                                                    
+//          //清除接收中断
+//          __HAL_UART_SEND_REQ(&hlpuart1, UART_RXDATA_FLUSH_REQUEST);
+//          
+//          //清除ilde中断标记
+//          __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_IDLEF); 
+
+//          //重新开启接收中断 
+//          __HAL_UART_ENABLE_IT(&hlpuart1, UART_IT_RXNE);  
            
            //设置串口接收完成事件
            lpuart_event_set(&uart_dev, UART_RX_EVENT); 
+         
        } 
 
         //清除ilde中断标记
@@ -553,7 +572,7 @@ int uart_data_rx_poll(uart_handle_t uart_handle, uint8_t *pData, uint16_t size, 
     /* 接收设置超时为 Timeout ms */
     ret = HAL_UART_Receive(uart_handle->p_huart, pData, size, Timeout);
     
-    if (ret == HAL_TIMEOUT) {
+    if (ret == HAL_TIMEOUT) {     
         //设置串口接收超时事件
         lpuart_event_set(uart_handle, UART_RX_TIMEOUT_EVENT); 
         

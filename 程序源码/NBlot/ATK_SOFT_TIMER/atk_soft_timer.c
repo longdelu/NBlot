@@ -51,7 +51,7 @@ int atk_soft_timer_timeout_change(struct atk_soft_timer *handle, uint32_t timeou
     
     //改变当前的超时值
     handle->timeout = _timer_ticks + timeout; 
-    
+    handle->repeat  = 0;
     
     //如果重置超时，软定时器并没有加入链表，则加入链表
     while(target) {

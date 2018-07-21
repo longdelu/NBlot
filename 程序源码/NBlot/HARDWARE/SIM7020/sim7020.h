@@ -35,12 +35,12 @@
 
 
 //信息查询相关命令
-#define AT_CGMI        "AT+CGMI"
-#define AT_CGMM        "AT+CGMM"
-#define AT_CGMR        "AT+CGMR"
-#define AT_CIMI        "AT+CIMI"
-#define AT_CGSN        "AT+CGSN"
-#define AT_CBAND       "AT+CBAND"
+#define AT_CGMI        "AT+CGMI"        //获取产商ID命令
+#define AT_CGMM        "AT+CGMM"        //获取模型ID命令
+#define AT_CGMR        "AT+CGMR"        //获取软件版本命令 
+#define AT_CIMI        "AT+CIMI"        //获取国际移动用户身份ID命令 
+#define AT_CGSN        "AT+CGSN"        //获取产品序列号ID命令
+#define AT_CBAND       "AT+CBAND"       //获取频率信息
 
 //TCP/UDP相关命令
 #define AT_CSOC        "AT+CSOC"
@@ -393,7 +393,7 @@ typedef struct sim7020_dev
     void                     *p_arg;
 
     //事件标记
-    int                       sim7020_event;
+    volatile int              sim7020_event;
     
     //sim7020指令执行状态信息
     at_cmd_info_t            *p_sim702_cmd; 
@@ -429,9 +429,6 @@ sim7020_handle_t sim7020_init(uart_handle_t lpuart_handle);
 
 //注册sim7020事件回调处理函数
 void sim7020_event_registercb (sim7020_handle_t sim7020_handle, sim7020_cb cb, void *p_arg);
-
-//sim7020应用状态处理函数
-void sim7020_app_status_poll (sim7020_handle_t sim7020_handle, int *sim702_main_status);
 
 //sim7020事件处理函数
 int sim7020_event_poll (sim7020_handle_t sim7020_handle);

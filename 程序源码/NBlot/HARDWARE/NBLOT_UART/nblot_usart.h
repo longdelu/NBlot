@@ -50,7 +50,7 @@ typedef void (*uart_cb)(void *p_arg);
 typedef struct uart_dev
 {  
     UART_HandleTypeDef *p_huart; 
-    
+  
     struct atk_soft_timer uart_rx_timer;  
     struct atk_soft_timer uart_tx_timer;
     
@@ -58,16 +58,16 @@ typedef struct uart_dev
     atk_ring_buf_t *p_uart_ring_buff;  
     
     //事件回调函数
-    uart_cb  uart_cb;
+    uart_cb         uart_cb;
     
     //回调函数
-    void     *p_arg;   
+    void           *p_arg;   
 
     //事件标记组
-    int       uart_event;  
+    volatile int    uart_event;  
 
     //当前使用的波特率
-    uint32_t  bound;    
+    uint32_t        bound;    
     
 }uart_dev_t;
 

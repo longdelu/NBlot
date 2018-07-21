@@ -15,6 +15,9 @@
 static int sm7020_main_status =  SIM7020_NBLOT_INFO;
 static sim7020_handle_t  sim7020_handle = NULL;  
 
+
+
+
 //sim7020消息事件处理函数
 static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, int len, char *msg)
 { 
@@ -151,6 +154,130 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
             break;
         }
     }             
+}
+
+
+//sim7020 状态处理函数
+//sim7020_main_status；sim7020所处的主状态阶段
+static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim7020_main_status)
+{    
+    switch(*sim7020_main_status)
+    {
+    case SIM7020_NONE:
+      {
+        
+      }
+      break;
+           
+    case SIM7020_NBLOT_INIT:
+      {
+        printf("sim7020 init start\r\n");
+                
+        sim7020_nblot_init(sim7020_handle);        
+
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_NBLOT_INFO:
+      {
+         printf("sim7020 get signal start\r\n");
+                
+         sim7020_nblot_info_get(sim7020_handle);
+
+         *sim7020_main_status = SIM7020_END;
+      }
+            
+      break;
+      
+    case SIM7020_SIGNAL:
+      {
+        printf("sim7020 rssi(db) start\r\n");
+        
+        sim7020_nblot_signal_get(sim7020_handle);
+        
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_TCPUDP_CR:
+      {
+        printf("tcp/udp socket creat start\r\n");  
+        
+//        sim7020_nblot_tcpudp_create(sim7020_handle, SIM7020_UDP);
+        
+        sim7020_nblot_tcpudp_create(sim7020_handle, SIM7020_TCP);
+        
+        //do nothing
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_TCPUDP_CL:
+      {          
+        //do nothing
+        printf("tcp/udp socket close start\r\n");  
+
+//        sim7020_nblot_tcpudp_close(sim7020_handle, SIM7020_UDP); 
+
+//        sim7020_nblot_tcpudp_close(sim7020_handle, SIM7020_TCP);        
+          
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_TCPUDP_SEND:
+      {
+          
+        printf("tcp/udp send start\r\n"); 
+
+//        sim7020_nblot_tcpudp_send_str(sim7020_handle, sizeof("hello world"), "hello world", SIM7020_UDP);
+        
+        sim7020_nblot_tcpudp_send_str(sim7020_handle, sizeof("hello world"), "hello world", SIM7020_TCP);        
+        
+        //do nothing
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_TCPUDP_RECV:
+      {         
+        printf("tcp/udp recv start\r\n");    
+        //do nothing
+        *sim7020_main_status = SIM7020_END; 
+      }
+      break;
+      
+    case SIM7020_CoAP_SEVER:
+      {
+        printf("CoAP Server set start\r\n");
+
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;
+      
+    case SIM7020_CoAP_SEND:
+      {
+        printf("CoAP send start\r\n");
+        *sim7020_main_status = SIM7020_END;
+        
+        
+      }
+      break;
+      
+    case SIM7020_CoAP_RECV:
+      {
+        printf("CoAP recv start\r\n");
+        *sim7020_main_status = SIM7020_END;        
+      }
+      break;  
+      
+    default:
+      {
+        
+      }
+      break;
+    }
 }
 
 
