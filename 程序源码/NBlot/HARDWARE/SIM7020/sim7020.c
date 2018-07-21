@@ -15,6 +15,14 @@
 //********************************************************************************
 
 
+#define SIM7020_DEBUG                   
+#ifdef SIM7020_DEBUG
+#define SIM7020_DEBUG_INFO(...)    (int)printf(__VA_ARGS__)
+#else
+#define SIM7020_DEBUG_INFO(...)
+#endif
+
+
 //简要逻辑
 //对命令的响应后的解析会调用at_cmd_result_parse这个函数
 //如果正确，会根据命令的属性来决定是否需要执行下一条命令
@@ -128,7 +136,7 @@ static void __uart_event_cb_handle (void *p_arg)
     if (p_uart_dev->uart_event & UART_TX_EVENT)
     {
                
-        printf("sim7020 uart tx ok %s", g_sim7020_send_desc.buf);  
+        SIM7020_DEBUG_INFO("sim7020 uart tx ok %s", g_sim7020_send_desc.buf);  
 
         lpuart_event_clr(p_uart_dev, UART_TX_EVENT);                 
     }
@@ -145,7 +153,7 @@ static void __uart_event_cb_handle (void *p_arg)
             //产生异步事件等待处理
             sim7020_event_notify(sim7020_handle, g_sim7020_recv_desc.buf);
             
-            printf("sim7020 uart rx ok %s\r\n", &g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]);
+            SIM7020_DEBUG_INFO("sim7020 uart rx ok %s\r\n", &g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]);
           
             g_sim7020_recv_desc.len = g_sim7020_recv_desc.len + size;
             
@@ -159,7 +167,7 @@ static void __uart_event_cb_handle (void *p_arg)
     if (p_uart_dev->uart_event & UART_TX_TIMEOUT_EVENT) 
     {
         
-        printf("sim7020 uart tx timeout %s", g_sim7020_send_desc.buf);  
+        SIM7020_DEBUG_INFO("sim7020 uart tx timeout %s", g_sim7020_send_desc.buf);  
 
         sim7020_event_set(sim7020_handle, SIM7020_TIMEOUT_EVENT);
       
@@ -190,7 +198,7 @@ static void __uart_event_cb_handle (void *p_arg)
            sim7020_event_set(sim7020_handle, SIM7020_TIMEOUT_EVENT);
        }
        
-       printf("sim7020 uart rx timeout %s\r\n", &g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]);  
+       SIM7020_DEBUG_INFO("sim7020 uart rx timeout %s\r\n", &g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]);  
        
        lpuart_event_clr(p_uart_dev, UART_RX_TIMEOUT_EVENT);
     }            
@@ -214,7 +222,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
             
     if (sim7020_handle->sim7020_event & SIM7020_RECV_EVENT) 
     {   
-        printf("%s recv event\r\n", g_at_cmd.p_atcmd);
+        SIM7020_DEBUG_INFO("%s recv event\r\n", g_at_cmd.p_atcmd);
       
         cmd_is_pass = at_cmd_result_parse(g_sim7020_recv_desc.buf);
         
@@ -253,7 +261,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
                 return  SIM7020_ERROR;
             }            
                                                             
-            printf("%s cmd excute ok\r\n", g_at_cmd.p_atcmd);
+            SIM7020_DEBUG_INFO("%s cmd excute ok\r\n", g_at_cmd.p_atcmd);
           
             //代表命令发送成功了并得到正确的响应
             sim7020_msg_send(sim7020_handle, at_response_par, TRUE);
@@ -270,7 +278,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         
             if (g_at_cmd.cmd_action & ACTION_ERROR_AND_TRY)
             {                                   
-                printf("%s cmd is failed and try\r\n", g_at_cmd.p_atcmd);
+                SIM7020_DEBUG_INFO("%s cmd is failed and try\r\n", g_at_cmd.p_atcmd);
                 
                 at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char*)g_at_cmd.p_atcmd;
                 
@@ -282,7 +290,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
             {               
                 at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = "error but next\r\n";
                
-                printf("%s cmd is failed and next\r\n", g_at_cmd.p_atcmd);
+                SIM7020_DEBUG_INFO("%s cmd is failed and next\r\n", g_at_cmd.p_atcmd);
                 
                 //通知上层应用，此动作执行失败后跳过该命令执行
                 sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_NEXT);
@@ -290,7 +298,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
             }
             else 
             {                
-                printf("%s cmd is failed and exit\r\n", g_at_cmd.p_atcmd);        
+                SIM7020_DEBUG_INFO("%s cmd is failed and exit\r\n", g_at_cmd.p_atcmd);        
                 at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char*)g_at_cmd.p_atcmd;
                 
                 //通知上层应用，此动作执行失败后跳过该命令执行
@@ -363,14 +371,14 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         {           
             at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char *)g_at_cmd.p_atcmd;
            
-            printf("%s cmd not repsonse or send failed\r\n", g_at_cmd.p_atcmd);
+            SIM7020_DEBUG_INFO("%s cmd not repsonse or send failed\r\n", g_at_cmd.p_atcmd);
                                
             //通知上层应用，此动作执行失败后跳过该命令执行
             sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_NEXT);            
         } 
         else 
         {            
-            printf("%s cmd is failed and exit\r\n", g_at_cmd.p_atcmd);        
+            SIM7020_DEBUG_INFO("%s cmd is failed and exit\r\n", g_at_cmd.p_atcmd);        
             at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char*)g_at_cmd.p_atcmd;
             
             //通知上层应用，此动作执行失败后跳过该命令执行
@@ -390,7 +398,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
 
     if (sim7020_handle->sim7020_event & SIM7020_REG_STA_EVENT) 
     {      
-        printf("creg event ok\r\n");
+        SIM7020_DEBUG_INFO("creg event ok\r\n");
                              
         at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = "creg ok";        
           
@@ -408,7 +416,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
     
     if (sim7020_handle->sim7020_event & SIM7020_TCP_RECV_EVENT) 
     {
-        printf("tcp recv event ok\r\n");
+        SIM7020_DEBUG_INFO("tcp recv event ok\r\n");
       
         //通知上层应用接收到TCP数据
         sim7020_msg_send(sim7020_handle, NULL, TRUE);     
@@ -421,7 +429,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
 
     if (sim7020_handle->sim7020_event & SIM7020_UDP_RECV_EVENT) 
     {
-        printf("udp recv event ok\r\n");
+        SIM7020_DEBUG_INFO("udp recv event ok\r\n");
       
         //通知上层应用网络注册结果
         sim7020_msg_send(sim7020_handle, NULL, TRUE);    
@@ -435,14 +443,14 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
     if (sim7020_handle->sim7020_event & SIM7020_COAP_RECV_EVENT) 
     {
         
-        printf("coap recv event ok\r\n");
+        SIM7020_DEBUG_INFO("coap recv event ok\r\n");
              
         sim7020_event_clr(sim7020_handle, SIM7020_COAP_RECV_EVENT); 
     }
     
     if (sim7020_handle->sim7020_event & SIM7020_SOCKET_ERR_EVENT) 
     {       
-        printf("socket err event\r\n");
+        SIM7020_DEBUG_INFO("socket err event\r\n");
       
         //通知上层应用SOCKET失败了
         sim7020_msg_send(sim7020_handle, NULL, TRUE);        
@@ -472,7 +480,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
     
 //    if ((!sim7020_handle->sim7020_event))
 //    {
-//        printf("g_recv_buf %s \r\n", g_sim7020_recv_desc.buf);
+//        SIM7020_DEBUG_INFO("g_recv_buf %s \r\n", g_sim7020_recv_desc.buf);
 //    }
 
     return SIM7020_OK;    
@@ -646,9 +654,9 @@ static int8_t at_cmd_result_parse (char *buf)
 {
     int8_t result = -1;
   
-//    printf("respones buf%s\r\n",buf); 
+//    SIM7020_DEBUG_INFO("respones buf%s\r\n",buf); 
 //  
-//    printf("respones buf len %d \r\n", strlen(buf)); 
+//    SIM7020_DEBUG_INFO("respones buf len %d \r\n", strlen(buf)); 
   
     char *p_colon = strchr(g_at_cmd.p_atcmd,'+');
     char *p_colon_temp = strchr(buf,':');
@@ -1108,9 +1116,9 @@ static uint8_t at_cmd_next (void)
                                         p_remote_port,                                         
                                         REMOTE_SERVER_IP);
                                         
-//            printf("tcpudp_cn_len = %d\r\n", tcpudp_cn_len);
+//            SIM7020_DEBUG_INFO("tcpudp_cn_len = %d\r\n", tcpudp_cn_len);
 //                                        
-//            printf("tcpudp_cn_buf = %s\r\n", buf);                            
+//            SIM7020_DEBUG_INFO("tcpudp_cn_buf = %s\r\n", buf);                            
             
             //最大响应时间不详                                        
             at_cmd_param_init(&g_at_cmd,AT_CSOCON, buf, CMD_SET, 3000);
@@ -1494,7 +1502,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     {
       char *data_buf = g_socket_info[0].data_offest; 
 
-//      printf("data_buf = %s", data_buf);      
+//      SIM7020_DEBUG_INFO("data_buf = %s", data_buf);      
            
       sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_RECV,strlen(data_buf),data_buf);
       
@@ -1509,7 +1517,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     if (g_sim7020_status.sub_status == SIM7020_SUB_SOCKET_ERR)
     {
 
-        printf("the socket err, the err code is %d\r\n", g_socket_info[0].socket_errcode); 
+        SIM7020_DEBUG_INFO("the socket err, the err code is %d\r\n", g_socket_info[0].socket_errcode); 
              
         sim7020_handle->sim7020_cb(sim7020_handle->p_arg,
                                    (sim7020_msg_id_t)SIM7020_MSG_SOCKET_ERROR, 
@@ -1645,8 +1653,7 @@ static int sim7020_at_cmd_send(sim7020_handle_t sim7020_handle, at_cmdhandle cmd
     ret = sim7020_handle->p_drv_funcs->sim7020_send_data(sim7020_handle, 
                                                          (uint8_t*)g_sim7020_send_desc.buf, 
                                                          strLen,                                                    
-                                                         cmd_handle->max_timeout);
-    
+                                                         cmd_handle->max_timeout);   
     return ret;
 }
 
@@ -1832,7 +1839,7 @@ int sim7020_nblot_tcpudp_close(sim7020_handle_t sim7020_handle, sim7020_connect_
         return SIM7020_ERROR;
     }
     
-//    printf("close len %d\r\n",msg_len); 
+//    SIM7020_DEBUG_INFO("close len %d\r\n",msg_len); 
     
                                     
         
@@ -1844,7 +1851,7 @@ int sim7020_nblot_tcpudp_close(sim7020_handle_t sim7020_handle, sim7020_connect_
 
     sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
     
-//    printf("close buf %s", g_sim7020_send_desc.buf);
+//    SIM7020_DEBUG_INFO("close buf %s", g_sim7020_send_desc.buf);
     
     return SIM7020_OK;
 }
@@ -1933,7 +1940,7 @@ int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle, int len, char
         return SIM7020_ERROR;
     }
     
-//    printf("send buf len %d\r\n",msg_len); 
+//    SIM7020_DEBUG_INFO("send buf len %d\r\n",msg_len); 
                                                           
     //构建TCP/UDP数据发送命令，最大响应时间不详
     at_cmd_param_init(&g_at_cmd, AT_CSOSEND, buf, CMD_SET, 3000);
@@ -1945,7 +1952,7 @@ int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle, int len, char
     sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
     
     
-//    printf("send buf %s", g_sim7020_send_desc.buf);    
+//    SIM7020_DEBUG_INFO("send buf %s", g_sim7020_send_desc.buf);    
 
     return SIM7020_OK;
 }   

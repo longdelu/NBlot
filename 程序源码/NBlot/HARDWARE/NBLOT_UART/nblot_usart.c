@@ -407,8 +407,8 @@ void LPUART1_IRQHandler(void)
         //把数据写入环形缓冲区
         atk_ring_buf_write(&g_uart_ring_buf, hlpuart1.Instance->RDR);  
              
-        //收到一个数据，重置超时为50ms 
-        atk_soft_timer_timeout_change(&uart_dev.uart_rx_timer, 50);
+        //收到一个数据，重置超时为500ms 
+        atk_soft_timer_timeout_change(&uart_dev.uart_rx_timer, 500);
                
         // 收到数据表明，发送在超时时间内正常完成，停止发送超时  
         atk_soft_timer_stop(&uart_dev.uart_tx_timer);
