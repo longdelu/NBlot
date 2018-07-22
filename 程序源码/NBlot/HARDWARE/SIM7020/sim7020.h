@@ -210,8 +210,9 @@ typedef enum sim7020_main_status
     SIM7020_TCPUDP_SEND,  // 利用已经创建的TCP/UDP发送数据
     SIM7020_TCPUDP_RECV,  // TCP/UDP接收信息 
     SIM7020_SOCKET_ERR,   // SOCKET连接发生错误
-    SIM7020_CoAP_SEVER,   // CoAP远程地址设置与获取
-    SIM7020_CoAP_SEND,    //  发送消息
+    SIM7020_CoAP_SEVER,   // CoAP远程服务器设置
+    SIM7020_CoAP_CLIENT,  // CoAP客户端连接地址设置
+    SIM7020_CoAP_SEND,    // 发送消息
     SIM7020_CoAP_RECV,    // CoAP返回信息
     SIM7020_RESET,        // 复位NB
     SIM7020_END
@@ -256,6 +257,12 @@ typedef enum sim7020_sub_status
     SIM7020_SUB_SOCKET_ERR,   // SOCKET连接发生错误    
     SIM7020_SUB_TCPUDP_CL,
     
+    SIM7020_SUB_CoAP_SEVER,   // CoAP远程服务器设置
+    SIM7020_SUB_CoAP_CLIENT,  // CoAP客户端连接地址设置
+    SIM7020_SUB_CoAP_SEND,    // 发送消息
+    SIM7020_SUB_CoAP_RECV,    // CoAP返回信息
+    
+    
     SIM7020_SUB_END   
     
 }sim7020_sub_status_t;
@@ -269,7 +276,8 @@ typedef struct sim7020_status_nest
     int                    sub_status;          //命令运行子阶段，用于状态嵌套  
     uint8_t                connect_status;      //链接的状态
     uint8_t                connect_type;        //链接的类型
-    int8_t                 rssi;                //信号的质量            
+    int8_t                 rssi;                //信号的质量
+    int8_t                 cid;  
     uint8_t                register_status;     //网络注册
     
 }sim7020_status_nest_t;
@@ -278,7 +286,7 @@ typedef struct sim7020_status_nest
 typedef struct sim7020_socket_info {
     uint8_t                socket_type;         //指示socket_type的类型
     int8_t                 socket_id;           //指示相应的socket id
-    int8_t                socket_errcode;      //指示相应的socket错误码 
+    int8_t                 socket_errcode;      //指示相应的socket错误码 
     char                  *data_offest;         //数据缓冲区起始地址所在偏移地址
     uint16_t               data_len;            //提示数据长度   
 }sim7020_socket_info_t;

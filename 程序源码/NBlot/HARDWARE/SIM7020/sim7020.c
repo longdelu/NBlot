@@ -1960,36 +1960,39 @@ int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle, int len, char
 //创建coap服务器 
 int sim7020_nblot_coap_server_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type)
 {
-    char *p_tcpudp = NULL;
+  
+    char buf[64] = {0};
   
     if (g_sim7020_status.main_status != SIM7020_NONE)
     {
         return SIM7020_ERROR;
     }
     
-    if (type == SIM7020_TCP)
+    if (type != SIM7020_COAP)
     {
-        g_socket_info[0].socket_type = SIM7020_TCP;
-        p_tcpudp = "1,1,1";
+        return SIM7020_NOTSUPPORT;
     }
     
-    else if(type == SIM7020_UDP)
-    {   
-        g_socket_info[0].socket_type = SIM7020_UDP;
-        p_tcpudp = "1,2,1";
-    } 
-    else 
-    {
-       return SIM7020_NOTSUPPORT;
-      
-    }
+    g_sim7020_status.connect_type = SIM7020_COAP;  
+    g_sim7020_status.cid          = 1;
+               
+                       
+    //这个函数的返回值为想要格式化写入的长度，并会在字符串结束后面自动加入结束字符
+    uint16_t coap_cn_len = snprintf(buf,
+                                    sizeof(buf) -1,"%s,%s,%d",                                                                                             
+                                    REMOTE_SERVER_IP,
+                                    REMOTE_COAP_PORT,
+                                    g_sim7020_status.cid);
+                                        
+                     
             
-    at_cmd_param_init(&g_at_cmd, AT_CSOC, p_tcpudp, CMD_SET, 3000);
-//    g_at_cmd.cmd_action  = ACTION_OK_AND_NEXT | ACTION_ERROR_EXIT;
+    //最大响应时间不详                                          
     
-    //进入SIM7020_SIGNAL状态
-    g_sim7020_status.main_status = SIM7020_TCPUDP_CR;
-    g_sim7020_status.sub_status  = SIM7020_SUB_TCPUDP_CR;
+    at_cmd_param_init(&g_at_cmd, AT_CCOAPSTA, buf, CMD_SET, 3000);
+    
+    //进入设置COAP服务器状态
+    g_sim7020_status.main_status = SIM7020_CoAP_SEVER;
+    g_sim7020_status.sub_status  = SIM7020_SUB_CoAP_SEVER;
 
     sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
     
@@ -2019,12 +2022,11 @@ int sim7020_nblot_coap_client_create(sim7020_handle_t sim7020_handle, sim7020_co
     } 
     else 
     {
-       return SIM7020_NOTSUPPORT;
+        return SIM7020_NOTSUPPORT;
       
     }
             
     at_cmd_param_init(&g_at_cmd, AT_CSOC, p_tcpudp, CMD_SET, 3000);
-//    g_at_cmd.cmd_action  = ACTION_OK_AND_NEXT | ACTION_ERROR_EXIT;
     
     //进入SIM7020_SIGNAL状态
     g_sim7020_status.main_status = SIM7020_TCPUDP_CR;

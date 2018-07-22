@@ -468,7 +468,7 @@ void LPUART1_IRQHandler(void)
     }    
     
     //调用HAL中断处理程序
-    HAL_UART_IRQHandler(&hlpuart1);    
+//    HAL_UART_IRQHandler(&hlpuart1);    
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
