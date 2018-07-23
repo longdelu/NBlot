@@ -485,12 +485,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
             sim7020_status_reset();
         }     
     }
-    
-//    if ((!sim7020_handle->sim7020_event))
-//    {
-//        SIM7020_DEBUG_INFO("g_recv_buf %s \r\n", g_sim7020_recv_desc.buf);
-//    }
-
+   
     return SIM7020_OK;    
 }
 
@@ -1310,10 +1305,20 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
 //    
 //    
     case SIM7020_SUB_CGACT_QUERY:
+    {
+        char *p_colon = strchr(buf[1],':');
+                    
+        if (p_colon != NULL) 
+        {                
+            p_colon++;
+            
+            //转换成10进制数字,得到当前创建的cid
+            g_sim7020_connect_status.cid =strtoul(p_colon,0, 10);
+        }
         
         break;
-    
-        
+     }
+           
     case SIM7020_SUB_CGATT:
         
         break;
@@ -2047,6 +2052,7 @@ int sim7020_nblot_coap_server_create(sim7020_handle_t sim7020_handle, sim7020_co
     
     g_sim7020_connect_status.connect_type = SIM7020_COAP;  
     g_sim7020_connect_status.cid          = 1;
+    g_sim7020_connect_status.connect_id   = 1;
     
     
     //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
@@ -2104,6 +2110,7 @@ int sim7020_nblot_coap_client_create(sim7020_handle_t sim7020_handle, sim7020_co
                                                                        
     //最大响应时间不详                                              
     at_cmd_param_init(&g_at_cmd, AT_CCOAPNEW, cmd_buf_temp, CMD_SET, 3000);
+    g_at_cmd.cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
                                        
     //进入创建客户端状态
     g_sim7020_sm_status.main_status = SIM7020_CoAP_CLIENT;
@@ -2182,11 +2189,16 @@ int sim7020_nblot_coap_send_hex(sim7020_handle_t sim7020_handle, int len, char *
                                 "%d,%d,",
                                  g_sim7020_connect_status.connect_id, 
                                 len);
-                                
+    
+    cmd_buf_temp[msg_len] = '\"';
+    
     for(uint16_t i = 0 ; i < len ; i++)
     {
-        sprintf(&cmd_buf_temp[msg_len + (i << 1)],"%02X",(uint8_t)msg[i]);
-    }                             
+        //表示一个字符先用十六进制表示 
+        sprintf(&cmd_buf_temp[msg_len + 1 + (i << 1)],"%02X",(uint8_t)msg[i]);
+    }
+
+    cmd_buf_temp[msg_len + 1 + (len << 1)] = '\"';    
  
     //构建coap数据发送命令，最大响应时间不详
     at_cmd_param_init(&g_at_cmd, AT_CCOAPSEND, cmd_buf_temp, CMD_SET, 3000);
@@ -2208,11 +2220,16 @@ int sim7020_nblot_coap_send_str(sim7020_handle_t sim7020_handle, int len, char *
         return SIM7020_ERROR;
     }
   
-    //判断SOCKET ID是否正确
-    if (g_socket_info[0].socket_id  < 0 || g_socket_info[0].socket_id > 5 )
+    //判断coap id是否正确
+    if (g_sim7020_connect_status.connect_id  < 0)
     {
         return SIM7020_ERROR;
     }
+    
+    if (type != SIM7020_COAP)
+    {
+        return SIM7020_NOTSUPPORT;
+    } 
       
     //最大数据长度为有效数据加上头部
     int16_t str_len = (SIM7020_SEND_BUF_MAX_LEN - 24) ;
