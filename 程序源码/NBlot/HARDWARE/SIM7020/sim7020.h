@@ -214,9 +214,9 @@ typedef enum sim7020_main_status
     SIM7020_CoAP_CLIENT,  // CoAP客户端连接地址设置
     SIM7020_CoAP_SEND,    // 发送消息
     SIM7020_CoAP_RECV,    // CoAP返回信息
+    SIM7020_CoAP_CL,      // 关闭CoAP
     SIM7020_RESET,        // 复位NB
-    SIM7020_END
-    
+    SIM7020_END    
 }sim7020_main_status_t;
 
 
@@ -261,7 +261,7 @@ typedef enum sim7020_sub_status
     SIM7020_SUB_CoAP_CLIENT,  // CoAP客户端连接地址设置
     SIM7020_SUB_CoAP_SEND,    // 发送消息
     SIM7020_SUB_CoAP_RECV,    // CoAP返回信息
-    
+    SIM7020_SUB_CoAP_CL,      // 关闭CoAP    
     
     SIM7020_SUB_END   
     
@@ -269,19 +269,24 @@ typedef enum sim7020_sub_status
 
 
 
-//sim7020 状态信息
-typedef struct sim7020_status_nest
+//sim7020 状态信息,用于状态机
+typedef struct sim7020_status_sm
 {
     sim7020_main_status_t  main_status;         //命令运行主阶段
-    int                    sub_status;          //命令运行子阶段，用于状态嵌套  
-    uint8_t                connect_status;      //链接的状态
-    uint8_t                connect_type;        //链接的类型
-    int8_t                 rssi;                //信号的质量
-    int8_t                 cid;  
-    uint8_t                register_status;     //网络注册
-    
-}sim7020_status_nest_t;
+    int                    sub_status;          //命令运行子阶段，用于状态嵌套     
+}sim7020_status_sm_t;
 
+//sim7020 连接状态信息,用于指示使用哪种协议进行连接
+typedef struct sim7020_status_connect {
+    uint8_t                connect_status;      //连接的状态
+    uint8_t                connect_type;        //连接的类型
+    int8_t                 connect_id;          //连接的id
+    int8_t                 rssi;                //信号的质量
+    int8_t                 cid;                 //连接的cid
+    uint8_t                register_status;     //网络注册
+    uint16_t               data_len;            //提示数据长度  
+    char                  *data_offest;         //数据缓冲区起始地址所在偏移地址  
+}sim7020_status_connect_t;
 
 typedef struct sim7020_socket_info {
     uint8_t                socket_type;         //指示socket_type的类型
@@ -291,15 +296,14 @@ typedef struct sim7020_socket_info {
     uint16_t               data_len;            //提示数据长度   
 }sim7020_socket_info_t;
 
-//链接类
+//连接的协议类型
 typedef enum sim7020_connect_type {
    SIM7020_NOCON,
    SIM7020_TCP  = 1,         
    SIM7020_UDP,         
    SIM7020_HTTP,        
    SIM7020_COAP,        
-   SIM7020_MQTT,        
-    
+   SIM7020_MQTT,            
 }sim7020_connect_type_t;
 
 //SIM7020G固件信息
@@ -380,13 +384,16 @@ typedef enum sim7020_msg_id
     
     SIM7020_MSG_SOCKET_ERROR, //socket错误    
 
-    SIM7020_MSG_COAP,
+    SIM7020_MSG_COAP_SERVER,
+    SIM7020_MSG_COAP_CLIENT,
     SIM7020_MSG_COAP_SEND,
     SIM7020_MSG_COAP_RECV,
 
-    SIM7020_MSG_RETRY,
+    SIM7020_MSG_CMD_RETRY,
     
-    SIM7020_MSG_FAIL,    
+    SIM7020_MSG_CMD_NEXT,
+    
+    SIM7020_MSG_CMD_FAIL,    
 
     SIM7020_MSG_END
   
@@ -412,13 +419,16 @@ typedef struct sim7020_dev
     volatile int              sim7020_event;
     
     //sim7020指令执行状态信息
-    at_cmd_info_t            *p_sim702_cmd; 
+    at_cmd_info_t            *p_sim7020_cmd; 
 
     //sim7020指令执行状态信息
     sim7020_socket_info_t    *p_socket_info;    
 
-    //sim7020状态信息
-    sim7020_status_nest_t    *sim702_status;
+    //sim7020 sm状态信息
+    sim7020_status_sm_t      *sim7020_sm_status;
+
+    //sim7020 连接状态信息
+    sim7020_status_connect_t *sim7020_connect_status;
   
     //sim7020固件信息
     sim020_firmware_info_t   *firmware_info; 
@@ -478,6 +488,22 @@ int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle,
                                   int len, 
                                   char *msg, 
                                   sim7020_connect_type_t type);
+                                  
+//创建coap服务器 
+int sim7020_nblot_coap_server_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type);
 
+//创建coap客户端
+int sim7020_nblot_coap_client_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type);
+
+
+//关闭coap
+int sim7020_nblot_coap_close(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type);
+
+
+//以hex数据格式发送coap协议数据,必须是偶数个长度
+int sim7020_nblot_coap_send_hex(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type);
+
+//以字符串格式发送数据coap协议数据
+int sim7020_nblot_coap_send_str(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type);                                                                  
 
 #endif

@@ -58,7 +58,7 @@
 int main(void)
 { 
     /* HALø‚≥ı ºªØ */
-    HAL_Init();        
+       HAL_Init();        
     /* Configure the system clock */
     SystemClock_Config();
     delay_init(HAL_RCC_GetHCLKFreq()/1000000);
@@ -81,9 +81,11 @@ int main(void)
     
 //    demo_sim7020_nblot_info_get_entry();
 
-    demo_sim7020_udp_entry();
+//    demo_sim7020_udp_entry();
 
 //    demo_sim7020_tcp_entry();
+
+    demo_sim7020_coap_entry();
     
     while (1)
     {            

@@ -27,11 +27,11 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
     
     switch(msg_id)
     {
-        case SIM7020_MSG_RETRY:
+        case SIM7020_MSG_CMD_RETRY:
           printf("%s cmd error and retry\r\n",msg);      
         break;  
 
-        case SIM7020_MSG_FAIL:
+        case SIM7020_MSG_CMD_FAIL:
         {
           printf("%s cmd failed\r\n",msg);
           
@@ -131,7 +131,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         }
         break;
         
-        case SIM7020_MSG_COAP:
+        case SIM7020_MSG_COAP_SERVER:
         {
           printf("\r\nCOAP=%s\r\n",msg);
         }

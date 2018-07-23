@@ -11,7 +11,7 @@
 #include "sim7020.h"
 #include "stm32l4xx_hal.h"
 
-static int sm7020_main_status = SIM7020_TCPUDP_CR;
+static int sm7020_main_status = SIM7020_CoAP_SEVER;
 
 //sim7020消息事件处理函数
 static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, int len, char *msg)
@@ -22,13 +22,18 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
     
     switch(msg_id)
     {
-        case SIM7020_MSG_RETRY:
-          printf("%s cmd error and retry\r\n",msg);      
+        case SIM7020_MSG_CMD_NEXT:
+          printf("msg %s cmd error but next\r\n",msg);
+          sm7020_main_status = SIM7020_CoAP_CLIENT;        
         break;
         
-        case SIM7020_MSG_FAIL:
+        case SIM7020_MSG_CMD_RETRY:
+          printf("msg %s cmd error but try\r\n",msg);      
+        break;        
+        
+        case SIM7020_MSG_CMD_FAIL:
         {
-          printf("%s cmd failed\r\n",msg);
+          printf("msg %s cmd failed\r\n",msg);
           
           break;                     
         }
@@ -128,21 +133,31 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         }
         break;
         
-        case SIM7020_MSG_COAP:
+        case SIM7020_MSG_COAP_SERVER:
         {
-          printf("\r\nmsg COAP=%s\r\n",msg);
+          printf("\r\nmsg COAP server=%s\r\n",msg);
+          sm7020_main_status = SIM7020_CoAP_CLIENT;   
         }
         break;
+        
+        case  SIM7020_MSG_COAP_CLIENT:
+          printf("\r\nmsg COAP client =%s\r\n",msg);
+          sm7020_main_status = SIM7020_CoAP_SEND;   
+          
+        break;
+     
         
         case SIM7020_MSG_COAP_SEND:
         {
           printf("\r\nmsg COAP_SENT=%s\r\n",msg);
+          
         }
         break;
 
         case SIM7020_MSG_COAP_RECV:
         {
             printf("\r\nmsg COAP_RECEV=%s\r\n",msg);
+            sm7020_main_status = SIM7020_CoAP_CL; 
         }
         break;
 
@@ -247,16 +262,31 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
     case SIM7020_CoAP_SEVER:
       {
         printf("CoAP Server set start\r\n");
+        
+        sim7020_nblot_coap_server_create(sim7020_handle, SIM7020_COAP); 
 
         *sim7020_main_status = SIM7020_END;
       }
       break;
       
+      
+    case SIM7020_CoAP_CLIENT:
+      {
+        printf("CoAP client set start\r\n");
+        
+        sim7020_nblot_coap_client_create(sim7020_handle, SIM7020_COAP); 
+
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;    
+      
     case SIM7020_CoAP_SEND:
       {
         printf("CoAP send start\r\n");
-        *sim7020_main_status = SIM7020_END;
                
+        sim7020_nblot_coap_send_hex(sim7020_handle, 12, "400141C7B7636F756E746572", SIM7020_COAP);  
+          
+        *sim7020_main_status = SIM7020_END;               
       }
       break;
       
@@ -265,6 +295,14 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
         printf("CoAP recv start\r\n");
         *sim7020_main_status = SIM7020_END;        
       }
+      
+    case SIM7020_CoAP_CL:
+      {
+        printf("CoAP close start\r\n");
+        sim7020_nblot_coap_close(sim7020_handle, SIM7020_COAP);
+        *sim7020_main_status = SIM7020_END;        
+      }      
+      
       break;  
       
     default:

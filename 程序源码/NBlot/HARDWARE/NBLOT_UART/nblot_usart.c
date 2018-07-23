@@ -397,15 +397,15 @@ static void __lpuart_tx_timeout_cb (void *p_arg)
 //注意,读取USARTx->SR能避免莫名其妙的错误  
 void LPUART1_IRQHandler(void)                    
 { 
-
-     
+    
     if ((__HAL_UART_GET_IT(&hlpuart1, UART_IT_RXNE)!=RESET))  
     { 
-        //重新开启接收中断 
-        __HAL_UART_ENABLE_IT(&hlpuart1, UART_IT_RXNE); 
       
         //把数据写入环形缓冲区
         atk_ring_buf_write(&g_uart_ring_buf, hlpuart1.Instance->RDR);  
+      
+        //重新开启接收中断 
+        __HAL_UART_ENABLE_IT(&hlpuart1, UART_IT_RXNE);       
              
         //收到一个数据，重置超时为500ms 
         atk_soft_timer_timeout_change(&uart_dev.uart_rx_timer, 500);
@@ -484,6 +484,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 }
 
 #else 
+
 //该函数在数据接收完成时被调用
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {

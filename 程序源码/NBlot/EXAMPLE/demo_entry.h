@@ -32,6 +32,9 @@ void demo_sim7020_gprs_attach_entry(void);
   */
 void demo_sim7020_nblot_info_get_entry(void);
 
+
+void demo_sim7020_coap_entry(void);
+
 /**
   * @}
   */
