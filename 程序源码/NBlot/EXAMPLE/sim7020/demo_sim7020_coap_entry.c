@@ -156,7 +156,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
 
         case SIM7020_MSG_COAP_RECV:
         {
-            printf("\r\nmsg COAP_RECEV=%s\r\n",msg);
+            printf("\r\n msg COAP_RECV=%s\r\n",msg);
             sm7020_main_status = SIM7020_CoAP_CL; 
         }
         break;
@@ -284,7 +284,7 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
       {
         printf("CoAP send start\r\n");
                
-        sim7020_nblot_coap_send_hex(sim7020_handle, 12, "400141C7B7636F756E746572", SIM7020_COAP);  
+        sim7020_nblot_coap_send_str(sim7020_handle, 12, "400141C7B7636F756E746572", SIM7020_COAP);  
           
         *sim7020_main_status = SIM7020_END;               
       }

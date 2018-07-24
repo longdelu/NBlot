@@ -53,7 +53,7 @@
 #define AT_CCOAPSTA    "AT+CCOAPSTA"   //连接远端 CoAP 服务
 #define AT_CCOAPNEW    "AT+CCOAPNEW"   //创建客户端实例
 #define AT_CCOAPSEND   "AT+CCOAPSEND"  //发送16进制数据
-#define AT_CCOAPDE     "AT+CCOAPDE"    //释放并删除客户端实例
+#define AT_CCOAPDEL     "AT+CCOAPDEL"  //释放并删除客户端实例
 
 
 #define AT_CLAC        "AT+CLAC"

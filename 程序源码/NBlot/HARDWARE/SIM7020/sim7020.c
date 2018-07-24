@@ -454,6 +454,9 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         sim7020_msg_send(sim7020_handle, NULL, TRUE);          
              
         sim7020_event_clr(sim7020_handle, SIM7020_COAP_RECV_EVENT); 
+      
+        //清除缓存数据    
+        sim7020_recv_buf_reset();  
     }
     
     if (sim7020_handle->sim7020_event & SIM7020_SOCKET_ERR_EVENT) 
@@ -464,6 +467,9 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         sim7020_msg_send(sim7020_handle, NULL, TRUE);        
               
         sim7020_event_clr(sim7020_handle, SIM7020_SOCKET_ERR_EVENT); 
+      
+        //清除缓存数据    
+        sim7020_recv_buf_reset();  
     }    
 
     //根据事件及状态判断是否需要执行下一条命令
@@ -845,6 +851,7 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         }                   
       
         sim7020_event_set(sim7020_handle, SIM7020_COAP_RECV_EVENT);  
+        sim7020_status_set(SIM7020_CoAP_RECV, SIM7020_SUB_CoAP_RECV);  
     }          
     else if((target_pos_start = strstr(buf,"+CLMOBSERVE")) != NULL)
     {
@@ -1643,10 +1650,8 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     if(g_sim7020_sm_status.sub_status == SIM7020_SUB_CoAP_RECV)
     {
       char *data_buf = g_sim7020_connect_status.data_offest; 
-
-//      SIM7020_DEBUG_INFO("data_buf = %s", data_buf);      
-           
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_RECV,strlen(data_buf),data_buf);
+              
+      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_COAP_RECV,strlen(data_buf),data_buf);
       
       //复位状态标志
       sim7020_status_reset();
@@ -2130,8 +2135,7 @@ int sim7020_nblot_coap_close(sim7020_handle_t sim7020_handle, sim7020_connect_ty
     {
         return SIM7020_ERROR;
     }
-    
-       
+           
     if (type != SIM7020_COAP)
     {
         return SIM7020_NOTSUPPORT;
@@ -2139,12 +2143,12 @@ int sim7020_nblot_coap_close(sim7020_handle_t sim7020_handle, sim7020_connect_ty
     
     g_sim7020_connect_status.connect_type = SIM7020_COAP;  
 
-    //通过客户端id来销毁TCP/UDP链接
-    cmd_buf_temp[0] = g_sim7020_connect_status.connect_id + '1'; 
+    //通过客户端id来销毁COAP链接
+    cmd_buf_temp[0] = g_sim7020_connect_status.connect_id + '0'; 
     cmd_buf_temp[1] = 0;
     cmd_buf_temp[2] = 0;     
                                                                                    
-    at_cmd_param_init(&g_at_cmd, AT_CCOAPDE, cmd_buf_temp, CMD_SET, 3000);
+    at_cmd_param_init(&g_at_cmd, AT_CCOAPDEL, cmd_buf_temp, CMD_SET, 3000);
 
     //进入coap关闭状态,最大响应时间不详
     g_sim7020_sm_status.main_status = SIM7020_CoAP_CL;
@@ -2159,8 +2163,7 @@ int sim7020_nblot_coap_close(sim7020_handle_t sim7020_handle, sim7020_connect_ty
 
 //以hex数据格式发送coap协议数据,必须是偶数个长度
 int sim7020_nblot_coap_send_hex(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type)
-{
-  
+{ 
     if (g_sim7020_sm_status.main_status != SIM7020_NONE)
     {
         return SIM7020_ERROR;
@@ -2242,7 +2245,7 @@ int sim7020_nblot_coap_send_str(sim7020_handle_t sim7020_handle, int len, char *
                                str_len,
                                "%d,%d,%s%s%s",
                                 g_sim7020_connect_status.connect_id ,
-                                0,
+                                len,
                                 "\"",                                  
                                 msg,
                                 "\"");
