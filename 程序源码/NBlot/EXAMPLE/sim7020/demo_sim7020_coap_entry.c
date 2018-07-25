@@ -160,6 +160,13 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
             sm7020_main_status = SIM7020_CoAP_CL; 
         }
         break;
+        
+        
+        case SIM7020_MSG_COAP_CLOSE:
+        {
+            printf("\r\nmsg coap close=%s\r\n",msg);
+        }
+        break;        
 
         default :
         {
@@ -284,7 +291,9 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
       {
         printf("CoAP send start\r\n");
                
-        sim7020_nblot_coap_send_str(sim7020_handle, 12, "400141C7B7636F756E746572", SIM7020_COAP);  
+//        sim7020_nblot_coap_send_str(sim7020_handle, 15, "400141C7B7636F756E746572FF0001", SIM7020_COAP); 
+//        sim7020_nblot_coap_send_str(sim7020_handle, 15, "400141C7B7636F756E746572FF65703d3836383333343033303033373433302670773d393039303236", SIM7020_COAP); 
+        
           
         *sim7020_main_status = SIM7020_END;               
       }

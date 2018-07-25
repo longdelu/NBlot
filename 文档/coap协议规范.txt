@@ -1,0 +1,19 @@
+0x40  ver = 01   t = 00 token = 0000 
+0x01  000 00001  code(method code)
+ 
+0x41C7 message id
+
+
+0xB7  1011 Option Delta  0111 Option Length
+
+opthion 的编号为11, opthion的长度为7个字节  
+
+
+
+63 c
+6F o
+75 u
+6E n
+74 t
+65 e
+72 r"

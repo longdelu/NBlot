@@ -275,10 +275,18 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
             
             //清缓存            
             sim7020_recv_buf_reset();
+            
+            //解析成功避免进入超时事件
+            //sim7020_event_clr(sim7020_handle, SIM7020_TIMEOUT_EVENT); 
        
         }       
         else if(cmd_is_pass == AT_CMD_RESULT_ERROR)
-        {                            
+        { 
+                       
+            //接收在超时时间内正常完成，停止接收超时  
+            atk_soft_timer_stop(&sim7020_handle->p_uart_dev->uart_rx_timer);   
+            recv_cnt=0;
+          
             next_cmd = sim7020_response_handle(sim7020_handle, FALSE);     
         
             if (g_at_cmd.cmd_action & ACTION_ERROR_AND_TRY)
@@ -317,10 +325,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
             //清缓存            
             sim7020_recv_buf_reset();
             
-            recv_cnt=0; 
-            
-            //接收在超时时间内正常完成，停止接收超时  
-            atk_soft_timer_stop(&sim7020_handle->p_uart_dev->uart_rx_timer); 
+
         } 
 
         else if (cmd_is_pass == AT_CMD_RESULT_CONTINUE)
@@ -328,13 +333,14 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
           
             //命令未执行完成，正常情况下，收到的的是命令回显, 接下来的还是当前命令响应数据的接收, 重新启动接收超时               
             atk_soft_timer_timeout_change(&sim7020_handle->p_uart_dev->uart_rx_timer, 1000);
+            recv_cnt=0;
           
             //处于TCP/UDP创建状态时
             if (g_sim7020_sm_status.main_status == SIM7020_TCPUDP_CR) {
                 //通知上层应用，获取相关的信息
                sim7020_msg_send(sim7020_handle, at_response_par, SIM7020_ERROR_CONTINUE);
             }          
-            recv_cnt=0; 
+             
 
             //命令未完成            
         }       
@@ -347,7 +353,10 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
             //一种是表示传输出错，收到的数据都是乱码        
             //第二种是IDLE成帧判断不是那么准确，没有收完也以为一帧结束了
             if (recv_cnt > AT_CMD_RESPONSE_PAR_NUM_MAX)                         
-            {              
+            {  
+               //接收在超时时间内正常完成，停止接收超时  
+               atk_soft_timer_stop(&sim7020_handle->p_uart_dev->uart_rx_timer);   
+              
                //收到的是乱码,强制接收结束
                next_cmd = sim7020_response_handle(sim7020_handle, FALSE);
                //清缓存            
@@ -524,10 +533,11 @@ static int  __sim7020_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, 
     return ret;    
 }
 
+
 //将1个字符转换为10进制数字
 //chr:字符,0~9/A~F/a~F
 //返回值:chr对应的10进制数值
-u8 sim7020_chr2hex(u8 chr)
+static u8 sim7020_chr2hex(u8 chr)
 {
     if(chr>='0'&&chr<='9')
     {
@@ -542,19 +552,17 @@ u8 sim7020_chr2hex(u8 chr)
       return (chr-'a'+10); 
     }
     else
-    {
-      
+    {     
       return 0;
     }
                 
 }
 
 
-
 //将1个16进制数字转换为字符
 //hex:16进制数字,0~15;
 //返回值:字符
-u8 sim7020_hex2chr(u8 hex)
+static u8 sim7020_hex2chr(u8 hex)
 {
     if(hex<=9)
     {
@@ -563,15 +571,35 @@ u8 sim7020_hex2chr(u8 hex)
     else if(hex>=10&&hex<=15)
     {
       return (hex-10+'A'); 
-    }
-    
+    }   
     else 
-    {
-        
-    }      
-    
-    return '0';
+    { 
+      return '0';
+    }              
 }
+
+
+//将缓冲区的数据转换成字符
+//hex:16进制数字,0~15;
+//返回值:字符
+void sim7020_hexbuf2chr(char *p_buf ,int len)
+{
+    int i = 0; 
+   
+    char tmp  = 0;
+    char tmp1 = 0;
+     
+    for (i = 0; i < len; i=i+2)
+    {
+        tmp = sim7020_chr2hex( p_buf[i]);       
+        tmp1 = sim7020_chr2hex(p_buf[i + 1]);      
+        p_buf[i / 2] = (tmp << 4)  |  tmp1;                    
+    } 
+    
+    p_buf[i / 2] = 0;      
+}
+
+
 
 
 //sim7020 at指令初始化
@@ -1577,6 +1605,8 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     if(g_sim7020_sm_status.sub_status == SIM7020_SUB_TCPUDP_RECV)
     {
       char *data_buf = g_socket_info[0].data_offest; 
+      
+      sim7020_hexbuf2chr(data_buf, strlen(data_buf));
 
 //      SIM7020_DEBUG_INFO("data_buf = %s", data_buf);      
            
@@ -1650,6 +1680,8 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     if(g_sim7020_sm_status.sub_status == SIM7020_SUB_CoAP_RECV)
     {
       char *data_buf = g_sim7020_connect_status.data_offest; 
+      
+      sim7020_hexbuf2chr(data_buf, strlen(data_buf));
               
       sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_COAP_RECV,strlen(data_buf),data_buf);
       
@@ -1672,7 +1704,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
              p_buf_tmep = "coap close";
          }         
         
-         sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
+         sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_COAP_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
      }
   }  
 
@@ -2195,9 +2227,11 @@ int sim7020_nblot_coap_send_hex(sim7020_handle_t sim7020_handle, int len, char *
     
     cmd_buf_temp[msg_len] = '\"';
     
+    
+    
     for(uint16_t i = 0 ; i < len ; i++)
     {
-        //表示一个字符先用十六进制表示 
+        //表示一个字符用十六进制表示 
         sprintf(&cmd_buf_temp[msg_len + 1 + (i << 1)],"%02X",(uint8_t)msg[i]);
     }
 
@@ -2266,7 +2300,9 @@ int sim7020_nblot_coap_send_str(sim7020_handle_t sim7020_handle, int len, char *
     sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
          
     return SIM7020_OK;
-}   
+}
+
+
 
 
 

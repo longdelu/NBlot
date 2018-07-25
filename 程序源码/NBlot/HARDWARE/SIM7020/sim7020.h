@@ -114,12 +114,26 @@
 
 #define CMD_OK_RES              "OK"
 
+//#define CTNB                    1
+
+#ifdef CTNB
+#define REMOTE_SERVER_IP        "\"180.101.147.115\""
+#define REMOTE_COAP_PORT        "5683"
+#define REMOTE_UDP_PORT         "6000"
+#define REMOTE_TCP_PORT         "5683"
+
+#define REMOTE_COAP_INFO        "\"180.101.147.115,5683\""
+
+#else
+
 #define REMOTE_SERVER_IP        "\"115.29.240.46\""
 #define REMOTE_COAP_PORT        "5683"
 #define REMOTE_UDP_PORT         "6000"
 #define REMOTE_TCP_PORT         "9000"
 
 #define REMOTE_COAP_INFO        "\"115.29.240.46,5683\""
+
+#endif
 
 #define BAND_850MHZ_ID           5
 #define BAND_850MHZ_STR          "850"
@@ -388,7 +402,8 @@ typedef enum sim7020_msg_id
     SIM7020_MSG_COAP_CLIENT,
     SIM7020_MSG_COAP_SEND,
     SIM7020_MSG_COAP_RECV,
-
+    SIM7020_MSG_COAP_CLOSE,
+    
     SIM7020_MSG_CMD_RETRY,
     
     SIM7020_MSG_CMD_NEXT,
