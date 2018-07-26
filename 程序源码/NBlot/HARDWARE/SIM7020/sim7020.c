@@ -338,10 +338,9 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
             //处于TCP/UDP创建状态时
             if (g_sim7020_sm_status.main_status == SIM7020_TCPUDP_CR) {
                 //通知上层应用，获取相关的信息
-               sim7020_msg_send(sim7020_handle, at_response_par, SIM7020_ERROR_CONTINUE);
+                sim7020_msg_send(sim7020_handle, at_response_par, SIM7020_ERROR_CONTINUE);
             }          
              
-
             //命令未完成            
         }       
         else 
@@ -467,6 +466,35 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         //清除缓存数据    
         sim7020_recv_buf_reset();  
     }
+    
+    if (sim7020_handle->sim7020_event & SIM7020_CM2M_RECV_EVENT) 
+    {
+        
+        SIM7020_DEBUG_INFO("cm2m recv event ok\r\n");
+      
+        //通知上层应用接收到CM2M数据
+        sim7020_msg_send(sim7020_handle, NULL, TRUE);          
+             
+        sim7020_event_clr(sim7020_handle, SIM7020_COAP_RECV_EVENT); 
+      
+        //清除缓存数据    
+        sim7020_recv_buf_reset();  
+    }
+
+    if (sim7020_handle->sim7020_event & SIM7020_CM2M_STATUS_EVENT) 
+    {
+        
+        SIM7020_DEBUG_INFO("cm2m status event ok\r\n");
+      
+        //通知上层应用CM2M状态连接发生变化
+        sim7020_msg_send(sim7020_handle, NULL, TRUE);          
+             
+        sim7020_event_clr(sim7020_handle, SIM7020_CM2M_STATUS_EVENT); 
+      
+        //清除缓存数据    
+        sim7020_recv_buf_reset();  
+    }      
+    
     
     if (sim7020_handle->sim7020_event & SIM7020_SOCKET_ERR_EVENT) 
     {       
@@ -853,7 +881,7 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
       
         int8_t coap_id = 0;
         
-        //得到是哪个socket收到数据
+        //得到是哪个coap收到的数据
         if (p_colon)
         {
             p_colon++;
@@ -880,7 +908,40 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
       
         sim7020_event_set(sim7020_handle, SIM7020_COAP_RECV_EVENT);  
         sim7020_status_set(SIM7020_CoAP_RECV, SIM7020_SUB_CoAP_RECV);  
-    }          
+    } 
+    else if ((target_pos_start = strstr(buf,"+CM2MCLI")) != NULL)
+    {
+        //收到服务器端发来CM2M状态数据
+        char *p_colon = strchr(target_pos_start, ':');
+      
+        
+        //得到有效数据的起始地址
+        if (p_colon)
+        {
+            p_colon++;
+            g_sim7020_connect_status.m2m_status = strtoul(p_colon,0,10);
+        } 
+                              
+        sim7020_event_set(sim7020_handle, SIM7020_CM2M_STATUS_EVENT);  
+        sim7020_status_set(SIM7020_CM2M_STATUS, SIM7020_SUB_CM2M_STATUS);          
+    }
+
+    else if ((target_pos_start = strstr(buf,"+ CM2MCLIRECV")) != NULL)
+    {
+        //收到服务器端发来CM2M数据
+        char *p_colon = strchr(target_pos_start, ':');
+             
+        //得到
+        if (p_colon)
+        {
+            p_colon++;
+            g_sim7020_connect_status.data_offest = p_colon;
+                     
+        } 
+                              
+        sim7020_event_set(sim7020_handle, SIM7020_CM2M_RECV_EVENT);  
+        sim7020_status_set(SIM7020_CM2M_RECV, SIM7020_SUB_CM2M_RECV);           
+    }    
     else if((target_pos_start = strstr(buf,"+CLMOBSERVE")) != NULL)
     {
         sim7020_event_set(sim7020_handle, SIM7020_LWM2M_RECV_EVENT);          
@@ -1219,8 +1280,7 @@ static uint8_t at_cmd_next (void)
       
         return FALSE;     
     }
-
-    
+   
      else if (g_sim7020_sm_status.main_status == SIM7020_CoAP_SEND) 
     {
       
@@ -1236,8 +1296,33 @@ static uint8_t at_cmd_next (void)
         g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
       
         return FALSE;     
-    }   
-        
+    }
+
+    else if (g_sim7020_sm_status.main_status == SIM7020_CM2M_CLIENT) 
+    {
+      
+        g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+      
+        return FALSE;     
+    }
+   
+     else if (g_sim7020_sm_status.main_status == SIM7020_CM2M_SEND) 
+    {
+      
+        g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+      
+        return FALSE;    
+      
+    } 
+    
+    else if (g_sim7020_sm_status.main_status == SIM7020_CM2M_CL) 
+    {
+      
+        g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+      
+        return FALSE;     
+    } 
+       
     else if (g_sim7020_sm_status.main_status == SIM7020_NONE)   
     {  //防止意外重发
        return FALSE; 
@@ -1606,7 +1691,6 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     {
       char *data_buf = g_socket_info[0].data_offest; 
       
-      sim7020_hexbuf2chr(data_buf, strlen(data_buf));
 
 //      SIM7020_DEBUG_INFO("data_buf = %s", data_buf);      
            
@@ -1680,9 +1764,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     if(g_sim7020_sm_status.sub_status == SIM7020_SUB_CoAP_RECV)
     {
       char *data_buf = g_sim7020_connect_status.data_offest; 
-      
-      sim7020_hexbuf2chr(data_buf, strlen(data_buf));
-              
+                   
       sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_COAP_RECV,strlen(data_buf),data_buf);
       
       //复位状态标志
@@ -1706,8 +1788,76 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
         
          sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_COAP_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
      }
-  }  
+  }
 
+  else if(g_sim7020_sm_status.main_status == SIM7020_CM2M_CLIENT)
+  {
+    if (g_sim7020_sm_status.sub_status == SIM7020_SUB_CM2M_CLIENT)
+    { 
+        
+    }    
+    
+    if(g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
+    { 
+      g_sim7020_connect_status.connect_status = 1;         
+      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_CM2M_CLIENT, 1, "S");
+    }
+  }  
+  
+  else if(g_sim7020_sm_status.main_status == SIM7020_CM2M_SEND)
+  {
+    if(g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
+    {
+       char *p_buf_tmep = g_sim7020_send_desc.buf;
+      
+       sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_CM2M_SEND, strlen(p_buf_tmep), p_buf_tmep);
+    }
+  }
+  else if(g_sim7020_sm_status.main_status == SIM7020_CM2M_RECV)
+  {
+    if(g_sim7020_sm_status.sub_status == SIM7020_SUB_CM2M_RECV)
+    {
+      char *data_buf = g_sim7020_connect_status.data_offest; 
+                    
+      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CM2M_RECV,strlen(data_buf),data_buf);
+      
+      //复位状态标志
+      sim7020_status_reset();
+         
+    }
+  }
+  
+  else if(g_sim7020_sm_status.main_status == SIM7020_CM2M_STATUS)
+  {
+    if(g_sim7020_sm_status.sub_status == SIM7020_SUB_CM2M_STATUS)
+    {
+      
+                    
+      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CM2M_STATUS,1, (char *)&g_sim7020_connect_status.m2m_status);
+      
+      //复位状态标志
+      sim7020_status_reset();
+         
+    }
+  }  
+  
+  else if(g_sim7020_sm_status.main_status == SIM7020_CM2M_CL)
+  {
+    if (g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
+    {
+         g_sim7020_connect_status.connect_status = 0;  
+      
+         char *p_buf_tmep = NULL;
+                                    
+         if (g_sim7020_connect_status.connect_type == SIM7020_COAP)
+         {
+             p_buf_tmep = "cm2m close";
+         }         
+        
+         sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CM2M_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
+     }
+  }
+  
   else
   {
 
@@ -2241,8 +2391,8 @@ int sim7020_nblot_coap_send_hex(sim7020_handle_t sim7020_handle, int len, char *
     at_cmd_param_init(&g_at_cmd, AT_CCOAPSEND, cmd_buf_temp, CMD_SET, 3000);
     
     //进入coap数据发送状态
-    g_sim7020_sm_status.main_status = SIM7020_TCPUDP_SEND;
-    g_sim7020_sm_status.sub_status  = SIM7020_SUB_TCPUDP_SEND;
+    g_sim7020_sm_status.main_status = SIM7020_CoAP_SEND;
+    g_sim7020_sm_status.sub_status  = SIM7020_SUB_CoAP_SEND;
 
     sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
 
@@ -2294,13 +2444,128 @@ int sim7020_nblot_coap_send_str(sim7020_handle_t sim7020_handle, int len, char *
     at_cmd_param_init(&g_at_cmd, AT_CCOAPSEND, cmd_buf_temp, CMD_SET, 3000);
     
     //进入coap数据发送状态
-    g_sim7020_sm_status.main_status = SIM7020_TCPUDP_SEND;
-    g_sim7020_sm_status.sub_status  = SIM7020_SUB_TCPUDP_SEND;
+    g_sim7020_sm_status.main_status = SIM7020_CoAP_SEND;
+    g_sim7020_sm_status.sub_status  = SIM7020_SUB_CoAP_SEND;
 
     sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
          
     return SIM7020_OK;
 }
+
+//创建cm2m客户端
+int sim7020_nblot_cm2m_client_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type)
+{     
+    if (g_sim7020_sm_status.main_status != SIM7020_NONE)
+    {
+        return SIM7020_ERROR;
+    }
+    
+    if (type != SIM7020_CM2M)
+    {
+        return SIM7020_NOTSUPPORT;
+    }
+    
+    g_sim7020_connect_status.connect_type = SIM7020_CM2M;
+
+    //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
+    memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));       
+                
+    //这个函数的返回值为想要格式化写入的长度，并会在字符串结束后面自动加入结束字符
+    uint16_t cm2m_cn_len = snprintf(cmd_buf_temp,
+                                    sizeof(cmd_buf_temp) -1,"%s,%s,%s,%d",                                                                                             
+                                    REMOTE_SERVER_IP,
+                                    REMOTE_COAP_PORT,
+                                    g_firmware_info.IMEI,
+                                    100);
+                                                                       
+    //最大响应时间不详                                              
+    at_cmd_param_init(&g_at_cmd, AT_CM2MCLINEW, cmd_buf_temp, CMD_SET, 3000);
+    //g_at_cmd.cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
+                                       
+    //进入创建客户端状态
+    g_sim7020_sm_status.main_status = SIM7020_CM2M_CLIENT;
+    g_sim7020_sm_status.sub_status  = SIM7020_SUB_CM2M_CLIENT;
+
+    sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
+    
+    return SIM7020_OK;
+}
+
+
+//关闭cm2m
+int sim7020_nblot_cm2m_close(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type)
+{
+  
+    if (g_sim7020_sm_status.main_status != SIM7020_NONE)
+    {
+        return SIM7020_ERROR;
+    }
+           
+    if (type != SIM7020_CM2M)
+    {
+        return SIM7020_NOTSUPPORT;
+    }   
+                                                                                   
+    at_cmd_param_init(&g_at_cmd, AT_CM2MCLIDEL, cmd_buf_temp, CMD_SET, 3000);
+
+    //进入cm2m关闭状态,最大响应时间不详
+    g_sim7020_sm_status.main_status = SIM7020_CM2M_CL;
+    g_sim7020_sm_status.sub_status  = SIM7020_SUB_CM2M_CL;
+
+    sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
+    
+    
+    return SIM7020_OK;
+}
+
+
+//以hex数据格式发送cm2m协议数据,必须是偶数个长度
+int sim7020_nblot_cm2m_send_hex(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type)
+{ 
+    if (g_sim7020_sm_status.main_status != SIM7020_NONE)
+    {
+        return SIM7020_ERROR;
+    }
+  
+    //当类型不为CM2M时，或都发送的数据个数不为偶数个时
+    if ((type != SIM7020_COAP) || (strlen(msg) % 2 != 0))
+    {
+        return SIM7020_NOTSUPPORT;
+    } 
+      
+    //最大数据长度为有效数据加上头部
+    int16_t str_len = (SIM7020_SEND_BUF_MAX_LEN - 24) ;
+
+
+    //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
+    memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));   
+
+    int16_t msg_len = snprintf(cmd_buf_temp,
+                               str_len,
+                               "%s%s%s",                                
+                                "\"",                                  
+                                msg,
+                                "\"");
+    
+    if (msg_len < 0) {
+      
+        return SIM7020_ERROR;
+    }
+    
+                                                          
+    //构建cm2m数据发送命令，最大响应时间不详
+    at_cmd_param_init(&g_at_cmd, AT_CM2MCLISEND, cmd_buf_temp, CMD_SET, 3000);
+    
+    //进入cm2m数据发送状态
+    g_sim7020_sm_status.main_status = SIM7020_CM2M_SEND;
+    g_sim7020_sm_status.sub_status  = SIM7020_SUB_CM2M_SEND;
+
+    sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
+         
+    return SIM7020_OK;
+}
+
+
 
 
 

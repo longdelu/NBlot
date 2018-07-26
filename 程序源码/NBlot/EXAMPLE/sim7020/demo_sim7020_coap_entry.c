@@ -156,6 +156,9 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
 
         case SIM7020_MSG_COAP_RECV:
         {
+            //收到的数据是十六进制的数字, data_buf缓冲区当中
+            //每两个字节组成一个十六进制数，2个字节换算成1个字符
+            sim7020_hexbuf2chr(msg, strlen(msg));
             printf("\r\n msg COAP_RECV=%s\r\n",msg);
             sm7020_main_status = SIM7020_CoAP_CL; 
         }
@@ -292,7 +295,7 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
         printf("CoAP send start\r\n");
                
 //        sim7020_nblot_coap_send_str(sim7020_handle, 15, "400141C7B7636F756E746572FF0001", SIM7020_COAP); 
-//        sim7020_nblot_coap_send_str(sim7020_handle, 15, "400141C7B7636F756E746572FF65703d3836383333343033303033373433302670773d393039303236", SIM7020_COAP); 
+        sim7020_nblot_coap_send_str(sim7020_handle, 15 + strlen("ep=868334030037430&pw=909026"), "400141C7B7636F756E746572FF65703d3836383333343033303033373433302670773d393039303236", SIM7020_COAP); 
         
           
         *sim7020_main_status = SIM7020_END;               
@@ -323,7 +326,7 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
 }
 
 /**
-  * @brief  The demo sim7020 udp entry entry point.
+  * @brief  The demo sim7020 coap entry entry point.
   *
   * @retval None
   */

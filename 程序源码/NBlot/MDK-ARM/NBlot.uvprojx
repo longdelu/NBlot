@@ -634,6 +634,11 @@
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\sim7020\demo_sim7020_coap_entry.c</FilePath>
             </File>
+            <File>
+              <FileName>demo_sim7020_iot_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_iot_entry.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -58,7 +58,7 @@
 int main(void)
 { 
     /* HALø‚≥ı ºªØ */
-       HAL_Init();        
+    HAL_Init();        
     /* Configure the system clock */
     SystemClock_Config();
     delay_init(HAL_RCC_GetHCLKFreq()/1000000);
