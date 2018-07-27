@@ -197,8 +197,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         case SIM7020_MSG_CM2M_STATUS:
         {
             printf("\r\nmsg cm2m status=%d\r\n",*msg);
-          
-          
+                 
             switch(*msg) 
             {
               case 1:
@@ -361,12 +360,11 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
       
     case SIM7020_CoAP_SEND:
       {
-        printf("CoAP send start\r\n");
-               
+        printf("CoAP send start\r\n");      
+        
 //        sim7020_nblot_coap_send_str(sim7020_handle, 15, "400141C7B7636F756E746572FF0001", SIM7020_COAP); 
         sim7020_nblot_coap_send_str(sim7020_handle, 15 + strlen("ep=868334030037430&pw=909026"), "400141C7B7636F756E746572FF65703d3836383333343033303033373433302670773d393039303236", SIM7020_COAP); 
-        
-          
+                  
         *sim7020_main_status = SIM7020_END;               
       }
       break;
@@ -399,6 +397,9 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
     case SIM7020_CM2M_SEND:
       {
         printf("CM2M send start\r\n");
+        
+        //创建完成CM2M客户端之后，需要根据当前网络的状态延时一段时间保证数据连接稳定
+        delay_ms(5000);        
                
         sim7020_nblot_cm2m_send_hex(sim7020_handle, strlen("0001"), "0001", SIM7020_CM2M); 
                   
@@ -415,7 +416,9 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
     case SIM7020_CM2M_CL:
       {
         printf("CM2M close start\r\n");
-        sim7020_nblot_coap_close(sim7020_handle, SIM7020_CM2M);
+        //创建完成CM2M客户端之后，需要根据当前网络的状态延时一段时间保证数据连接稳定
+        delay_ms(2000);
+        sim7020_nblot_cm2m_close(sim7020_handle, SIM7020_CM2M);
         *sim7020_main_status = SIM7020_END;        
       }      
       

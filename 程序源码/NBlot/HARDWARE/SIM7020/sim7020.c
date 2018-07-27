@@ -450,7 +450,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         //通知上层应用接收到CM2M数据
         sim7020_msg_send(sim7020_handle, NULL, TRUE);          
              
-        sim7020_event_clr(sim7020_handle, SIM7020_COAP_RECV_EVENT); 
+        sim7020_event_clr(sim7020_handle, SIM7020_CM2M_RECV_EVENT); 
       
         //清除缓存数据    
         sim7020_recv_buf_reset();  
@@ -942,7 +942,7 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         sim7020_status_set(SIM7020_CM2M_STATUS, SIM7020_SUB_CM2M_STATUS);          
     }
 
-    else if ((target_pos_start = strstr(buf,"+ CM2MCLIRECV")) != NULL)
+    else if ((target_pos_start = strstr(buf,"+CM2MCLIRECV")) != NULL)
     {
         //收到服务器端发来CM2M数据
         char *p_colon = strchr(target_pos_start, ':');
@@ -2498,8 +2498,9 @@ int sim7020_nblot_cm2m_client_create(sim7020_handle_t sim7020_handle, sim7020_co
                                     100);
                                                                        
     //最大响应时间不详                                              
-    at_cmd_param_init(&g_at_cmd, AT_CM2MCLINEW, cmd_buf_temp, CMD_SET, 3000);
-   // g_at_cmd.cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
+    at_cmd_param_init(&g_at_cmd, AT_CM2MCLINEW, cmd_buf_temp, CMD_SET, 15000);
+                                    
+    g_at_cmd.cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
                                        
     //进入创建客户端状态
     g_sim7020_sm_status.main_status = SIM7020_CM2M_CLIENT;
@@ -2525,7 +2526,7 @@ int sim7020_nblot_cm2m_close(sim7020_handle_t sim7020_handle, sim7020_connect_ty
         return SIM7020_NOTSUPPORT;
     }   
                                                                                    
-    at_cmd_param_init(&g_at_cmd, AT_CM2MCLIDEL, cmd_buf_temp, CMD_SET, 3000);
+    at_cmd_param_init(&g_at_cmd, AT_CM2MCLIDEL, NULL, CMD_EXCUTE, 15000);
     g_at_cmd.cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT;     
 
     //进入cm2m关闭状态,最大响应时间不详
@@ -2547,7 +2548,7 @@ int sim7020_nblot_cm2m_send_hex(sim7020_handle_t sim7020_handle, int len, char *
     }
   
     //当类型不为CM2M时，或都发送的数据个数不为偶数个时
-    if ((type != SIM7020_COAP) || (strlen(msg) % 2 != 0))
+    if ((type != SIM7020_CM2M) || ((strlen(msg) % 2) != 0))
     {
         return SIM7020_NOTSUPPORT;
     } 

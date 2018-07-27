@@ -402,10 +402,11 @@ void LPUART1_IRQHandler(void)
     { 
       
         //把数据写入环形缓冲区
-        atk_ring_buf_write(&g_uart_ring_buf, hlpuart1.Instance->RDR);         
+        atk_ring_buf_write(&g_uart_ring_buf, hlpuart1.Instance->RDR);  
+          
              
-        //收到一个数据，重置超时为50ms 
-        atk_soft_timer_timeout_change(&uart_dev.uart_rx_timer, 50);
+        //收到一个数据，重置超时为500ms 
+        atk_soft_timer_timeout_change(&uart_dev.uart_rx_timer, 500);
                
         // 收到数据表明，发送在超时时间内正常完成，停止发送超时  
         atk_soft_timer_stop(&uart_dev.uart_tx_timer);
@@ -426,14 +427,48 @@ void LPUART1_IRQHandler(void)
            //设置串口接收完成事件
            lpuart_event_set(&uart_dev, UART_RX_EVENT); 
          
+          #if !UART_ANY_DATA_LEN_RECV 
+           
+              /* Disable the UART Parity Error Interrupt and RXNE interrupts */
+          #if defined(USART_CR1_FIFOEN)
+              CLEAR_BIT(hlpuart1.Instance->CR1, (USART_CR1_RXNEIE_RXFNEIE | USART_CR1_PEIE));
+          #else
+              CLEAR_BIT(hlpuart1.Instance->CR1, (USART_CR1_RXNEIE | USART_CR1_PEIE));
+          #endif //endif  USART_CR1_FIFOEN
+              
+              /* Disable the UART Error Interrupt: (Frame error, noise error, overrun error) */
+              CLEAR_BIT(hlpuart1.Instance->CR3, USART_CR3_EIE);     
+              
+          #endif //endif    UART_ANY_DATA_LEN_RECV
+              
+              //reset the lphuart->RxState
+              hlpuart1.RxState= HAL_UART_STATE_READY; 
+                      
+              //清除溢出中断标记
+              __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_OREF); 
+                                            
+              //清除帧错误中断标记
+              __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_FEF); 
+                                                    
+              //清除校验中断标记
+              __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_PEF); 
+                                                        
+              //清除接收中断
+              __HAL_UART_SEND_REQ(&hlpuart1, UART_RXDATA_FLUSH_REQUEST);
+              
+              //重新开启接收中断 
+              __HAL_UART_ENABLE_IT(&hlpuart1, UART_IT_RXNE);          
+         
+         
        } 
 
         //清除ilde中断标记
         __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_IDLEF);       
                             
     }
-     
-        
+
+       
+         
     
     //调用HAL中断处理程序
 //    HAL_UART_IRQHandler(&hlpuart1);    
