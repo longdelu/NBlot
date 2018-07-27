@@ -488,7 +488,13 @@ typedef sim7020_dev_t *sim7020_handle_t;
 //将缓冲区的数据转换成字符
 //hex:16进制数字,0~15;
 //返回值:字符
-void sim7020_hexbuf2chr(char *p_buf ,int len);
+void sim7020_buf2chr(char *p_buf ,int len);
+
+//缓冲区当中每两个字节组成一个十六进制数，2个字节换算一个字节的十六进制数
+//hex:16进制数字,0~15;
+//返回值:字符
+void sim7020_buf2hex(char *p_buf ,int len);
+
 
 //设置sim7020事件
 void sim7020_event_set (sim7020_handle_t sim7020_handle, int sim7020_event);

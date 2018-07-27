@@ -624,10 +624,10 @@ static u8 sim7020_hex2chr(u8 hex)
 }
 
 
-//将缓冲区的数据转换成字符
+//缓冲区当中每两个字节组成一个十六进制数，2个字节换算成1个字符
 //hex:16进制数字,0~15;
 //返回值:字符
-void sim7020_hexbuf2chr(char *p_buf ,int len)
+void sim7020_buf2chr(char *p_buf ,int len)
 {
     int i = 0; 
    
@@ -637,6 +637,26 @@ void sim7020_hexbuf2chr(char *p_buf ,int len)
     for (i = 0; i < len; i=i+2)
     {
         tmp = sim7020_chr2hex( p_buf[i]);       
+        tmp1 = sim7020_chr2hex(p_buf[i + 1]);      
+        p_buf[i / 2] = (tmp << 4)  |  tmp1;                    
+    } 
+    
+    p_buf[i / 2] = 0;      
+}
+
+//缓冲区当中每两个字节组成一个十六进制数，2个字节换算一个字节的十六进制数
+//hex:16进制数字,0~15;
+//返回值:字符
+void sim7020_buf2hex(char *p_buf ,int len)
+{
+    int i = 0; 
+   
+    char tmp  = 0;
+    char tmp1 = 0;
+     
+    for (i = 0; i < len; i=i+2)
+    {
+        tmp = sim7020_chr2hex(p_buf[i]);       
         tmp1 = sim7020_chr2hex(p_buf[i + 1]);      
         p_buf[i / 2] = (tmp << 4)  |  tmp1;                    
     } 
@@ -950,7 +970,7 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         //得到
         if (p_colon)
         {
-            p_colon++;
+            p_colon =  p_colon + 2;
             g_sim7020_connect_status.data_offest = p_colon;
                      
         } 
@@ -1864,7 +1884,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
       
          char *p_buf_tmep = NULL;
                                     
-         if (g_sim7020_connect_status.connect_type == SIM7020_COAP)
+         if (g_sim7020_connect_status.connect_type == SIM7020_CM2M)
          {
              p_buf_tmep = "cm2m close";
          }         
@@ -2534,8 +2554,7 @@ int sim7020_nblot_cm2m_close(sim7020_handle_t sim7020_handle, sim7020_connect_ty
     g_sim7020_sm_status.sub_status  = SIM7020_SUB_CM2M_CL;
 
     sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
-    
-    
+        
     return SIM7020_OK;
 }
 

@@ -129,7 +129,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
           
             //收到的数据是十六进制的数字, data_buf缓冲区当中
             //每两个字节组成一个十六进制数，2个字节换算成1个字符
-            sim7020_hexbuf2chr(msg, strlen(msg));
+            sim7020_buf2chr(msg, strlen(msg));
           
             printf("\r\nmsg udp recv=%s\r\n",msg);
           
@@ -153,7 +153,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         {
             //收到的数据是十六进制的数字, data_buf缓冲区当中
             //每两个字节组成一个十六进制数，2个字节换算成1个字符
-            sim7020_hexbuf2chr(msg, strlen(msg));
+            sim7020_buf2chr(msg, strlen(msg));
             printf("\r\nmsg COAP_RECEV=%s\r\n",msg);
         }
         break;

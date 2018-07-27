@@ -190,6 +190,38 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         case SIM7020_MSG_CM2M_RECV:
         {
             printf("\r\n msg cm2m recv=%s\r\n",msg);
+          
+            sim7020_buf2hex(msg, strlen(msg));
+          
+            //是LED灯的消息
+            if (msg[0] == 0x02)
+            {
+                if (msg[1] == 0x01) 
+                {
+                    LED0(1);
+                }
+                else
+                {
+                    LED0(0);
+                }
+            }
+            
+            //是蜂鸣器的消息
+            else if (msg[0] == 0x03)  
+            {
+              
+                if (msg[1] == 0x01) 
+                {
+                    LED0(1);
+                }
+                else
+                {
+                    LED0(0);
+                }              
+              
+            }
+            
+            //关闭连接
             sm7020_main_status = SIM7020_CM2M_CL; 
         }
         break;
@@ -208,7 +240,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
 
               case 2:
                 
-                 printf("connect iot update , Take the initiative to report\r\n");
+                printf("connect iot update , Take the initiative to report\r\n");
               
                 break;
               
