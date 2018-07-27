@@ -62,7 +62,7 @@
 #define AT_CM2MCLISEND   "AT+CM2MCLISEND"  //发送16进制数据
 #define AT_CM2MCLIDEL    "AT+CM2MCLIDEL"   //释放并删除客户端实例
 
-
+//低功耗相关命令
 #define AT_CLAC        "AT+CLAC"
 #define AT_CGPADDR     "AT+CGPADDR"
 #define AT_CGDCONT     "AT+CGDCONT"
@@ -73,46 +73,9 @@
 #define AT_CEDRXRDP    "AT+CEDRXRDP"
 #define AT_CTZR        "AT+CTZR"
 
+    
+#define  AT_CIPPING      "AT+CIPPING"     //Ping命令
 
-/* ETSI Commands* (127.005)  <Under development> */
-/*
-#define AT_CSMS       "AT+CSMS"
-#define AT_CNMA       "AT+CNMA"
-#define AT_CSCA       "AT+CSCA"
-#define AT_CMGS       "AT+CMGS"
-#define AT_CMGC       "AT+CMGC"
-#define AT_CSODCP     "AT+CSODCP"
-#define AT_CRTDCP     "AT+CRTDCP"
-*/
-
-#define AT_NMGS       "AT+NMGS"
-#define AT_NMGR       "AT+NMGR"
-#define AT_NNMI       "AT+NNMI"
-#define AT_NSMI       "AT+NSMI"
-#define AT_NQMGR      "AT+NQMGR"
-#define AT_NQMGS      "AT+NQMGS"
-#define AT_NMSTATUS   "AT+NMSTATUS"
-#define AT_NRB        "AT+NRB"
-#define AT_NCDP       "AT+NCDP"
-
-#define AT_NUESTATS   "AT+NUESTATS"
-
-#define AT_NEARFCN    "AT+NEARFCN"
-#define AT_NSOCR      "AT+NSOCR"
-#define AT_NSOST      "AT+NSOST"
-#define AT_NSOSTF     "AT+NSOSTF"
-#define AT_NSORF      "AT+NSORF"
-#define AT_NSOCL      "AT+NSOCL"  
-      
-#define  AT_NPING          "AT+NPING"
-#define  AT_NLOGLEVEL      "AT+NLOGLEVEL"
-#define  AT_NCONFIG        "AT+NCONFIG"
-#define  AT_NATSPEED       "AT+NATSPEED"
-#define  AT_NCCID          "AT+NCCID"
-#define  AT_NFWUPD         "AT+NFWUPD"
-#define  AT_NRDCTRL        "AT+NRDCTRL"
-#define  AT_NCHIPINFO      "AT+NCHIPINFO"
-#define  AT_NTSETID        "AT+NTSETID"
 
 
 #define CMD_TRY_TIMES           10
@@ -217,8 +180,6 @@ typedef at_cmd_info_t *at_cmdhandle;
 #define   SIM7020_ERROR_NEXT         -4
 #define   SIM7020_ERROR_CONTINUE     -5
 
-
-
 //sim7020主状态定义，app可以使用该信息
 typedef enum sim7020_main_status
 {
@@ -300,12 +261,11 @@ typedef enum sim7020_sub_status
 }sim7020_sub_status_t;
 
 
-
 //sim7020 状态信息,用于状态机
 typedef struct sim7020_status_sm
 {
     sim7020_main_status_t  main_status;         //命令运行主阶段
-    int                    sub_status;          //命令运行子阶段，用于状态嵌套     
+    sim7020_sub_status_t   sub_status;          //命令运行子阶段，用于状态嵌套     
 }sim7020_status_sm_t;
 
 //sim7020 连接状态信息,用于指示使用哪种协议进行连接
@@ -390,61 +350,9 @@ struct sim7020_drv_funcs {
 #define    SIM7020_CM2M_RECV_EVENT     0X0200           //CM2M接收事件
 #define    SIM7020_CM2M_STATUS_EVENT   0X0400           //CM2M状态事件
 
-//sim7020消息id, 回调函数中使用
-typedef enum sim7020_msg_id
-{
-    SIM7020_MSG_NONE,
 
-    SIM7020_MSG_NBLOT_INIT,
-
-    SIM7020_MSG_NBLOT_INFO,
-    
-    SIM7020_MSG_REG,
-  
-    SIM7020_MSG_IMEI,       //移动设备身份码   
-    SIM7020_MSG_IMSI,
-  
-    SIM7020_MSG_MID,        //产商ID
-    SIM7020_MSG_MMODEL,     //模块型号
-    SIM7020_MSG_MREV,       //软件版本号
-    SIM7020_MSG_BAND,       //工作频段
-  
-    SIM7020_MSG_CSQ,        
-    SIM7020_MSG_SIGNAL,     //信号强度
-    
-
-    SIM7020_MSG_TCPUDP_CREATE,
-    SIM7020_MSG_TCPUDP_CLOSE,
-    SIM7020_MSG_TCPUDP_SEND,
-    SIM7020_MSG_TCPUDP_RECV,
-    
-    SIM7020_MSG_SOCKET_ERROR, //socket错误    
-
-    SIM7020_MSG_COAP_SERVER,
-    SIM7020_MSG_COAP_CLIENT,
-    SIM7020_MSG_COAP_SEND,
-    SIM7020_MSG_COAP_RECV,
-    SIM7020_MSG_COAP_CLOSE,
-    
-    SIM7020_MSG_CM2M_CLIENT,
-    SIM7020_MSG_CM2M_SEND,
-    SIM7020_MSG_CM2M_RECV,
-    SIM7020_MSG_CM2M_STATUS,
-    SIM7020_MSG_CM2M_CLOSE,   
-
-
-    SIM7020_MSG_CMD_RETRY,
-    
-    SIM7020_MSG_CMD_NEXT,
-    
-    SIM7020_MSG_CMD_FAIL,    
-
-    SIM7020_MSG_END
-  
-}sim7020_msg_id_t;
-
-//定义串口事件回调函数指针
-typedef void (*sim7020_cb)(void *p_arg, sim7020_msg_id_t, int ,char*);
+//定义SIM7020事件回调函数指针
+typedef void (*sim7020_cb)(void *p_arg, int, int ,char*);
 
 
 //sim7020设备结构体
@@ -485,15 +393,29 @@ typedef struct sim7020_dev
 //sim7020设备句柄
 typedef sim7020_dev_t *sim7020_handle_t;
 
+
 //将缓冲区的数据转换成字符
 //hex:16进制数字,0~15;
 //返回值:字符
-void sim7020_buf2chr(char *p_buf ,int len);
+void sim7020_buf2chr (char *p_buf ,int len);
 
 //缓冲区当中每两个字节组成一个十六进制数，2个字节换算一个字节的十六进制数
 //hex:16进制数字,0~15;
 //返回值:字符
-void sim7020_buf2hex(char *p_buf ,int len);
+void sim7020_buf2hex (char *p_buf ,int len);
+
+//sim7020 at指令初始化
+void at_cmd_param_init (at_cmdhandle cmd_handle,
+                              const char *at_cmd,
+                              char *argument,
+                              cmd_property_t property,
+                              uint32_t at_cmd_time_out);
+                              
+//sim7020发送AT指令
+//sim7020_handle   sim7020_handle设备句柄
+//cmd_handle       将要发送指令信息句柄
+//note 调用该函数前先构造好命令的参数
+int sim7020_at_cmd_send(sim7020_handle_t sim7020_handle, at_cmdhandle cmd_handle);                              
 
 
 //设置sim7020事件
@@ -514,63 +436,7 @@ void sim7020_event_registercb (sim7020_handle_t sim7020_handle, sim7020_cb cb, v
 
 //sim7020事件处理函数
 int sim7020_event_poll (sim7020_handle_t sim7020_handle);
-
-//sim7020 nblot初始化及完成网络注册
-int sim7020_nblot_init (sim7020_handle_t sim7020_handle);
-
-//获取NB模块的信息
-int sim7020_nblot_info_get(sim7020_handle_t sim7020_handle);
-
-//获取NB模块的信号质量
-int sim7020_nblot_signal_get(sim7020_handle_t sim7020_handle);
-
-
-//创建tcpudp 
-int sim7020_nblot_tcpudp_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type);
-
-
-//关闭tcpudp
-int sim7020_nblot_tcpudp_close(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type);
-
-
-//以hex数据格式发送数据
-int sim7020_nblot_tcpudp_send_hex(sim7020_handle_t sim7020_handle, 
-                                  int len, 
-                                  char *msg, 
-                                  sim7020_connect_type_t type);
-
-//以字符串格式发送数据
-int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle, 
-                                  int len, 
-                                  char *msg, 
-                                  sim7020_connect_type_t type);
-                                  
-//创建coap服务器 
-int sim7020_nblot_coap_server_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type);
-
-//创建coap客户端
-int sim7020_nblot_coap_client_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type);
-
-
-//关闭coap
-int sim7020_nblot_coap_close(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type);
-
-
-//以hex数据格式发送coap协议数据,必须是偶数个长度
-int sim7020_nblot_coap_send_hex(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type);
-
-//以字符串格式发送数据coap协议数据
-int sim7020_nblot_coap_send_str(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type);                                                                  
-
-//创建cm2m客户端
-int sim7020_nblot_cm2m_client_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type);
-
-
-//关闭cm2m
-int sim7020_nblot_cm2m_close(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type);
-
-//以hex数据格式发送cm2m协议数据,必须是偶数个长度
-int sim7020_nblot_cm2m_send_hex(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type);                                    
+                                   
                                   
                                   
 #endif

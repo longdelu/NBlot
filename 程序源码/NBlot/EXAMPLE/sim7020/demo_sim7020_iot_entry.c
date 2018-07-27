@@ -9,13 +9,14 @@
 #include "delay.h"
 #include "nblot_usart.h"
 #include "sim7020.h"
+#include "sim7020_nblot.h"
 #include "key.h"
 #include "stm32l4xx_hal.h"
 
 static int sm7020_main_status = SIM7020_NBLOT_INIT;
 
 //sim7020消息事件处理函数
-static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, int len, char *msg)
+static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *msg)
 { 
     sim7020_handle_t sim7020_handle = (sim7020_handle_t)p_arg; 
     
@@ -222,7 +223,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
             }
             
             //关闭连接
-            sm7020_main_status = SIM7020_CM2M_CL; 
+//            sm7020_main_status = SIM7020_CM2M_CL; 
         }
         break;
         

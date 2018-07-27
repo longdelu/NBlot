@@ -9,6 +9,7 @@
 #include "delay.h"
 #include "nblot_usart.h"
 #include "sim7020.h"
+#include "sim7020_nblot.h"
 #include "stm32l4xx_hal.h"
 
 
@@ -19,7 +20,7 @@ static sim7020_handle_t  sim7020_handle = NULL;
 
 
 //sim7020消息事件处理函数
-static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, int len, char *msg)
+static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *msg)
 { 
     sim7020_handle_t sim7020_handle = (sim7020_handle_t)p_arg; 
     

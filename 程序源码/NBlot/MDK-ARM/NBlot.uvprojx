@@ -549,6 +549,11 @@
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\SIM7020\sim7020.c</FilePath>
             </File>
+            <File>
+              <FileName>sim7020_nblot.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\SIM7020\sim7020_nblot.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -638,6 +643,11 @@
               <FileName>demo_sim7020_iot_entry.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\sim7020\demo_sim7020_iot_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_sim7020_low_power_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_low_power_entry.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -43,6 +43,13 @@ void demo_sim7020_coap_entry(void);
 void demo_sim7020_iot_entry(void);
 
 /**
+  * @brief  The demo sim7020 low power entry entry point.
+  *
+  * @retval None
+  */
+void demo_sim7020_low_power_entry(void);
+
+/**
   * @}
   */
 
