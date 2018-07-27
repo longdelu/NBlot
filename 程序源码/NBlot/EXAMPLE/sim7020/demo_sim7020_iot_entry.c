@@ -25,7 +25,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
     {
         case SIM7020_MSG_CMD_NEXT:
           printf("msg %s cmd error but next\r\n",msg);
-          sm7020_main_status = SIM7020_CoAP_CLIENT;        
+          ;        
         break;
         
         case SIM7020_MSG_CMD_RETRY:
@@ -44,7 +44,7 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
           printf("init=%s\r\n",msg);
           
           //连接iot平台时必须先得到imie码
-          sm7020_main_status = SIM7020_CM2M_CLIENT;
+          sm7020_main_status = SIM7020_NBLOT_INFO;
                      
         }
         break;
@@ -72,8 +72,9 @@ static void __sim7020_event_cb_handler (void *p_arg, sim7020_msg_id_t msg_id, in
         case SIM7020_MSG_NBLOT_INFO:
           
         {
-          printf("info get=%s\r\n",msg);
-                     
+           printf("info get=%s\r\n",msg);
+           //跳到创建CM2M客户端
+           sm7020_main_status = SIM7020_CM2M_CLIENT;                     
         }
 
         break;
@@ -379,11 +380,47 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
     case SIM7020_CoAP_CL:
       {
         printf("CoAP close start\r\n");
-        sim7020_nblot_coap_close(sim7020_handle, SIM7020_COAP);
+        sim7020_nblot_coap_close(sim7020_handle, SIM7020_CM2M);
+        *sim7020_main_status = SIM7020_END;        
+      }      
+      
+      break; 
+
+    case SIM7020_CM2M_CLIENT:
+      {
+        printf("CM2M client set start\r\n");
+        
+        sim7020_nblot_cm2m_client_create(sim7020_handle, SIM7020_CM2M); 
+
+        *sim7020_main_status = SIM7020_END;
+      }
+      break;    
+      
+    case SIM7020_CM2M_SEND:
+      {
+        printf("CM2M send start\r\n");
+               
+        sim7020_nblot_cm2m_send_hex(sim7020_handle, strlen("0001"), "0001", SIM7020_CM2M); 
+                  
+        *sim7020_main_status = SIM7020_END;               
+      }
+      break;
+      
+    case SIM7020_CM2M_RECV:
+      {
+        printf("CM2M recv start\r\n");
+        *sim7020_main_status = SIM7020_END;        
+      }
+      
+    case SIM7020_CM2M_CL:
+      {
+        printf("CM2M close start\r\n");
+        sim7020_nblot_coap_close(sim7020_handle, SIM7020_CM2M);
         *sim7020_main_status = SIM7020_END;        
       }      
       
       break;  
+      
       
     default:
       {
@@ -444,10 +481,10 @@ void demo_sim7020_iot_entry(void)
     delay_ms(1000);
              
     while (1)
-    {   
+    {
+        sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);      
+        sim7020_event_poll(sim7020_handle);      
         uart_event_poll(lpuart_handle);         
-        sim7020_event_poll(sim7020_handle);
-        sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);
         key_poll();
     }
 }

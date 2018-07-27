@@ -302,9 +302,9 @@ void demo_sim7020_nblot_info_get_entry(void)
              
     while (1)
     {   
-        uart_event_poll(lpuart_handle);         
-        sim7020_event_poll(sim7020_handle);
-        sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);
+        sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);      
+        sim7020_event_poll(sim7020_handle);      
+        uart_event_poll(lpuart_handle);       
     }
 }
 

@@ -36,6 +36,13 @@ void demo_sim7020_nblot_info_get_entry(void);
 void demo_sim7020_coap_entry(void);
 
 /**
+  * @brief  The demo sim7020 iot entry entry point.
+  *
+  * @retval None
+  */
+void demo_sim7020_iot_entry(void);
+
+/**
   * @}
   */
 

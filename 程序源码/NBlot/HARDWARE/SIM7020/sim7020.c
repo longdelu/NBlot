@@ -127,7 +127,7 @@ int sim7020_event_get (sim7020_handle_t sim7020_handle,  int sim7020_event)
 //清除sim7020事件
 void sim7020_event_clr (sim7020_handle_t sim7020_handle, int sim7020_event)
 { 
-    sim7020_handle->sim7020_event ^= sim7020_event;
+    sim7020_handle->sim7020_event &= ~sim7020_event;
 }
 
 //串口事件回调处理函数
@@ -159,7 +159,7 @@ static void __uart_event_cb_handle (void *p_arg)
             //产生异步事件等待处理
             sim7020_event_notify(sim7020_handle, g_sim7020_recv_desc.buf);
             
-            SIM7020_DEBUG_INFO("sim7020 uart rx ok %s\r\n", &g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]);
+            SIM7020_DEBUG_INFO("sim7020 uart rx ok 0x%\r\n", &g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]);
           
             g_sim7020_recv_desc.len = g_sim7020_recv_desc.len + size;
             
@@ -277,7 +277,9 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
             sim7020_recv_buf_reset();
             
             //解析成功避免进入超时事件
-            //sim7020_event_clr(sim7020_handle, SIM7020_TIMEOUT_EVENT); 
+//            sim7020_event_clr(sim7020_handle, SIM7020_TIMEOUT_EVENT); 
+            //清超时事件
+//           lpuart_event_clr(sim7020_handle->p_uart_dev, UART_RX_TIMEOUT_EVENT);                
        
         }       
         else if(cmd_is_pass == AT_CMD_RESULT_ERROR)
@@ -380,7 +382,7 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         next_cmd = sim7020_response_handle(sim7020_handle, FALSE);
       
         //通知上层应用，此动作执行超时
-        if (g_at_cmd.cmd_action & ACTION_ERROR_AND_TRY) 
+        if (g_at_cmd.cmd_action & ACTION_ERROR_BUT_NEXT) 
         {           
             at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char *)g_at_cmd.p_atcmd;
            
@@ -388,8 +390,17 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
                                
             //通知上层应用，此动作执行失败后跳过该命令执行
             sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_NEXT);            
-        } 
-        else 
+        }        
+        else if (g_at_cmd.cmd_action & ACTION_ERROR_AND_TRY) 
+        {           
+            at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char *)g_at_cmd.p_atcmd;
+           
+            SIM7020_DEBUG_INFO("%s cmd not repsonse or send failed\r\n", g_at_cmd.p_atcmd);
+                               
+            //通知上层应用，此动作执行失败后跳过该命令执行
+            sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_RETRY);            
+        }
+        else        
         {            
             SIM7020_DEBUG_INFO("%s cmd is failed and exit\r\n", g_at_cmd.p_atcmd);        
             at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char*)g_at_cmd.p_atcmd;
@@ -909,12 +920,11 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         sim7020_event_set(sim7020_handle, SIM7020_COAP_RECV_EVENT);  
         sim7020_status_set(SIM7020_CoAP_RECV, SIM7020_SUB_CoAP_RECV);  
     } 
-    else if ((target_pos_start = strstr(buf,"+CM2MCLI")) != NULL)
+    else if ((target_pos_start = strstr(buf,"+CM2MCLI:")) != NULL)
     {
         //收到服务器端发来CM2M状态数据
         char *p_colon = strchr(target_pos_start, ':');
-      
-        
+              
         //得到有效数据的起始地址
         if (p_colon)
         {
@@ -1475,7 +1485,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     //查询网络注册状态    
     case SIM7020_SUB_CEREG_QUERY:
 
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_REG, strlen(buf[0]), buf[0]);
+      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_REG, strlen(buf[1]), buf[1]);
     
       break;        
         
@@ -1516,7 +1526,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
         
         if(p_colon)
         {
-          p_colon++;
+          p_colon = p_colon + 2;
           memcpy(g_firmware_info.IMEI ,p_colon,15);
           g_firmware_info.IMEI[15] = 0;
           sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_IMEI,15,(char*)g_firmware_info.IMEI);
@@ -1831,8 +1841,7 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
   {
     if(g_sim7020_sm_status.sub_status == SIM7020_SUB_CM2M_STATUS)
     {
-      
-                    
+                         
       sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CM2M_STATUS,1, (char *)&g_sim7020_connect_status.m2m_status);
       
       //复位状态标志
@@ -2472,15 +2481,19 @@ int sim7020_nblot_cm2m_client_create(sim7020_handle_t sim7020_handle, sim7020_co
                 
     //这个函数的返回值为想要格式化写入的长度，并会在字符串结束后面自动加入结束字符
     uint16_t cm2m_cn_len = snprintf(cmd_buf_temp,
-                                    sizeof(cmd_buf_temp) -1,"%s,%s,%s,%d",                                                                                             
+                                    sizeof(cmd_buf_temp) -1,"%s,%s%s%s,%s%s%s,%d",                                                                                             
                                     REMOTE_SERVER_IP,
+                                    "\"",
                                     REMOTE_COAP_PORT,
+                                    "\"",
+                                    "\"",
                                     g_firmware_info.IMEI,
+                                    "\"",
                                     100);
                                                                        
     //最大响应时间不详                                              
     at_cmd_param_init(&g_at_cmd, AT_CM2MCLINEW, cmd_buf_temp, CMD_SET, 3000);
-    //g_at_cmd.cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
+    g_at_cmd.cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
                                        
     //进入创建客户端状态
     g_sim7020_sm_status.main_status = SIM7020_CM2M_CLIENT;
@@ -2507,6 +2520,7 @@ int sim7020_nblot_cm2m_close(sim7020_handle_t sim7020_handle, sim7020_connect_ty
     }   
                                                                                    
     at_cmd_param_init(&g_at_cmd, AT_CM2MCLIDEL, cmd_buf_temp, CMD_SET, 3000);
+    g_at_cmd.cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT;     
 
     //进入cm2m关闭状态,最大响应时间不详
     g_sim7020_sm_status.main_status = SIM7020_CM2M_CL;
@@ -2517,7 +2531,6 @@ int sim7020_nblot_cm2m_close(sim7020_handle_t sim7020_handle, sim7020_connect_ty
     
     return SIM7020_OK;
 }
-
 
 //以hex数据格式发送cm2m协议数据,必须是偶数个长度
 int sim7020_nblot_cm2m_send_hex(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type)

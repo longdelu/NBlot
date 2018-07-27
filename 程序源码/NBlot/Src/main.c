@@ -85,7 +85,9 @@ int main(void)
 
 //    demo_sim7020_tcp_entry();
 
-    demo_sim7020_coap_entry();
+//    demo_sim7020_coap_entry();
+
+    demo_sim7020_iot_entry();
     
     while (1)
     {            

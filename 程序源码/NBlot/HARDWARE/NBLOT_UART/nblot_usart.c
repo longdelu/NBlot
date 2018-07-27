@@ -52,7 +52,7 @@ int lpuart_event_get (uart_handle_t uart_handle, int uart_event)
 //清除串口事件
 void lpuart_event_clr (uart_handle_t uart_handle, int uart_event)
 { 
-    uart_handle->uart_event ^= uart_event;
+    uart_handle->uart_event &= ~uart_event;
 }
 
 /**
@@ -420,7 +420,8 @@ void LPUART1_IRQHandler(void)
     {
         
         //如果是空闲中断一开始是使能的
-       if (__HAL_UART_GET_IT_SOURCE(&hlpuart1, UART_IT_IDLE)!=RESET) {
+//       if (__HAL_UART_GET_IT_SOURCE(&hlpuart1, UART_IT_IDLE)!=RESET) 
+       {
            
            //接收在超时时间内正常完成，停止接收超时  
            atk_soft_timer_stop(&uart_dev.uart_rx_timer);
@@ -463,7 +464,7 @@ void LPUART1_IRQHandler(void)
        } 
 
         //清除ilde中断标记
-        __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_IDLEF);        
+        __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_IDLEF);       
                             
     }    
     

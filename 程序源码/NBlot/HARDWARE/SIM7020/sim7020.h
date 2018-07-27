@@ -121,7 +121,7 @@
 
 #define CMD_OK_RES              "OK"
 
-//#define CTNB                    1
+#define CTNB                    1
 
 #ifdef CTNB
 #define REMOTE_SERVER_IP        "\"180.101.147.115\""
