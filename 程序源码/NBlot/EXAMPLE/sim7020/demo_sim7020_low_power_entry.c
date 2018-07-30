@@ -165,8 +165,7 @@ static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *
 
         }
         break;
-        
-        
+               
         case SIM7020_MSG_COAP_CLOSE:
         {
             printf("\r\nmsg coap close=%s\r\n",msg);

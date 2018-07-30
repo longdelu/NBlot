@@ -25,8 +25,7 @@ static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *
     switch(msg_id)
     {
         case SIM7020_MSG_CMD_NEXT:
-          printf("msg %s cmd error but next\r\n",msg);
-          ;        
+          printf("msg %s cmd error but next\r\n",msg);         ;        
         break;
         
         case SIM7020_MSG_CMD_RETRY:
@@ -479,6 +478,7 @@ static void key_event_handle(u32 key_event,void *p_arg)
         
         case KEY1_PRES://KEY1按下,写入sector
             printf("key1 press\r\n");
+            sm7020_main_status = SIM7020_CM2M_CL;
             break;
         case KEY2_PRES://KEY2按下,恢复sector的数据
             printf("key2 press\r\n");

@@ -202,6 +202,9 @@ typedef enum sim7020_main_status
     SIM7020_CM2M_RECV,    // CM2M返回信息
     SIM7020_CM2M_STATUS,  // CM2M返回状态消息
     SIM7020_CM2M_CL,      // 关闭CM2M 
+    SIM7020_PSM,          // PSM
+    SIM7020_EDRX,         // eDRX 
+    SIM7020_SLEEP,        // SLEEP      
     SIM7020_RESET,        // 复位NB
     SIM7020_END    
 }sim7020_main_status_t;
@@ -255,7 +258,9 @@ typedef enum sim7020_sub_status
     SIM7020_SUB_CM2M_RECV,    // CM2M返回信息
     SIM7020_SUB_CM2M_STATUS,  // CM2M返回状态消息
     SIM7020_SUB_CM2M_CL,      // 关闭CM2M 
-    
+    SIM7020_SUB_PSM,          // PSM
+    SIM7020_SUB_EDRX,         // eDRX 
+    SIM7020_SUB_SLEEP,        // SLEEP        
     SIM7020_SUB_END   
     
 }sim7020_sub_status_t;
@@ -300,13 +305,26 @@ typedef enum sim7020_connect_type {
    SIM7020_CM2M, 
 }sim7020_connect_type_t;
 
-//SIM7020G固件信息
+//SIM7020固件信息
 typedef struct sim020_firmware_info
 {   char         name[32];
     uint8_t      IMSI[16];
     uint8_t      IMEI[16];      
 }sim020_firmware_info_t;
 
+
+//连接的协议类型
+typedef enum sim7020_lpower_type {
+   PSM  = 1,
+   EDRX,         
+   SLEEP, 
+}sim7020_lpower_type_t;
+
+//SIM7020低功耗信息结构体
+typedef struct sim020_lpower_info_t
+{   sim7020_lpower_type_t lpower_type;
+    char time[4]; 
+}sim020_lpower_info_t;
 
 //定义收发数据缓冲区长度
 #define SIM7020_RECV_BUF_MAX_LEN    (RING_BUF_LEN + 1)
@@ -349,7 +367,8 @@ struct sim7020_drv_funcs {
 #define    SIM7020_SOCKET_ERR_EVENT    0x0100           //SOCKET发生错误事件
 #define    SIM7020_CM2M_RECV_EVENT     0X0200           //CM2M接收事件
 #define    SIM7020_CM2M_STATUS_EVENT   0X0400           //CM2M状态事件
-
+#define    SIM7020_ENTER_LPOWER_EVENT  0X0800           //进入低功耗事件
+#define    SIM7020_EXIT_LPOWER_EVENT   0X1000           //退出低功耗事件
 
 //定义SIM7020事件回调函数指针
 typedef void (*sim7020_cb)(void *p_arg, int, int ,char*);
