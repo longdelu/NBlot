@@ -3,6 +3,7 @@
 #include "sys.h"
 #include "stdio.h"    
 #include "atk_soft_timer.h"
+#include "atk_ring_buf.h"
 
 //////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
@@ -19,7 +20,7 @@
 //V1.0修改说明 
 //////////////////////////////////////////////////////////////////////////////////  
 
-//串口任意长度设备句柄
+//串口任意数据长度收发使能宏
 #define UART_ANY_DATA_LEN_RECV       1
 
 
@@ -29,18 +30,6 @@
 #define UART_TX_TIMEOUT_EVENT        0X0004
 #define UART_RX_TIMEOUT_EVENT        0X0008
 
-//定义环形缓冲区最大接收字节数                               
-#define RING_BUF_LEN                  512         
-
-//环形缓冲区结构体
-typedef struct atk_ring_buf_t
-{
-    uint32_t head;           
-    uint32_t tail;
-    uint32_t lenght;
-    uint8_t  ring_buf[RING_BUF_LEN];  
-    
-}atk_ring_buf_t;
 
 
 //定义串口事件回调函数指针
@@ -74,38 +63,6 @@ typedef struct uart_dev
 //uart设备句柄
 typedef uart_dev_t *uart_handle_t;
 
-
-/**
- * @brief 初始化环形缓冲区的相关信息
- */
-int atk_ring_buf_init (atk_ring_buf_t *p_ring_buf);
-
-/**
- * @brief 往环形缓冲区写数据
- */
-int atk_ring_buf_write(atk_ring_buf_t *p_ring_buf, uint8_t data);
-
-
- /**
- * @brief  读取环形缓冲区的数据
- */
-int atk_ring_buf_read(atk_ring_buf_t *p_ring_buf, uint8_t *data);
-
-/**
- * @brief 环形缓冲区中有效数据的个数
- */
-int atk_ring_buf_avail_len (atk_ring_buf_t *p_ring_buf);
-
- /**
- * @brief  从接收缓存里读取指定长度的数据，并释放占用的空间
- */
-int atk_ring_buf_size_read(atk_ring_buf_t *p_ring_buf, uint8_t *data, int len);
-
-
- /**
- * @brief  写入接收缓存里读指定长度的数据，并占用的空间
- */
-int atk_ring_buf_size_write(atk_ring_buf_t *p_ring_buf, uint8_t *data, int len);
 
 
  /**

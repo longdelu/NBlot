@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32L476xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../Drivers/STM32L4xx_HAL_Driver/Inc;../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../Drivers/CMSIS/Include;..\HARDWARE\KEY;..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\NBLOT_UART;..\HARDWARE\TIMER;..\HARDWARE\LPTIMER;..\EXAMPLE;..\HARDWARE\SIM7020;..\ATK_SOFT_TIMER;..\EXAMPLE\sim7020</IncludePath>
+              <IncludePath>../Inc;../Drivers/STM32L4xx_HAL_Driver/Inc;../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../Drivers/CMSIS/Include;..\HARDWARE\KEY;..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\NBLOT_UART;..\HARDWARE\TIMER;..\HARDWARE\LPTIMER;..\EXAMPLE;..\HARDWARE\SIM7020;..\ATK_SOFT_TIMER;..\EXAMPLE\sim7020;..\ATK_RING_BUF</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -649,6 +649,11 @@
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\sim7020\demo_sim7020_low_power_entry.c</FilePath>
             </File>
+            <File>
+              <FileName>demo_sim7020_iot_api_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_iot_api_entry.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -663,6 +668,21 @@
               <FileName>atk_soft_timer_demo_entry.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\ATK_SOFT_TIMER\atk_soft_timer_demo_entry.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>RING_BUF</GroupName>
+          <Files>
+            <File>
+              <FileName>atk_ring_buf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ATK_RING_BUF\atk_ring_buf.c</FilePath>
+            </File>
+            <File>
+              <FileName>atk_ring_buf_demo_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ATK_RING_BUF\atk_ring_buf_demo_entry.c</FilePath>
             </File>
           </Files>
         </Group>

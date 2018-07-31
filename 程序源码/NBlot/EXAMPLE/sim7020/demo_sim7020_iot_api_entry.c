@@ -497,7 +497,7 @@ static void key_event_handle(u32 key_event,void *p_arg)
   *
   * @retval None
   */
-void demo_sim7020_iot_entry(void)
+void demo_sim7020_api_iot_entry(void)
 {         
     uart_handle_t lpuart_handle = NULL; 
 
