@@ -23,7 +23,6 @@
 
 static char cmd_buf_temp[SIM7020_RECV_BUF_MAX_LEN] = {0};
 
-
 //sim7020 nblot初始化及完成网络注册
 int sim7020_nblot_init (sim7020_handle_t sim7020_handle)
 {

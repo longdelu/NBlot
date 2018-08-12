@@ -506,7 +506,6 @@ void demo_sim7020_iot_entry(void)
     key_init(1);  
     key_registercb(key_event_handle, NULL);  
   
-
     lpuart_handle = lpuart1_init(115200);  
     
     sim7020_handle = sim7020_init(lpuart_handle);

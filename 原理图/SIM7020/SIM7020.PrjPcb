@@ -27,13 +27,13 @@ PushECOToAnnotationFile=1
 DItemRevisionGUID=
 
 [Document1]
-DocumentPath=SIM7020.SchDoc
+DocumentPath=SIM7020.OutJob
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
 AnnotateSuffix=
 AnnotateScope=All
-AnnotateOrder=0
+AnnotateOrder=-1
 DoLibraryUpdate=1
 DoDatabaseUpdate=1
 ClassGenCCAutoEnabled=1
@@ -42,7 +42,7 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
 [Document2]
-DocumentPath=SIM7020.PcbDoc
+DocumentPath=SIM7020_mp2128.PcbDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -57,7 +57,37 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
 [Document3]
-DocumentPath=SIM7020.OutJob
+DocumentPath=SIM7020_mp2128.SchDoc
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+
+[Document4]
+DocumentPath=SIM7020.PcbDoc
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+
+[Document5]
+DocumentPath=SIM7020.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -76,6 +106,10 @@ DocumentPath=Project Outputs for SIM7020\Design Rule Check - SIM7020.html
 DItemRevisionGUID=
 
 [GeneratedDocument2]
+DocumentPath=Project Outputs for SIM7020\Design Rule Check - SIM7020_mp2128.html
+DItemRevisionGUID=
+
+[GeneratedDocument3]
 DocumentPath=SIM7020.PcbDoc.htm
 DItemRevisionGUID=
 

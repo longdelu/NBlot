@@ -207,7 +207,7 @@ static void __uart_event_cb_handle (void *p_arg)
                 g_sim7020_recv_desc.len = g_sim7020_recv_desc.len + size;
             }          
          
-            //产生超时事件，超时事件是否执行命令执行结果
+            //产生超时事件，超时事件是否执行得看命令解析结果
             sim7020_event_set(sim7020_handle, SIM7020_TIMEOUT_EVENT);
        }
        
@@ -662,8 +662,6 @@ void sim7020_buf2hex (char *p_buf ,int len)
 }
 
 
-
-
 //sim7020 at指令初始化
 void at_cmd_param_init (at_cmdhandle cmd_handle,
                         const char *at_cmd,
@@ -805,9 +803,9 @@ static int8_t at_cmd_result_parse (char *buf)
 //处理sim7020事件通知
 static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
 {
-   char *target_pos_start = NULL;
+    char *target_pos_start = NULL;
     
-   if((target_pos_start = strstr(buf, "+CGREG:")) != NULL)
+    if((target_pos_start = strstr(buf, "+CGREG:")) != NULL)
     {
         char *p_colon = strchr(target_pos_start,':');
       
@@ -948,7 +946,7 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         //收到服务器端发来CM2M状态数据
         char *p_colon = strchr(target_pos_start, ':');
               
-        //得到有效数据的起始地址
+        //得到CM2M当前的状态
         if (p_colon)
         {
             p_colon++;
@@ -964,7 +962,7 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         //收到服务器端发来CM2M数据
         char *p_colon = strchr(target_pos_start, ':');
              
-        //得到
+        //得到有效数据的起始地址
         if (p_colon)
         {
             p_colon =  p_colon + 2;
@@ -1079,9 +1077,9 @@ static uint8_t at_cmd_next (void)
         case SIM7020_SUB_CGACT_QUERY:
           {
             at_cmd_param_init(&g_at_cmd, AT_CGACT, NULL, CMD_READ, 151000);
-            g_at_cmd.p_expectres = "+CGACT: 1,1"; //设置期望回复消息，如果指令执行完成
-                                                  //没有与期望的消息匹配，则认为出错
-                                                  //并进行出错尝试
+            g_at_cmd.p_expectres = ",1"; //设置期望回复消息，如果指令执行完成
+                                         //没有与期望的消息匹配，则认为出错
+                                         //并进行出错尝试
           }
           break;          
                

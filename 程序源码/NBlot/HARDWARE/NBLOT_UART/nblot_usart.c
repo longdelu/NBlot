@@ -344,9 +344,6 @@ void LPUART1_IRQHandler(void)
         __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_IDLEF);       
                             
     }
-
-       
-         
     
     //调用HAL中断处理程序
 //    HAL_UART_IRQHandler(&hlpuart1);    

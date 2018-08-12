@@ -25,7 +25,6 @@ void atk_soft_timer_init(struct atk_soft_timer *handle,
                          uint32_t timeout, 
                          uint32_t repeat)
 {
-    // memset(handle, sizeof(struct Timer), 0);
     handle->timeout_cb = timeout_cb;
     handle->p_arg   = p_arg;
     handle->timeout = timeout;

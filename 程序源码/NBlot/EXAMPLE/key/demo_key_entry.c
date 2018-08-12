@@ -12,8 +12,7 @@
 #include "stm32l4xx_hal.h"
 
 static void key_event_handle(u32 key_event,void *p_arg)
-{   
-  
+{     
     switch(key_event)
     {
         case KEY0_PRES://KEY0按下,读取sector
@@ -32,8 +31,7 @@ static void key_event_handle(u32 key_event,void *p_arg)
             printf("WKUP_PRES press\r\n");
             break;        
         
-    }   
-    
+    }      
 }
 
 /**
