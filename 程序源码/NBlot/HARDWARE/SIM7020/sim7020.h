@@ -412,23 +412,37 @@ typedef struct sim7020_dev
 //sim7020设备句柄
 typedef sim7020_dev_t *sim7020_handle_t;
 
-
 //将缓冲区的数据转换成字符
 //hex:16进制数字,0~15;
 //返回值:字符
-void sim7020_buf2chr (char *p_buf ,int len);
+//注意该函数会改变原缓冲区
+void sim7020_buf2chr (char *p_buf, int len);
 
 //缓冲区当中每两个字节组成一个十六进制数，2个字节换算一个字节的十六进制数
 //hex:16进制数字,0~15;
 //返回值:字符
-void sim7020_buf2hex (char *p_buf ,int len);
+//注意该函数会改变原缓冲区
+void sim7020_buf2hex (char *p_buf , int len);
+
+
+//将缓冲区的数据转换成字符
+//hex:16进制数字,0~15;
+//返回值:字符
+//该函数会保留原缓冲区
+void sim7020_srcbuf2chr (char *src_buf ,char *dest_buf, int len);
+
+//缓冲区当中每两个字节组成一个十六进制数，2个字节换算一个字节的十六进制数
+//hex:16进制数字,0~15;
+//返回值:字符
+//该函数会保留原缓冲区
+void sim7020_srcbuf2hex (char *src_buf ,char *dest_buf, int len);
 
 //sim7020 at指令初始化
 void at_cmd_param_init (at_cmdhandle cmd_handle,
-                              const char *at_cmd,
-                              char *argument,
-                              cmd_property_t property,
-                              uint32_t at_cmd_time_out);
+                        const char *at_cmd,
+                        char *argument,
+                        cmd_property_t property,
+                        uint32_t at_cmd_time_out);
                               
 //sim7020发送AT指令
 //sim7020_handle   sim7020_handle设备句柄

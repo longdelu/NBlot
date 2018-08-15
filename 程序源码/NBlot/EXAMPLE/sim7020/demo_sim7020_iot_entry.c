@@ -191,23 +191,37 @@ static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *
         {
             printf("\r\n msg cm2m recv=%s\r\n",msg);
           
-            sim7020_buf2hex(msg, strlen(msg));
+            
+            char recv_buf[12] = {'0','4', '0', '0'};
+            char cmd_rsp[12] = {'0','4', '0', '0'};
+                             
+            sim7020_srcbuf2hex(msg, recv_buf, strlen(msg));
           
             //是LED灯的消息
-            if (msg[0] == 0x02)
+            if (recv_buf[0] == 0x02)
             {
-                if (msg[1] == 0x01) 
+                if (recv_buf[1] == 0x01) 
                 {
                     LED0(1);
                 }
                 else
                 {
                     LED0(0);
+                  
                 }
+                
+              memcpy(&cmd_rsp[4],  &msg[4], 4);
+                
+              cmd_rsp[8] = '0';
+                
+              cmd_rsp[9] = '0';  
+                                
+              //代表该命令执行成功
+              sim7020_nblot_cm2m_send_hex(sim7020_handle, strlen(cmd_rsp), cmd_rsp, SIM7020_CM2M);                       
             }
             
             //是蜂鸣器的消息
-            else if (msg[0] == 0x03)  
+            else if (recv_buf[0] == 0x03)  
             {
               
                 if (msg[1] == 0x01) 
@@ -220,6 +234,14 @@ static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *
                 }              
               
             }
+            
+            else 
+            {
+            
+            
+            }
+            
+      
             
             //关闭连接
 //            sm7020_main_status = SIM7020_CM2M_CL; 

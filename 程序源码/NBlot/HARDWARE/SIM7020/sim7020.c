@@ -620,11 +620,8 @@ static u8 sim7020_hex2chr (u8 hex)
     }              
 }
 
-
-//缓冲区当中每两个字节组成一个十六进制数，2个字节换算成1个字符
-//hex:16进制数字,0~15;
-//返回值:字符
-void sim7020_buf2chr (char *p_buf ,int len)
+//将hex转换成一整串的字符,如0x12345678转换成字符串"12345678"
+void sim7020_hex2chrbuf (char *src_p_buf, char *dest_buf, int len)
 {
     int i = 0; 
    
@@ -633,7 +630,27 @@ void sim7020_buf2chr (char *p_buf ,int len)
      
     for (i = 0; i < len; i=i+2)
     {
-        tmp = sim7020_chr2hex( p_buf[i]);       
+        tmp = sim7020_chr2hex( src_p_buf[i]);       
+        tmp1 = sim7020_chr2hex(src_p_buf[i + 1]);      
+        dest_buf[i / 2] = (tmp << 4)  |  tmp1;                    
+    } 
+    
+    dest_buf[i / 2] = 0;      
+}
+
+//缓冲区当中每两个字节组成一个十六进制数，2个字节换算成1个字符
+//hex:16进制数字,0~15;
+//返回值:字符
+void sim7020_buf2chr (char *p_buf, int len)
+{
+    int i = 0; 
+   
+    char tmp  = 0;
+    char tmp1 = 0;
+     
+    for (i = 0; i < len; i=i+2)
+    {
+        tmp  = sim7020_chr2hex(p_buf[i]);       
         tmp1 = sim7020_chr2hex(p_buf[i + 1]);      
         p_buf[i / 2] = (tmp << 4)  |  tmp1;                    
     } 
@@ -644,7 +661,7 @@ void sim7020_buf2chr (char *p_buf ,int len)
 //缓冲区当中每两个字节组成一个十六进制数，2个字节换算一个字节的十六进制数
 //hex:16进制数字,0~15;
 //返回值:字符
-void sim7020_buf2hex (char *p_buf ,int len)
+void sim7020_buf2hex (char *p_buf , int len)
 {
     int i = 0; 
    
@@ -662,6 +679,47 @@ void sim7020_buf2hex (char *p_buf ,int len)
 }
 
 
+//缓冲区当中每两个字节组成一个十六进制数，2个字节换算成1个字符
+//hex:16进制数字,0~15;
+//返回值:字符
+void sim7020_srcbuf2chr (char *src_buf, char *dest_buf, int len)
+{
+    int i = 0; 
+   
+    char tmp  = 0;
+    char tmp1 = 0;
+     
+    for (i = 0; i < len; i=i+2)
+    {
+        tmp  = sim7020_chr2hex(src_buf[i]);       
+        tmp1 = sim7020_chr2hex(src_buf[i + 1]);      
+        dest_buf[i / 2] = (tmp << 4)  |  tmp1;                    
+    } 
+    
+    dest_buf[i / 2] = 0;      
+}
+
+//缓冲区当中每两个字节组成一个十六进制数，2个字节换算一个字节的十六进制数
+//hex:16进制数字,0~15;
+//返回值:字符
+void sim7020_srcbuf2hex (char *src_buf ,char *dest_buf, int len)
+{
+    int i = 0; 
+   
+    char tmp  = 0;
+    char tmp1 = 0;
+     
+    for (i = 0; i < len; i=i+2)
+    {
+        tmp = sim7020_chr2hex(src_buf[i]);       
+        tmp1 = sim7020_chr2hex(src_buf[i + 1]);      
+        dest_buf[i / 2] = (tmp << 4)  |  tmp1;                    
+    } 
+    
+    dest_buf[i / 2] = 0;      
+}
+
+
 //sim7020 at指令初始化
 void at_cmd_param_init (at_cmdhandle cmd_handle,
                         const char *at_cmd,
@@ -669,9 +727,9 @@ void at_cmd_param_init (at_cmdhandle cmd_handle,
                         cmd_property_t property,
                         uint32_t at_cmd_time_out)
 {
-    if(cmd_handle == NULL)
+    if (cmd_handle == NULL)
     {
-      return;
+        return;
     }
     cmd_handle->cmd_try     = CMD_TRY_TIMES;
     cmd_handle->property    = property;
@@ -688,9 +746,9 @@ static int cmd_generate(at_cmdhandle cmd_handle)
 {
     int cmdLen = 0;
     
-    if(cmd_handle == NULL)
+    if (cmd_handle == NULL)
     {
-       return cmdLen;
+        return cmdLen;
     }
     memset(g_sim7020_send_desc.buf,0,SIM7020_SEND_BUF_MAX_LEN);
     g_sim7020_send_desc.len = 0;
@@ -1721,14 +1779,13 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     if(g_sim7020_sm_status.sub_status == SIM7020_SUB_TCPUDP_RECV)
     {
       char *data_buf = g_socket_info[0].data_offest; 
-      
+      //复位状态标志
+      sim7020_status_reset();      
 
 //      SIM7020_DEBUG_INFO("data_buf = %s", data_buf);      
            
       sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_RECV,strlen(data_buf),data_buf);
       
-      //复位状态标志
-      sim7020_status_reset();
     }
     
   }
@@ -1739,14 +1796,15 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     {
 
         SIM7020_DEBUG_INFO("the socket err, the err code is %d\r\n", g_socket_info[0].socket_errcode); 
+      
+        //复位状态标志
+        sim7020_status_reset();      
              
         sim7020_handle->sim7020_cb(sim7020_handle->p_arg,
                                    (sim7020_msg_id_t)SIM7020_MSG_SOCKET_ERROR, 
                                     1, 
                                     (char *)&g_socket_info[0].socket_errcode);
 
-        //复位状态标志
-        sim7020_status_reset();
     }
     
   }
@@ -1795,12 +1853,12 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     if(g_sim7020_sm_status.sub_status == SIM7020_SUB_CoAP_RECV)
     {
       char *data_buf = g_sim7020_connect_status.data_offest; 
-                   
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_COAP_RECV,strlen(data_buf),data_buf);
       
       //复位状态标志
-      sim7020_status_reset();
-         
+      sim7020_status_reset();      
+                   
+      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_COAP_RECV,strlen(data_buf),data_buf);
+               
     }
   }
   
@@ -1849,11 +1907,12 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
     if(g_sim7020_sm_status.sub_status == SIM7020_SUB_CM2M_RECV)
     {
       char *data_buf = g_sim7020_connect_status.data_offest; 
+      
+      //复位状态标志
+      sim7020_status_reset();      
                     
       sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CM2M_RECV,strlen(data_buf),data_buf);
       
-      //复位状态标志
-      sim7020_status_reset();
          
     }
   }
@@ -1862,12 +1921,10 @@ static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t
   {
     if(g_sim7020_sm_status.sub_status == SIM7020_SUB_CM2M_STATUS)
     {
-                         
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CM2M_STATUS,1, (char *)&g_sim7020_connect_status.m2m_status);
-      
       //复位状态标志
-      sim7020_status_reset();
-         
+      sim7020_status_reset();                         
+      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CM2M_STATUS,1, (char *)&g_sim7020_connect_status.m2m_status);
+               
     }
   }  
   

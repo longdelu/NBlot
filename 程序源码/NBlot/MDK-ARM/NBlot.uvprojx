@@ -650,9 +650,9 @@
               <FilePath>..\EXAMPLE\sim7020\demo_sim7020_low_power_entry.c</FilePath>
             </File>
             <File>
-              <FileName>demo_sim7020_iot_api_entry.c</FileName>
+              <FileName>demo_sim7020_easyiot_entry.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_iot_api_entry.c</FilePath>
+              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_easyiot_entry.c</FilePath>
             </File>
           </Files>
         </Group>
