@@ -8,7 +8,7 @@
 #include "atk_led.h"
 #include "atk_delay.h"
 #include "atk_bc28_nbiot.h"
-#include "atk_sim7020.h"
+#include "atk_bc28.h"
 #include "atk_bc28_nbiot.h"
 #include "stm32l4xx_hal.h"
 
@@ -283,13 +283,13 @@ void demo_sim7020_gprs_attach_entry(void)
 { 
     int sm7020_main_status =  SIM7020_NBLOT_INIT;
         
-    uart_handle_t lpuart_handle = NULL; 
+    uart_handle_t nbiot_handle = NULL; 
 
     sim7020_handle_t  sim7020_handle = NULL;   
 
-    lpuart_handle = lpuart1_init(115200);  
+    nbiot_handle = atk_nbiot_uart_init(115200);  
     
-    sim7020_handle = sim7020_init(lpuart_handle);
+    sim7020_handle = sim7020_init(nbiot_handle);
      
     sim7020_event_registercb(sim7020_handle, __sim7020_event_cb_handler, sim7020_handle);
     
@@ -300,7 +300,7 @@ void demo_sim7020_gprs_attach_entry(void)
     {   
         sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);      
         sim7020_event_poll(sim7020_handle);      
-        uart_event_poll(lpuart_handle);       
+        uart_event_poll(nbiot_handle);       
     }
 }
 

@@ -1,18 +1,18 @@
 /**
   *
   * @file           : demo_sim7020_udp_entry.c
-  * @brief          : sim7020 coap 收发数据实验
+  * @brief          : sim7020 udp 收发数据实验
   */
 /* Includes ------------------------------------------------------------------*/
 #include "atk_sys.h"
 #include "atk_led.h"
 #include "atk_delay.h"
 #include "atk_bc28_nbiot.h"
-#include "atk_sim7020.h"
+#include "atk_bc28.h"
 #include "atk_bc28_nbiot.h"
 #include "stm32l4xx_hal.h"
 
-static int sm7020_main_status = SIM7020_CoAP_SEVER;
+static int sm7020_main_status = SIM7020_TCPUDP_CR;
 
 //sim7020消息事件处理函数
 static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *msg)
@@ -23,18 +23,17 @@ static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *
     
     switch(msg_id)
     {
-        case SIM7020_MSG_CMD_NEXT:
-          printf("msg %s cmd error but next\r\n",msg);
-          sm7020_main_status = SIM7020_CoAP_CLIENT;        
+        case SIM7020_MSG_CMD_RETRY:
+          printf("%s cmd error and retry\r\n",msg);      
         break;
         
-        case SIM7020_MSG_CMD_RETRY:
-          printf("msg %s cmd error but try\r\n",msg);      
+        case SIM7020_MSG_CMD_NEXT:
+          printf("%s cmd error and retry\r\n",msg);      
         break;        
         
         case SIM7020_MSG_CMD_FAIL:
         {
-          printf("msg %s cmd failed\r\n",msg);
+          printf("%s cmd failed\r\n",msg);
           
           break;                     
         }
@@ -128,6 +127,11 @@ static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *
         
         case SIM7020_MSG_TCPUDP_RECV:
         {
+                     
+            //收到的数据是十六进制的数字, data_buf缓冲区当中
+            //每两个字节组成一个十六进制数，2个字节换算成1个字符
+            sim7020_buf2chr(msg, strlen(msg));
+          
             printf("\r\nmsg udp recv=%s\r\n",msg);
           
             sm7020_main_status = SIM7020_TCPUDP_CL;
@@ -136,22 +140,13 @@ static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *
         
         case SIM7020_MSG_COAP_SERVER:
         {
-          printf("\r\nmsg COAP server=%s\r\n",msg);
-          sm7020_main_status = SIM7020_CoAP_CLIENT;   
+          printf("\r\nmsg COAP=%s\r\n",msg);
         }
         break;
-        
-        case  SIM7020_MSG_COAP_CLIENT:
-          printf("\r\nmsg COAP client =%s\r\n",msg);
-          sm7020_main_status = SIM7020_CoAP_SEND;   
-          
-        break;
-     
         
         case SIM7020_MSG_COAP_SEND:
         {
           printf("\r\nmsg COAP_SENT=%s\r\n",msg);
-          
         }
         break;
 
@@ -160,17 +155,9 @@ static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *
             //收到的数据是十六进制的数字, data_buf缓冲区当中
             //每两个字节组成一个十六进制数，2个字节换算成1个字符
             sim7020_buf2chr(msg, strlen(msg));
-            printf("\r\n msg COAP_RECV=%s\r\n",msg);
-            sm7020_main_status = SIM7020_CoAP_CL; 
+            printf("\r\nmsg COAP_RECEV=%s\r\n",msg);
         }
         break;
-        
-        
-        case SIM7020_MSG_COAP_CLOSE:
-        {
-            printf("\r\nmsg coap close=%s\r\n",msg);
-        }
-        break;        
 
         default :
         {
@@ -273,33 +260,16 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
     case SIM7020_CoAP_SEVER:
       {
         printf("CoAP Server set start\r\n");
-        
-        sim7020_nblot_coap_server_create(sim7020_handle, SIM7020_COAP); 
 
         *sim7020_main_status = SIM7020_END;
       }
       break;
       
-      
-    case SIM7020_CoAP_CLIENT:
-      {
-        printf("CoAP client set start\r\n");
-        
-        sim7020_nblot_coap_client_create(sim7020_handle, SIM7020_COAP); 
-
-        *sim7020_main_status = SIM7020_END;
-      }
-      break;    
-      
     case SIM7020_CoAP_SEND:
       {
         printf("CoAP send start\r\n");
+        *sim7020_main_status = SIM7020_END;
                
-//        sim7020_nblot_coap_send_str(sim7020_handle, 15, "400141C7B7636F756E746572FF0001", SIM7020_COAP); 
-        sim7020_nblot_coap_send_str(sim7020_handle, 15 + strlen("ep=868334030037430&pw=909026"), "400141C7B7636F756E746572FF65703d3836383333343033303033373433302670773d393039303236", SIM7020_COAP); 
-        
-          
-        *sim7020_main_status = SIM7020_END;               
       }
       break;
       
@@ -308,14 +278,6 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
         printf("CoAP recv start\r\n");
         *sim7020_main_status = SIM7020_END;        
       }
-      
-    case SIM7020_CoAP_CL:
-      {
-        printf("CoAP close start\r\n");
-        sim7020_nblot_coap_close(sim7020_handle, SIM7020_COAP);
-        *sim7020_main_status = SIM7020_END;        
-      }      
-      
       break;  
       
     default:
@@ -327,19 +289,19 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
 }
 
 /**
-  * @brief  The demo sim7020 coap entry entry point.
+  * @brief  The demo sim7020 udp entry entry point.
   *
   * @retval None
   */
-void demo_sim7020_coap_entry(void)
+void demo_sim7020_udp_entry(void)
 {         
-    uart_handle_t lpuart_handle = NULL; 
+    uart_handle_t nbiot_handle = NULL; 
 
     sim7020_handle_t  sim7020_handle = NULL;   
 
-    lpuart_handle = lpuart1_init(115200);  
+    nbiot_handle = atk_nbiot_uart_init(115200);  
     
-    sim7020_handle = sim7020_init(lpuart_handle);
+    sim7020_handle = sim7020_init(nbiot_handle);
      
     sim7020_event_registercb(sim7020_handle, __sim7020_event_cb_handler, sim7020_handle);
     
@@ -348,9 +310,9 @@ void demo_sim7020_coap_entry(void)
              
     while (1)
     {   
-        uart_event_poll(lpuart_handle);         
-        sim7020_event_poll(sim7020_handle);
-        sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);
+        sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);      
+        sim7020_event_poll(sim7020_handle);      
+        uart_event_poll(nbiot_handle);       
     }
 }
 

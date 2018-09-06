@@ -4,7 +4,7 @@
  *      *** Do not modify ! ***
  *
  * Project: 'ATK_BC28_NBIoT' 
- * Target:  'NBlot' 
+ * Target:  'NBIoT' 
  */
 
 #ifndef RTE_COMPONENTS_H

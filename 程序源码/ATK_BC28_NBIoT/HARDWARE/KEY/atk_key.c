@@ -13,12 +13,12 @@
 //All rights reserved									  
 //////////////////////////////////////////////////////////////////////////////////
 
-static key_dev_t key_check_press = {0,0, NULL, NULL};
+static key_dev_t key_dev = {0,0, NULL, NULL};
 
 
 //按键初始化函数
 //mode: 0 查询模式； 1：中断模式
-void key_init(int mode)
+key_handle_t key_init(int mode)
 {
     GPIO_InitTypeDef GPIO_Initure;
     
@@ -54,6 +54,8 @@ void key_init(int mode)
         HAL_NVIC_SetPriority(EXTI3_IRQn,12,0);       //抢占优先级为12，子优先级为0
         HAL_NVIC_EnableIRQ(EXTI3_IRQn);              //使能中断线13          
     }
+		
+    return &key_dev;
 }
 
 //按键处理函数,非中断情况下调用
@@ -62,7 +64,7 @@ void key_init(int mode)
 //0，没有任何按键按下
 //1，WKUP按下 WK_UP
 //注意此函数有响应优先级,KEY0>KEY1>KEY2>WK_UP!!
-u8 KEY_Scan(u8 mode)
+u8 key_scan(u8 mode)
 {
     static u8 key_up=1;     //按键松开标志
     if(mode==1)key_up=1;    //支持连按
@@ -110,16 +112,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         case GPIO_PIN_0:
             if(WK_UP==0) 
             {
-                key_check_press.key_event  = WKUP_PRES;
-                key_check_press.start_tick = HAL_GetTick();
+                key_dev.key_event  = WKUP_PRES;
+                key_dev.start_tick = HAL_GetTick();
             }
             break;
             
         case GPIO_PIN_1:
             if (KEY2==0)  //
             {
-                key_check_press.key_event  = KEY2_PRES;
-                key_check_press.start_tick = HAL_GetTick();           
+                key_dev.key_event  = KEY2_PRES;
+                key_dev.start_tick = HAL_GetTick();           
                 
             }
             break;
@@ -127,8 +129,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         case GPIO_PIN_2:
             if(KEY1==0)  
             {
-                key_check_press.key_event  = KEY1_PRES;
-                key_check_press.start_tick = HAL_GetTick();
+                key_dev.key_event  = KEY1_PRES;
+                key_dev.start_tick = HAL_GetTick();
                 
             }
             break;
@@ -138,83 +140,77 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             if(KEY0==0)  //
             {
                 
-                key_check_press.key_event  = KEY0_PRES;
-                key_check_press.start_tick = HAL_GetTick();
+                key_dev.key_event  = KEY0_PRES;
+                key_dev.start_tick = HAL_GetTick();
             }
             break;
     }
 }
 
 
-//注册按钮事件回调
-void key_registercb(key_cb cb, void *p_arg)
+//注册按键事件回调
+void atk_key_registercb (key_handle_t key_handle, key_cb cb, void *p_arg)
 {
-    if(cb != 0)
+    if ((cb != NULL) && (key_handle != NULL))
     {
-        key_check_press.key_cb = cb;
-        key_check_press.p_arg  = p_arg;
+        key_handle->key_cb = cb;
+        key_handle->p_arg  = p_arg;
     }
 }
 
 
-//**************************************
-// fn : key_poll
-//
-// brief : 轮询按钮事件
-//
-// param : none
-//
-// return : none
-void key_poll(void)
+
+//轮询按钮事件
+void atk_key_event_poll(key_handle_t key_handle)
 {
   uint8_t key_event = 0;
     
-  if(key_check_press.key_event)
+  if(key_dev.key_event)
   { 
-    if(HAL_GetTick() - key_check_press.start_tick >= KEY_DELAY_TICK )
+    if(HAL_GetTick() - key_dev.start_tick >= KEY_DELAY_TICK )
     {
-      if(key_check_press.key_event & WKUP_PRES)
+      if(key_dev.key_event & WKUP_PRES)
       {
         if(WK_UP == GPIO_PIN_RESET)
         {
           key_event |= WKUP_PRES;
         }
 
-        key_check_press.key_event ^= WKUP_PRES;
+        key_dev.key_event ^= WKUP_PRES;
       }
       
-      if(key_check_press.key_event & KEY2_PRES)
+      if(key_dev.key_event & KEY2_PRES)
       {
         if(KEY2 == GPIO_PIN_RESET)
         {
           key_event |= KEY2_PRES;
         }
-        key_check_press.key_event ^= KEY2_PRES;
+        key_dev.key_event ^= KEY2_PRES;
       }
       
-      if(key_check_press.key_event & KEY1_PRES)
+      if(key_dev.key_event & KEY1_PRES)
       {
         if(KEY1 == GPIO_PIN_RESET)
         {
           key_event |= KEY1_PRES;
         }
-        key_check_press.key_event ^= KEY1_PRES;
+        key_dev.key_event ^= KEY1_PRES;
       }
       
-      if(key_check_press.key_event & KEY0_PRES)
+      if(key_dev.key_event & KEY0_PRES)
       {
         if(KEY0 == GPIO_PIN_RESET)
         {
           key_event |= KEY0_PRES;
         }
-        key_check_press.key_event ^= KEY0_PRES;
+        key_dev.key_event ^= KEY0_PRES;
       }
     }
   }
   
   //如果真的有按钮按下，则执行回调函数
-  if(key_event && key_check_press.key_cb)
+  if(key_event && key_handle->key_cb)
   {
-    key_check_press.key_cb(key_event, key_check_press.p_arg);
+    key_handle->key_cb(key_event, key_handle->p_arg);
   }
 }

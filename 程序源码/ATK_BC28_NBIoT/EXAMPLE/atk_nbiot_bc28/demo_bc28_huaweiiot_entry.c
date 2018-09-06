@@ -7,9 +7,9 @@
 #include "atk_sys.h"
 #include "atk_led.h"
 #include "atk_delay.h"
+#include "atk_nbiot_usart.h"
 #include "atk_bc28_nbiot.h"
-#include "atk_sim7020.h"
-#include "atk_bc28_nbiot.h"
+#include "atk_bc28.h"
 #include "atk_key.h"
 #include "stm32l4xx_hal.h"
 
@@ -191,14 +191,60 @@ static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *
         {
             printf("\r\n msg cm2m recv=%s\r\n",msg);
           
-            printf("\r\n msg cm2m recv=%s\r\n",msg);
+            
+            char recv_buf[12] = {'0','4', '0', '0'};
+            char cmd_rsp[12] = {'0','4', '0', '0'};
+                             
+            sim7020_srcbuf2hex(msg, recv_buf, strlen(msg));
           
+            //是LED灯的消息
+            if (recv_buf[0] == 0x02)
+            {
+                if (recv_buf[1] == 0x01) 
+                {
+                    LED0(1);
+                }
+                else
+                {
+                    LED0(0);
+                  
+                }
+                
+              memcpy(&cmd_rsp[4],  &msg[4], 4);
+                
+              cmd_rsp[8] = '0';
+                
+              cmd_rsp[9] = '0';  
+                                
+              //代表该命令执行成功
+              sim7020_nblot_cm2m_send_hex(sim7020_handle, strlen(cmd_rsp), cmd_rsp, SIM7020_CM2M);                       
+            }
+            
+            //是蜂鸣器的消息
+            else if (recv_buf[0] == 0x03)  
+            {
+              
+                if (msg[1] == 0x01) 
+                {
+                    LED0(1);
+                }
+                else
+                {
+                    LED0(0);
+                }              
+              
+            }
+            
+            else 
+            {
+            
+            
+            }
             
       
-                                
-            //代表该命令执行成功
-            //sim7020_nblot_cm2m_send_hex(sim7020_handle, strlen(cmd_rsp), cmd_rsp, SIM7020_CM2M);                       
-                                               
+            
+            //关闭连接
+//            sm7020_main_status = SIM7020_CM2M_CL; 
         }
         break;
         
@@ -268,7 +314,7 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
            
     case SIM7020_NBLOT_INIT:
       {
-        printf("atk_sim7020 init start\r\n");
+        printf("sim7020 init start\r\n");
                 
         sim7020_nblot_init(sim7020_handle);        
 
@@ -278,7 +324,7 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
       
     case SIM7020_NBLOT_INFO:
       {
-         printf("atk_sim7020 get signal start\r\n");
+         printf("sim7020 get signal start\r\n");
                 
          sim7020_nblot_info_get(sim7020_handle);
 
@@ -289,7 +335,7 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
       
     case SIM7020_SIGNAL:
       {
-        printf("atk_sim7020 rssi(db) start\r\n");
+        printf("sim7020 rssi(db) start\r\n");
         
         sim7020_nblot_signal_get(sim7020_handle);
         
@@ -407,12 +453,9 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
         printf("CM2M send start\r\n");
         
         //创建完成CM2M客户端之后，需要根据当前网络的状态延时一段时间保证数据连接稳定
-        delay_ms(5000);
-
-        //easyiot平台数据
-        char *easyiot_buf="01F00035000150FFFFFFCE313233343536373839303132333435373834303139323833373531303233000001658EE53A4001000401000101B5";       
+        delay_ms(5000);        
                
-        sim7020_nblot_cm2m_send_hex(sim7020_handle, strlen(easyiot_buf), easyiot_buf, SIM7020_CM2M); 
+        sim7020_nblot_cm2m_send_hex(sim7020_handle, strlen("00023132"), "00023132", SIM7020_CM2M); 
                   
         *sim7020_main_status = SIM7020_END;               
       }
@@ -431,9 +474,11 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
         delay_ms(2000);
         sim7020_nblot_cm2m_close(sim7020_handle, SIM7020_CM2M);
         *sim7020_main_status = SIM7020_END;        
-      }           
+      }      
+      
       break;  
-           
+      
+      
     default:
       {
         
@@ -444,7 +489,8 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
 
 
 static void key_event_handle(u32 key_event,void *p_arg)
-{     
+{   
+  
     switch(key_event)
     {
         case KEY0_PRES://KEY0按下,再一次发送数据
@@ -473,19 +519,22 @@ static void key_event_handle(u32 key_event,void *p_arg)
   *
   * @retval None
   */
-void demo_sim7020_easyiot_entry(void)
+void demo_sim7020_huaweiiot_entry(void)
 {         
-    uart_handle_t lpuart_handle = NULL; 
+    uart_handle_t nbiot_handle = NULL; 
 
     sim7020_handle_t  sim7020_handle = NULL; 
+	
+	key_handle_t  key_handle = NULL;
+	
 
-    key_init(1);  
-    key_registercb(key_event_handle, NULL);  
-  
-
-    lpuart_handle = lpuart1_init(115200);  
+    key_handle = key_init(1); 
+	
+    atk_key_registercb(key_handle, key_event_handle, NULL);  
+   
+    nbiot_handle = atk_nbiot_uart_init(115200);  
     
-    sim7020_handle = sim7020_init(lpuart_handle);
+    sim7020_handle = sim7020_init(nbiot_handle);
      
     sim7020_event_registercb(sim7020_handle, __sim7020_event_cb_handler, sim7020_handle);
     
@@ -496,8 +545,8 @@ void demo_sim7020_easyiot_entry(void)
     {
         sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);      
         sim7020_event_poll(sim7020_handle);      
-        uart_event_poll(lpuart_handle);         
-        key_poll();
+        uart_event_poll(nbiot_handle);         
+        atk_key_event_poll(key_handle);
     }
 }
 

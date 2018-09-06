@@ -1,6 +1,7 @@
 #ifndef _NBLOT_USART_H
 #define _NBLOT_USART_H
-#include "sys.h"
+
+#include "atk_sys.h"
 #include "stdio.h"    
 #include "atk_soft_timer.h"
 #include "atk_ring_buf.h"
@@ -83,7 +84,7 @@ int uart_ring_buf_write(uart_handle_t uart_handle, uint8_t *data, int len);
                    
 //初始化IO LPUART1
 //bound:波特率
-uart_dev_t *lpuart1_init (u32 bound);
+uart_dev_t *atk_nbiot_uart_init (u32 bound);
 
 
 //轮询发送串口数据
@@ -101,17 +102,17 @@ int uart_data_tx_int(uart_handle_t uart_handle, uint8_t *pData, uint16_t size, u
 
 
 //注册串口事件回调函数
-void lpuart_event_registercb(uart_handle_t uart_handle, uart_cb cb, void *p_arg);
+void uart_event_registercb(uart_handle_t uart_handle, uart_cb cb, void *p_arg);
 
 
 //设置串口事件
-void lpuart_event_set (uart_handle_t uart_handle,int uart_event);
+void uart_event_set (uart_handle_t uart_handle,int uart_event);
 
 //获取串口事件
-int lpuart_event_get (uart_handle_t uart_handle, int uart_event);
+int uart_event_get (uart_handle_t uart_handle, int uart_event);
 
 //清除串口事件
-void lpuart_event_clr (uart_handle_t uart_handle, int uart_event);
+void uart_event_clr (uart_handle_t uart_handle, int uart_event);
 
 //轮询串口事件
 void uart_event_poll(uart_handle_t uart_handle);

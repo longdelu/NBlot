@@ -8,7 +8,7 @@
 #include "atk_led.h"
 #include "atk_delay.h"
 #include "atk_bc28_nbiot.h"
-#include "atk_sim7020.h"
+#include "atk_bc28.h"
 #include "atk_bc28_nbiot.h"
 #include "atk_key.h"
 #include "stm32l4xx_hal.h"
@@ -497,16 +497,19 @@ static void key_event_handle(u32 key_event,void *p_arg)
   */
 void demo_sim7020_low_power_entry(void)
 {         
-    uart_handle_t lpuart_handle = NULL; 
+    uart_handle_t nbiot_handle = NULL; 
 
     sim7020_handle_t  sim7020_handle = NULL; 
-
-    key_init(1);  
-    key_registercb(key_event_handle, NULL);  
-  
-    lpuart_handle = lpuart1_init(115200);  
     
-    sim7020_handle = sim7020_init(lpuart_handle);
+    key_handle_t  key_handle = NULL;
+
+    key_handle = key_init(1);
+    
+    atk_key_registercb(key_handle, key_event_handle, NULL);  
+  
+    nbiot_handle = atk_nbiot_uart_init(115200);  
+    
+    sim7020_handle = sim7020_init(nbiot_handle);
      
     sim7020_event_registercb(sim7020_handle, __sim7020_event_cb_handler, sim7020_handle);
     
@@ -517,8 +520,8 @@ void demo_sim7020_low_power_entry(void)
     {
         sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);      
         sim7020_event_poll(sim7020_handle);      
-        uart_event_poll(lpuart_handle);         
-        key_poll();
+        uart_event_poll(nbiot_handle);         
+        atk_key_event_poll(key_handle);
     }
 }
 

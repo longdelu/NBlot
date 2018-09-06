@@ -24,25 +24,25 @@ static void uart_event_callback_handle(void *p_arg)
 
     if (p_uart_dev->uart_event & UART_TX_EVENT) {
         printf("tx data ok\r\n"); 
-        lpuart_event_clr(p_uart_dev, UART_TX_EVENT); 
+        uart_event_clr(p_uart_dev, UART_TX_EVENT); 
     }
 
     if (p_uart_dev->uart_event & UART_RX_EVENT) {
         printf("rx data ok\r\n");
         
-        lpuart_event_clr(p_uart_dev, UART_RX_EVENT); 
+        uart_event_clr(p_uart_dev, UART_RX_EVENT); 
     } 
 
     if (p_uart_dev->uart_event & UART_TX_TIMEOUT_EVENT) {
         printf("tx data timeout\r\n");
         
-        lpuart_event_clr(p_uart_dev, UART_TX_TIMEOUT_EVENT); 
+        uart_event_clr(p_uart_dev, UART_TX_TIMEOUT_EVENT); 
     } 
 
     if (p_uart_dev->uart_event & UART_RX_TIMEOUT_EVENT) {
         printf("rx data timeout\r\n");
         
-        lpuart_event_clr(p_uart_dev, UART_RX_TIMEOUT_EVENT); 
+        uart_event_clr(p_uart_dev, UART_RX_TIMEOUT_EVENT); 
     }            
 }
 
@@ -56,18 +56,18 @@ void demo_uart_int_entry(void)
 { 
     uint8_t buf[32];  
 
-    uart_handle_t lpuart_handle = NULL;  
+    uart_handle_t nbiot_handle = NULL;  
 
-    lpuart_handle = lpuart1_init(115200);  
+    nbiot_handle = atk_nbiot_uart_init(115200);  
      
-    lpuart_event_registercb(lpuart_handle, uart_event_callback_handle, lpuart_handle);  
+    uart_event_registercb(nbiot_handle, uart_event_callback_handle, nbiot_handle);  
 
-    uart_data_rx_int(lpuart_handle,  buf, sizeof("nblot_uart rx tx test ok\r\n") - 1, 20000); 
-    uart_data_tx_poll(lpuart_handle, buf, sizeof("nblot_uart rx tx test ok\r\n") - 1, 20000);    
+    uart_data_rx_int(nbiot_handle,  buf, sizeof("nblot_uart rx tx test ok\r\n") - 1, 20000); 
+    uart_data_tx_poll(nbiot_handle, buf, sizeof("nblot_uart rx tx test ok\r\n") - 1, 20000);    
 
     while (1)
     {
-        uart_event_poll(lpuart_handle);
+        uart_event_poll(nbiot_handle);
         LED0_Toggle;        
         delay_ms(100);  
     }  

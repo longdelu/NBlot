@@ -14,123 +14,122 @@
 #include "atk_bc28_nbiot.h"
 #include "atk_delay.h"
 
-#define SIM7020_NBLOT_DEBUG                   
-#ifdef SIM7020_NBLOT_DEBUG
-#define SIM7020_NBLOT_DEBUG_INFO(...)    (int)printf(__VA_ARGS__)
+#define NBIOT_DEBUG                   
+#ifdef NBIOT_DEBUG
+#define NBIOT_DEBUG_INFO(...)    (int)printf(__VA_ARGS__)
 #else
-#define SIM7020_NBLOT_DEBUG_INFO(...)
+#define NBIOT_DEBUG_INFO(...)
 #endif
 
-static char cmd_buf_temp[SIM7020_RECV_BUF_MAX_LEN] = {0};
+static char cmd_buf_temp[NBIOT_RECV_BUF_MAX_LEN] = {0};
 
-//sim7020 nblot初始化及完成网络注册
-int sim7020_nblot_init (sim7020_handle_t sim7020_handle)
-{
-    
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+//nblot初始化,用于完成网络注册
+int nblot_init (nbiot_handle_t handle)
+{    
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
 
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_SYNC, NULL, CMD_EXCUTE, 3000);
+    at_cmd_param_init(handle->p_cmd, AT_SYNC, NULL, CMD_EXCUTE, 3000);
 
-    //进入SIM7020_NBLOT_INIT状态
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_NBLOT_INIT;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_SYNC;
+    //进入NBIOT_INIT状态
+    handle->sm_status->main_status = NBIOT_INIT;
+    handle->sm_status->sub_status  = NBIOT_SUB_SYNC;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
 
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 //获取NB模块的信息
-int sim7020_nblot_info_get(sim7020_handle_t sim7020_handle)
+int nblot_info_get(nbiot_handle_t handle)
 {
 
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
     
     
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CGREG, NULL, CMD_READ, 3000);
+    at_cmd_param_init(handle->p_cmd, AT_CGREG, NULL, CMD_READ, 3000);
 
-    //进入SIM7020_NBLOT_INFO状态
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_NBLOT_INFO;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_CEREG_QUERY;
+    //进入NBIOT_INFO状态
+    handle->sm_status->main_status = NBIOT_INFO;
+    handle->sm_status->sub_status  = NBIOT_SUB_CEREG_QUERY;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
     
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 
 //获取NB模块的信号质量
-int sim7020_nblot_signal_get(sim7020_handle_t sim7020_handle)
+int nblot_signal_get(nbiot_handle_t handle)
 {
 
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
         
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CSQ, NULL, CMD_EXCUTE, 3000);
+    at_cmd_param_init(handle->p_cmd, AT_CSQ, NULL, CMD_EXCUTE, 3000);
 
-    //进入SIM7020_SIGNAL状态
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_SIGNAL;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_CSQ;
+    //进入NBIOT_SIGNAL状态
+    handle->sm_status->main_status = NBIOT_SIGNAL;
+    handle->sm_status->sub_status  = NBIOT_SUB_CSQ;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
     
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 //创建tcpudp 
-int sim7020_nblot_tcpudp_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type)
+int nblot_tcpudp_create(nbiot_handle_t handle, connect_type_t type)
 {
     char *p_tcpudp = NULL;
   
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
     
-    if (type == SIM7020_TCP)
+    if (type == NBIOT_TCP)
     {
-        sim7020_handle->p_socket_info[0].socket_type = SIM7020_TCP;
+        handle->p_socket_info[0].socket_type = NBIOT_TCP;
         p_tcpudp = "1,1,1";
     }
     
-    else if(type == SIM7020_UDP)
+    else if(type == NBIOT_UDP)
     {   
-        sim7020_handle->p_socket_info[0].socket_type = SIM7020_UDP;
+        handle->p_socket_info[0].socket_type = NBIOT_UDP;
         p_tcpudp = "1,2,1";
     } 
     else 
     {
-       return SIM7020_NOTSUPPORT;
+       return NBIOT_NOTSUPPORT;
       
     }
             
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CSOC, p_tcpudp, CMD_SET, 3000);
+    at_cmd_param_init(handle->p_cmd, AT_CSOC, p_tcpudp, CMD_SET, 3000);
     
     //进入创建TCP/UDP状态
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_TCPUDP_CR;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_TCPUDP_CR;
+    handle->sm_status->main_status = NBIOT_TCPUDP_CR;
+    handle->sm_status->sub_status  = NBIOT_SUB_TCPUDP_CR;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
     
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 
 //关闭tcpudp
-int sim7020_nblot_tcpudp_close(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type)
+int nblot_tcpudp_close(nbiot_handle_t handle, connect_type_t type)
 {
 
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
     
        
@@ -142,42 +141,42 @@ int sim7020_nblot_tcpudp_close(sim7020_handle_t sim7020_handle, sim7020_connect_
     int16_t msg_len = snprintf(cmd_buf_temp,
                                 sizeof(cmd_buf_temp),
                                 "%d",
-                                sim7020_handle->p_socket_info[0].socket_id);
+                                handle->p_socket_info[0].socket_id);
                                 
     if (msg_len < 0) {
       
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
                                                    
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CSOCL, cmd_buf_temp, CMD_SET, 3000);
+    at_cmd_param_init(handle->p_cmd, AT_CSOCL, cmd_buf_temp, CMD_SET, 3000);
 
     //进入tcp/udp关闭状态
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_TCPUDP_CL;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_TCPUDP_CL;
+    handle->sm_status->main_status = NBIOT_TCPUDP_CL;
+    handle->sm_status->sub_status  = NBIOT_SUB_TCPUDP_CL;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
         
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 
 //以hex数据格式发送数据,必须是偶数个长度
-int sim7020_nblot_tcpudp_send_hex(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type)
+int nblot_tcpudp_send_hex(nbiot_handle_t handle, int len, char *msg, connect_type_t type)
 {
   
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
   
     //判断SOCKET ID是否正确
-    if (sim7020_handle->p_socket_info[0].socket_id  < 0 || sim7020_handle->p_socket_info[0].socket_id > 5 )
+    if (handle->p_socket_info[0].socket_id  < 0 || handle->p_socket_info[0].socket_id > 5 )
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
   
     //最大数据长度为有效数据加上头部
-    int16_t str_len = (SIM7020_SEND_BUF_MAX_LEN - 20) ;
+    int16_t str_len = (NBIOT_SEND_BUF_MAX_LEN - 20) ;
 
     //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
     memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));
@@ -186,7 +185,7 @@ int sim7020_nblot_tcpudp_send_hex(sim7020_handle_t sim7020_handle, int len, char
     uint16_t msg_len = snprintf(cmd_buf_temp,
                                 str_len,
                                 "%d,%d,",
-                                 sim7020_handle->p_socket_info[0].socket_id, 
+                                 handle->p_socket_info[0].socket_id, 
                                 len);
                                 
     for(uint16_t i = 0 ; i < len ; i++)
@@ -195,35 +194,35 @@ int sim7020_nblot_tcpudp_send_hex(sim7020_handle_t sim7020_handle, int len, char
     }                             
  
     //构建TCP/UDP数据发送命令，最大响应时间不详
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CSOSEND, cmd_buf_temp, CMD_SET, 3000);
+    at_cmd_param_init(handle->p_cmd, AT_CSOSEND, cmd_buf_temp, CMD_SET, 3000);
     
     //进入tcp/udp数据发送状态
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_TCPUDP_SEND;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_TCPUDP_SEND;
+    handle->sm_status->main_status = NBIOT_TCPUDP_SEND;
+    handle->sm_status->sub_status  = NBIOT_SUB_TCPUDP_SEND;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
 
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 //以字符串格式发送数据
-int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type)
+int nblot_tcpudp_send_str(nbiot_handle_t handle, int len, char *msg, connect_type_t type)
 {
   
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
   
     //判断SOCKET ID是否正确
-    if (sim7020_handle->p_socket_info[0].socket_id  < 0 || sim7020_handle->p_socket_info[0].socket_id > 5 )
+    if (handle->p_socket_info[0].socket_id  < 0 || handle->p_socket_info[0].socket_id > 5 )
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
       
 
     //最大数据长度为有效数据加上头部
-    int16_t str_len = (SIM7020_SEND_BUF_MAX_LEN - 20) ;
+    int16_t str_len = (NBIOT_SEND_BUF_MAX_LEN - 20) ;
 
     //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
     memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));
@@ -232,7 +231,7 @@ int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle, int len, char
     int16_t msg_len = snprintf(cmd_buf_temp,
                                str_len,
                                "%d,%d,%s%s%s",
-                                sim7020_handle->p_socket_info[0].socket_id,
+                                handle->p_socket_info[0].socket_id,
                                 0,
                                 "\"",                                  
                                 msg,
@@ -240,39 +239,39 @@ int sim7020_nblot_tcpudp_send_str(sim7020_handle_t sim7020_handle, int len, char
     
     if (msg_len < 0) {
       
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
     
                                                           
     //构建TCP/UDP数据发送命令，最大响应时间不详
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CSOSEND, cmd_buf_temp, CMD_SET, 3000);
+    at_cmd_param_init(handle->p_cmd, AT_CSOSEND, cmd_buf_temp, CMD_SET, 3000);
     
     //进入tcp/udp数据发送状态
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_TCPUDP_SEND;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_TCPUDP_SEND;
+    handle->sm_status->main_status = NBIOT_TCPUDP_SEND;
+    handle->sm_status->sub_status  = NBIOT_SUB_TCPUDP_SEND;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
     
-    return SIM7020_OK;
+    return NBIOT_OK;
 }   
 
 //创建coap服务器 
-int sim7020_nblot_coap_server_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type)
+int nblot_coap_server_create(nbiot_handle_t handle, connect_type_t type)
 {
    
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
     
-    if (type != SIM7020_COAP)
+    if (type != NBIOT_COAP)
     {
-        return SIM7020_NOTSUPPORT;
+        return NBIOT_NOTSUPPORT;
     }
     
-    sim7020_handle->sim7020_connect_status->connect_type = SIM7020_COAP;  
-    sim7020_handle->sim7020_connect_status->cid          = 1;
-    sim7020_handle->sim7020_connect_status->connect_id   = 1;
+    handle->connect_status->connect_type = NBIOT_COAP;  
+    handle->connect_status->cid          = 1;
+    handle->connect_status->connect_id   = 1;
     
     
     //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
@@ -284,39 +283,39 @@ int sim7020_nblot_coap_server_create(sim7020_handle_t sim7020_handle, sim7020_co
                                     sizeof(cmd_buf_temp) -1,"%s,%s,%d",                                                                                             
                                     REMOTE_SERVER_IP,
                                     REMOTE_COAP_PORT,
-                                    sim7020_handle->sim7020_connect_status->cid);
+                                    handle->connect_status->cid);
                                         
                      
             
     //最大响应时间不详                                              
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CCOAPSTA, cmd_buf_temp, CMD_SET, 3000);
-    sim7020_handle->p_sim7020_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT;                                
+    at_cmd_param_init(handle->p_cmd, AT_CCOAPSTA, cmd_buf_temp, CMD_SET, 3000);
+    handle->p_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT;                                
     
     //进入设置COAP服务器状态
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_CoAP_SEVER;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_CoAP_SEVER;
+    handle->sm_status->main_status = NBIOT_CoAP_SEVER;
+    handle->sm_status->sub_status  = NBIOT_SUB_CoAP_SEVER;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
     
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 //创建coap客户端
-int sim7020_nblot_coap_client_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type)
+int nblot_coap_client_create(nbiot_handle_t handle, connect_type_t type)
 {
      
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
     
-    if (type != SIM7020_COAP)
+    if (type != NBIOT_COAP)
     {
-        return SIM7020_NOTSUPPORT;
+        return NBIOT_NOTSUPPORT;
     }
     
-    sim7020_handle->sim7020_connect_status->connect_type = SIM7020_COAP;
-    sim7020_handle->sim7020_connect_status->cid          = 1;  
+    handle->connect_status->connect_type = NBIOT_COAP;
+    handle->connect_status->cid          = 1;  
 
     //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
     memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));       
@@ -326,77 +325,77 @@ int sim7020_nblot_coap_client_create(sim7020_handle_t sim7020_handle, sim7020_co
                                     sizeof(cmd_buf_temp) -1,"%s,%s,%d",                                                                                             
                                     REMOTE_SERVER_IP,
                                     REMOTE_COAP_PORT,
-                                    sim7020_handle->sim7020_connect_status->cid);
+                                    handle->connect_status->cid);
                                                                        
     //最大响应时间不详                                              
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CCOAPNEW, cmd_buf_temp, CMD_SET, 3000);
-    sim7020_handle->p_sim7020_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
+    at_cmd_param_init(handle->p_cmd, AT_CCOAPNEW, cmd_buf_temp, CMD_SET, 3000);
+    handle->p_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
                                        
     //进入创建客户端状态
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_CoAP_CLIENT;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_CoAP_CLIENT;
+    handle->sm_status->main_status = NBIOT_CoAP_CLIENT;
+    handle->sm_status->sub_status  = NBIOT_SUB_CoAP_CLIENT;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
     
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 
 //关闭coap
-int sim7020_nblot_coap_close(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type)
+int nblot_coap_close(nbiot_handle_t handle, connect_type_t type)
 {
   
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
            
-    if (type != SIM7020_COAP)
+    if (type != NBIOT_COAP)
     {
-        return SIM7020_NOTSUPPORT;
+        return NBIOT_NOTSUPPORT;
     }
     
-    sim7020_handle->sim7020_connect_status->connect_type = SIM7020_COAP;  
+    handle->connect_status->connect_type = NBIOT_COAP;  
 
     //通过客户端id来销毁COAP链接
-    cmd_buf_temp[0] = sim7020_handle->sim7020_connect_status->connect_id + '0'; 
+    cmd_buf_temp[0] = handle->connect_status->connect_id + '0'; 
     cmd_buf_temp[1] = 0;
     cmd_buf_temp[2] = 0;     
                                                                                    
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CCOAPDEL, cmd_buf_temp, CMD_SET, 3000);
+    at_cmd_param_init(handle->p_cmd, AT_CCOAPDEL, cmd_buf_temp, CMD_SET, 3000);
 
     //进入coap关闭状态,最大响应时间不详
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_CoAP_CL;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_CoAP_CL;
+    handle->sm_status->main_status = NBIOT_CoAP_CL;
+    handle->sm_status->sub_status  = NBIOT_SUB_CoAP_CL;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
     
     
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 
 //以hex数据格式发送coap协议数据,必须是偶数个长度
-int sim7020_nblot_coap_send_hex(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type)
+int nblot_coap_send_hex(nbiot_handle_t handle, int len, char *msg, connect_type_t type)
 { 
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
   
     //判断coap id是否正确
-    if (sim7020_handle->sim7020_connect_status->connect_id  < 0)
+    if (handle->connect_status->connect_id  < 0)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
     
-    if (type != SIM7020_COAP)
+    if (type != NBIOT_COAP)
     {
-        return SIM7020_NOTSUPPORT;
+        return NBIOT_NOTSUPPORT;
     }    
   
     //最大数据长度为有效数据加上头部
-    int16_t str_len = (SIM7020_SEND_BUF_MAX_LEN - 24) ;
+    int16_t str_len = (NBIOT_SEND_BUF_MAX_LEN - 24) ;
 
     //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
     memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));    
@@ -405,7 +404,7 @@ int sim7020_nblot_coap_send_hex(sim7020_handle_t sim7020_handle, int len, char *
     uint16_t msg_len = snprintf(cmd_buf_temp,
                                 str_len,
                                 "%d,%d,",
-                                 sim7020_handle->sim7020_connect_status->connect_id, 
+                                 handle->connect_status->connect_id, 
                                 len);
     
     cmd_buf_temp[msg_len] = '\"';
@@ -421,38 +420,38 @@ int sim7020_nblot_coap_send_hex(sim7020_handle_t sim7020_handle, int len, char *
     cmd_buf_temp[msg_len + 1 + (len << 1)] = '\"';    
  
     //构建coap数据发送命令，最大响应时间不详
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CCOAPSEND, cmd_buf_temp, CMD_SET, 3000);
+    at_cmd_param_init(handle->p_cmd, AT_CCOAPSEND, cmd_buf_temp, CMD_SET, 3000);
     
     //进入coap数据发送状态
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_CoAP_SEND;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_CoAP_SEND;
+    handle->sm_status->main_status = NBIOT_CoAP_SEND;
+    handle->sm_status->sub_status  = NBIOT_SUB_CoAP_SEND;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
 
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 //以字符串格式发送数据coap协议数据
-int sim7020_nblot_coap_send_str(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type)
+int nblot_coap_send_str(nbiot_handle_t handle, int len, char *msg, connect_type_t type)
 { 
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
   
     //判断coap id是否正确
-    if (sim7020_handle->sim7020_connect_status->connect_id  < 0)
+    if (handle->connect_status->connect_id  < 0)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
     
-    if (type != SIM7020_COAP)
+    if (type != NBIOT_COAP)
     {
-        return SIM7020_NOTSUPPORT;
+        return NBIOT_NOTSUPPORT;
     } 
       
     //最大数据长度为有效数据加上头部
-    int16_t str_len = (SIM7020_SEND_BUF_MAX_LEN - 24) ;
+    int16_t str_len = (NBIOT_SEND_BUF_MAX_LEN - 24) ;
 
 
     //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
@@ -461,7 +460,7 @@ int sim7020_nblot_coap_send_str(sim7020_handle_t sim7020_handle, int len, char *
     int16_t msg_len = snprintf(cmd_buf_temp,
                                str_len,
                                "%d,%d,%s%s%s",
-                                sim7020_handle->sim7020_connect_status->connect_id ,
+                                handle->connect_status->connect_id ,
                                 len,
                                 "\"",                                  
                                 msg,
@@ -469,36 +468,36 @@ int sim7020_nblot_coap_send_str(sim7020_handle_t sim7020_handle, int len, char *
     
     if (msg_len < 0) {
       
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
     
                                                           
     //构建coap数据发送命令，最大响应时间不详
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CCOAPSEND, cmd_buf_temp, CMD_SET, 3000);
+    at_cmd_param_init(handle->p_cmd, AT_CCOAPSEND, cmd_buf_temp, CMD_SET, 3000);
     
     //进入coap数据发送状态
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_CoAP_SEND;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_CoAP_SEND;
+    handle->sm_status->main_status = NBIOT_CoAP_SEND;
+    handle->sm_status->sub_status  = NBIOT_SUB_CoAP_SEND;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
          
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 //创建cm2m客户端
-int sim7020_nblot_cm2m_client_create(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type)
+int nblot_cm2m_client_create(nbiot_handle_t handle, connect_type_t type)
 {     
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
     
-    if (type != SIM7020_CM2M)
+    if (type != NBIOT_CM2M)
     {
-        return SIM7020_NOTSUPPORT;
+        return NBIOT_NOTSUPPORT;
     }
     
-    sim7020_handle->sim7020_connect_status->connect_type = SIM7020_CM2M;
+    handle->connect_status->connect_type = NBIOT_CM2M;
 
     //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
     memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));       
@@ -511,67 +510,67 @@ int sim7020_nblot_cm2m_client_create(sim7020_handle_t sim7020_handle, sim7020_co
                                     REMOTE_COAP_PORT,
                                     "\"",
                                     "\"",
-                                    sim7020_handle->firmware_info->IMEI,
+                                    handle->firmware_info->IMEI,
                                     "\"",
                                     100);
                                                                        
     //最大响应时间不详                                              
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CM2MCLINEW, cmd_buf_temp, CMD_SET, 15000);
+    at_cmd_param_init(handle->p_cmd, AT_CM2MCLINEW, cmd_buf_temp, CMD_SET, 15000);
                                     
-    sim7020_handle->p_sim7020_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
+    handle->p_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
                                        
     //进入创建客户端状态
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_CM2M_CLIENT;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_CM2M_CLIENT;
+    handle->sm_status->main_status = NBIOT_CM2M_CLIENT;
+    handle->sm_status->sub_status  = NBIOT_SUB_CM2M_CLIENT;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
     
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 
 //关闭cm2m
-int sim7020_nblot_cm2m_close(sim7020_handle_t sim7020_handle, sim7020_connect_type_t type)
+int nblot_cm2m_close(nbiot_handle_t handle, connect_type_t type)
 {
   
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
            
-    if (type != SIM7020_CM2M)
+    if (type != NBIOT_CM2M)
     {
-        return SIM7020_NOTSUPPORT;
+        return NBIOT_NOTSUPPORT;
     }   
                                                                                    
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CM2MCLIDEL, NULL, CMD_EXCUTE, 15000);
-    sim7020_handle->p_sim7020_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT;     
+    at_cmd_param_init(handle->p_cmd, AT_CM2MCLIDEL, NULL, CMD_EXCUTE, 15000);
+    handle->p_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT;     
 
     //进入cm2m关闭状态,最大响应时间不详
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_CM2M_CL;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_CM2M_CL;
+    handle->sm_status->main_status = NBIOT_CM2M_CL;
+    handle->sm_status->sub_status  = NBIOT_SUB_CM2M_CL;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
         
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 //以hex数据格式发送cm2m协议数据,必须是偶数个长度
-int sim7020_nblot_cm2m_send_hex(sim7020_handle_t sim7020_handle, int len, char *msg, sim7020_connect_type_t type)
+int nblot_cm2m_send_hex(nbiot_handle_t handle, int len, char *msg, connect_type_t type)
 { 
-    if (sim7020_handle->sim7020_sm_status->main_status != SIM7020_NONE)
+    if (handle->sm_status->main_status != NBIOT_NONE)
     {
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
   
     //当类型不为CM2M时，或都发送的数据个数不为偶数个时
-    if ((type != SIM7020_CM2M) || ((strlen(msg) % 2) != 0))
+    if ((type != NBIOT_CM2M) || ((strlen(msg) % 2) != 0))
     {
-        return SIM7020_NOTSUPPORT;
+        return NBIOT_NOTSUPPORT;
     } 
       
     //最大数据长度为有效数据加上头部
-    int16_t str_len = (SIM7020_SEND_BUF_MAX_LEN - 24) ;
+    int16_t str_len = (NBIOT_SEND_BUF_MAX_LEN - 24) ;
 
 
     //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
@@ -586,20 +585,20 @@ int sim7020_nblot_cm2m_send_hex(sim7020_handle_t sim7020_handle, int len, char *
     
     if (msg_len < 0) {
       
-        return SIM7020_ERROR;
+        return NBIOT_ERROR;
     }
     
                                                           
     //构建cm2m数据发送命令，最大响应时间不详
-    at_cmd_param_init(sim7020_handle->p_sim7020_cmd, AT_CM2MCLISEND, cmd_buf_temp, CMD_SET, 3000);
+    at_cmd_param_init(handle->p_cmd, AT_CM2MCLISEND, cmd_buf_temp, CMD_SET, 3000);
     
     //进入cm2m数据发送状态
-    sim7020_handle->sim7020_sm_status->main_status = SIM7020_CM2M_SEND;
-    sim7020_handle->sim7020_sm_status->sub_status  = SIM7020_SUB_CM2M_SEND;
+    handle->sm_status->main_status = NBIOT_CM2M_SEND;
+    handle->sm_status->sub_status  = NBIOT_SUB_CM2M_SEND;
 
-    sim7020_at_cmd_send(sim7020_handle, sim7020_handle->p_sim7020_cmd);
+    at_cmd_send(handle, handle->p_cmd);
          
-    return SIM7020_OK;
+    return NBIOT_OK;
 }
 
 

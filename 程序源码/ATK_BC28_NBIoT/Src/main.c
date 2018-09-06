@@ -45,7 +45,7 @@
 #include "atk_delay.h"
 #include "atk_usart.h"
 #include "atk_bc28_nbiot.h"
-#include "atk_sim7020.h"
+#include "atk_bc28.h"
 #include "demo_entry.h"
 
 
@@ -58,11 +58,15 @@
 int main(void)
 { 
     /* HALø‚≥ı ºªØ */
-    HAL_Init();        
+    HAL_Init();
+	
     /* Configure the system clock */
     SystemClock_Config();
+	
     delay_init(HAL_RCC_GetHCLKFreq()/1000000);
-    uart1_init(115200);          
+	
+    uart1_init(115200);
+	
     led_init();    
     
 //    demo_key_entry();

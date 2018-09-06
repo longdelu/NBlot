@@ -1,4 +1,4 @@
-#include "atk_sim7020.h"
+#include "atk_bc28.h"
 #include "atk_delay.h"
 #include "atk_bc28_nbiot.h"
 
@@ -16,48 +16,48 @@
 //********************************************************************************
 
 
-#define SIM7020_DEBUG                   
-#ifdef SIM7020_DEBUG
-#define SIM7020_DEBUG_INFO(...)    (int)printf(__VA_ARGS__)
+#define NBIOT_DEBUG                   
+#ifdef NBIOT_DEBUG
+#define NBIOT_DEBUG_INFO(...)    (int)printf(__VA_ARGS__)
 #else
-#define SIM7020_DEBUG_INFO(...)
+#define NBIOT_DEBUG_INFO(...)
 #endif
 
 
 //简要逻辑
 //对命令的响应后的解析会调用at_cmd_result_parse这个函数
 //如果正确，会根据命令的属性来决定是否需要执行下一条命令
-//发送消息时，调用sim7020_msg_send，子状态的命令此时并没有发生改变
+//发送消息时，调用nbiot_msg_send，子状态的命令此时并没有发生改变
 //直到调用at_cmd_next构造好下一条指令的时候才会改变子状态
 //当at_cmd_next返回FALSE时，表明所有的子状态都已经结束了，此时会复用状态机的逻辑
 
-//定义sim7020数据收发描述结构体
-static struct sim7020_recv  g_sim7020_recv_desc;
-static struct sim7020_send  g_sim7020_send_desc;
+//定义nbiot数据收发描述结构体
+static struct nbiot_recv  g_nbiot_recv_desc;
+static struct nbiot_send  g_nbiot_send_desc;
 
 //定义用于保存当前正在执行的AT指令的述结构体
 static at_cmd_info_t g_at_cmd; 
 
-static char cmd_buf_temp[SIM7020_RECV_BUF_MAX_LEN] = {0};
+static char cmd_buf_temp[NBIOT_RECV_BUF_MAX_LEN] = {0};
 
-//定义sim7020设备结构体
-static struct sim7020_dev       g_sim7020_dev;
+//定义nbiot设备结构体
+static struct nbiot_dev       g_nbiot_dev;
 
-//定义sim7020状态信息结构体
-static sim7020_status_sm_t      g_sim7020_sm_status;
+//定义nbiot状态信息结构体
+static nbiot_status_sm_t      g_nbiot_sm_status;
 
 //连接状态信息结构体
-static sim7020_status_connect_t  g_sim7020_connect_status;     
+static nbiot_status_connect_t  g_nbiot_connect_status;     
 
-//定义sim7020固件信息结构体
+//定义nbiot固件信息结构体
 static sim020_firmware_info_t   g_firmware_info; 
 
 //定义socket信息结构体
-static sim7020_socket_info_t    g_socket_info[5];
+static nbiot_socket_info_t    g_socket_info[5];
 
 //驱动函数函数声明
-static int  __sim7020_uart_data_tx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);
-static int  __sim7020_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);
+static int  __nbiot_uart_data_tx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);
+static int  __nbiot_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);
 
 
 //串口事件回调处理函数
@@ -67,81 +67,82 @@ static void __uart_event_cb_handle(void *p_arg);
 static int8_t at_cmd_result_parse(char* buf);
 
 //指令响应结果处理
-static uint8_t sim7020_response_handle (sim7020_handle_t sim7020_handle, uint8_t cmd_response);
+static uint8_t nbiot_response_handle (nbiot_handle_t nbiot_handle, uint8_t cmd_response);
 
 //产生下一条AT指令
 static uint8_t at_cmd_next (void);
    
-//sim7020事件通知
-static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf);
+//nbiot事件通知
+static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf);
 
 //发送消息与应用层交互
-static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t is_ok);
+static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok);
 
 
 
-//sim7020接收数据
-static int sim7020_data_recv(sim7020_handle_t sim7020_handle, uint8_t *pData, uint16_t size, uint32_t Timeout);
+//nbiot接收数据
+static int nbiot_data_recv(nbiot_handle_t nbiot_handle, uint8_t *pData, uint16_t size, uint32_t Timeout);
 
 
-static struct sim7020_drv_funcs drv_funcs = {    
-    __sim7020_uart_data_tx,
-    __sim7020_uart_data_rx,        
+//填充NBIoT模块驱动函数
+static struct nbiot_drv_funcs drv_funcs = {    
+    __nbiot_uart_data_tx,
+    __nbiot_uart_data_rx,        
 };
 
 //复位接收缓存
-static void sim7020_recv_buf_reset(void)
+static void nbiot_recv_buf_reset(void)
 {   
-    memset(&g_sim7020_recv_desc, 0, sizeof(struct sim7020_recv));
+    memset(&g_nbiot_recv_desc, 0, sizeof(struct nbiot_recv));
 }
 
 //复位执行进程
-static void sim7020_status_reset(void)
+static void nbiot_status_reset(void)
 {
-    g_sim7020_sm_status.main_status  = SIM7020_NONE;
-    g_sim7020_sm_status.sub_status   = SIM7020_SUB_NONE;
+    g_nbiot_sm_status.main_status  = NBIOT_NONE;
+    g_nbiot_sm_status.sub_status   = NBIOT_SUB_NONE;
 }
 
 //设置执行进程
-static void sim7020_status_set (sim7020_main_status_t  main_status, sim7020_sub_status_t  sub_status)
+static void nbiot_status_set (nbiot_main_status_t  main_status, nbiot_sub_status_t  sub_status)
 {
-    g_sim7020_sm_status.main_status  = main_status;
-    g_sim7020_sm_status.sub_status   = sub_status;
+    g_nbiot_sm_status.main_status  = main_status;
+    g_nbiot_sm_status.sub_status   = sub_status;
 }
 
-//设置sim7020事件
-void sim7020_event_set (sim7020_handle_t sim7020_handle, int sim7020_event)
+//设置nbiot事件
+void nbiot_event_set (nbiot_handle_t nbiot_handle, int nbiot_event)
 { 
-    sim7020_handle->sim7020_event |= sim7020_event;   
+    nbiot_handle->nbiot_event |= nbiot_event;   
 }
 
-//获取sim7020事件
-int sim7020_event_get (sim7020_handle_t sim7020_handle,  int sim7020_event)
+//获取nbiot事件
+int nbiot_event_get (nbiot_handle_t nbiot_handle,  int nbiot_event)
 { 
-    return (sim7020_handle->sim7020_event & sim7020_event); 
+    return (nbiot_handle->nbiot_event & nbiot_event); 
 }
 
-//清除sim7020事件
-void sim7020_event_clr (sim7020_handle_t sim7020_handle, int sim7020_event)
+//清除nbiot事件
+void nbiot_event_clr (nbiot_handle_t nbiot_handle, int nbiot_event)
 { 
-    sim7020_handle->sim7020_event &= ~sim7020_event;
+    nbiot_handle->nbiot_event &= ~nbiot_event;
 }
 
 //串口事件回调处理函数
 static void __uart_event_cb_handle (void *p_arg)
 {    
-    sim7020_handle_t  sim7020_handle = (sim7020_handle_t)p_arg; 
+    nbiot_handle_t  nbiot_handle = (nbiot_handle_t)p_arg; 
     
-    uart_dev_t       *p_uart_dev     = sim7020_handle->p_uart_dev;
+    uart_dev_t       *p_uart_dev     = nbiot_handle->p_uart_dev;
   
-    int size = g_sim7020_recv_desc.len;
+    int size = g_nbiot_recv_desc.len;
     
     if (p_uart_dev->uart_event & UART_TX_EVENT)
     {
                
-        SIM7020_DEBUG_INFO("atk_sim7020 uart tx ok %s", g_sim7020_send_desc.buf);  
+        NBIOT_DEBUG_INFO("atk_nbiot uart tx ok %s", g_nbiot_send_desc.buf);  
 
-        lpuart_event_clr(p_uart_dev, UART_TX_EVENT);                 
+        uart_event_clr(p_uart_dev, UART_TX_EVENT);                 
     }
 
     if (p_uart_dev->uart_event & UART_RX_EVENT)
@@ -151,29 +152,29 @@ static void __uart_event_cb_handle (void *p_arg)
         //从缓冲区当中读取数据
         if (size > 0)
         {                                  
-            sim7020_data_recv(sim7020_handle, (uint8_t*)(&g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]), size, 0);
+            nbiot_data_recv(nbiot_handle, (uint8_t*)(&g_nbiot_recv_desc.buf[g_nbiot_recv_desc.len]), size, 0);
                      
             //产生异步事件等待处理
-            sim7020_event_notify(sim7020_handle, g_sim7020_recv_desc.buf);
+            nbiot_event_notify(nbiot_handle, g_nbiot_recv_desc.buf);
                         
-            SIM7020_DEBUG_INFO("atk_sim7020 uart rx ok %s\r\n", &g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]);
+            NBIOT_DEBUG_INFO("atk_nbiot uart rx ok %s\r\n", &g_nbiot_recv_desc.buf[g_nbiot_recv_desc.len]);
           
-            g_sim7020_recv_desc.len = g_sim7020_recv_desc.len + size;
+            g_nbiot_recv_desc.len = g_nbiot_recv_desc.len + size;
             
         }
                                                                                  
-        lpuart_event_clr(p_uart_dev, UART_RX_EVENT); 
+        uart_event_clr(p_uart_dev, UART_RX_EVENT); 
     } 
 
     //发生发送超时事件，说明指令有可能没有发送出去，或者发送过程中出错
     //或者模块工作异常，没有回应命令的数据
     if (p_uart_dev->uart_event & UART_TX_TIMEOUT_EVENT) 
     {        
-        SIM7020_DEBUG_INFO("atk_sim7020 uart tx timeout %s", g_sim7020_send_desc.buf);  
+        NBIOT_DEBUG_INFO("atk_nbiot uart tx timeout %s", g_nbiot_send_desc.buf);  
 
-        sim7020_event_set(sim7020_handle, SIM7020_TIMEOUT_EVENT);
+        nbiot_event_set(nbiot_handle, NBIOT_TIMEOUT_EVENT);
       
-        lpuart_event_clr(p_uart_dev, UART_TX_TIMEOUT_EVENT); 
+        uart_event_clr(p_uart_dev, UART_TX_TIMEOUT_EVENT); 
     } 
 
     //如果使用非超时成帧，此事件理论上不会发生
@@ -182,16 +183,16 @@ static void __uart_event_cb_handle (void *p_arg)
         size = uart_ring_buf_avail_len(p_uart_dev);
         
         //超时成帧      
-        if (g_sim7020_dev.frame_format == 1) 
+        if (g_nbiot_dev.frame_format == 1) 
         {
             if (size > 0)
             {               
-                sim7020_data_recv(sim7020_handle, (uint8_t*)(&g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]), size, 0);
+                nbiot_data_recv(nbiot_handle, (uint8_t*)(&g_nbiot_recv_desc.buf[g_nbiot_recv_desc.len]), size, 0);
                                              
                 //产生异步事件等待处理
-                sim7020_event_notify(sim7020_handle, g_sim7020_recv_desc.buf);
+                nbiot_event_notify(nbiot_handle, g_nbiot_recv_desc.buf);
               
-                g_sim7020_recv_desc.len = g_sim7020_recv_desc.len + size;
+                g_nbiot_recv_desc.len = g_nbiot_recv_desc.len + size;
             }
                                         
        //不在超时成帧的状态下，代表的确发生了超时事件      
@@ -199,31 +200,31 @@ static void __uart_event_cb_handle (void *p_arg)
          
             if (size > 0)
             {               
-                sim7020_data_recv(sim7020_handle, (uint8_t*)(&g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]), size, 0);
+                nbiot_data_recv(nbiot_handle, (uint8_t*)(&g_nbiot_recv_desc.buf[g_nbiot_recv_desc.len]), size, 0);
                                              
                 //产生异步事件等待处理
-                sim7020_event_notify(sim7020_handle, g_sim7020_recv_desc.buf);
+                nbiot_event_notify(nbiot_handle, g_nbiot_recv_desc.buf);
               
-                g_sim7020_recv_desc.len = g_sim7020_recv_desc.len + size;
+                g_nbiot_recv_desc.len = g_nbiot_recv_desc.len + size;
             }          
          
             //产生超时事件，超时事件是否执行得看命令解析结果
-            sim7020_event_set(sim7020_handle, SIM7020_TIMEOUT_EVENT);
+            nbiot_event_set(nbiot_handle, NBIOT_TIMEOUT_EVENT);
        }
        
-       SIM7020_DEBUG_INFO("atk_sim7020 uart rx timeout %s\r\n", g_sim7020_recv_desc.buf);  
+       NBIOT_DEBUG_INFO("atk_nbiot uart rx timeout %s\r\n", g_nbiot_recv_desc.buf);  
        
-       lpuart_event_clr(p_uart_dev, UART_RX_TIMEOUT_EVENT);
+       uart_event_clr(p_uart_dev, UART_RX_TIMEOUT_EVENT);
     }            
 }
 
 //uint8_t tmp_buf[513];
-//sim7020事件处理函数
-int sim7020_event_poll(sim7020_handle_t sim7020_handle)
+//nbiot事件处理函数
+int nbiot_event_poll(nbiot_handle_t nbiot_handle)
 {
     char *at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX] = {0};
     
-    char *p_revc_buf_tmp = g_sim7020_recv_desc.buf;
+    char *p_revc_buf_tmp = g_nbiot_recv_desc.buf;
     
     uint8_t index = 0;
         
@@ -233,24 +234,24 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
     
     static int8_t recv_cnt = 0;
             
-    if (sim7020_handle->sim7020_event & SIM7020_RECV_EVENT) 
+    if (nbiot_handle->nbiot_event & NBIOT_RECV_EVENT) 
     { 
       
-        SIM7020_DEBUG_INFO("%s recv event\r\n", g_at_cmd.p_atcmd);
+        NBIOT_DEBUG_INFO("%s recv event\r\n", g_at_cmd.p_atcmd);
       
-        cmd_is_pass = at_cmd_result_parse(g_sim7020_recv_desc.buf);
+        cmd_is_pass = at_cmd_result_parse(g_nbiot_recv_desc.buf);
         
         //命令响应结果     
         if (cmd_is_pass == AT_CMD_RESULT_OK) 
         {
 
             //接收在超时时间内正常完成，停止接收超时  
-            atk_soft_timer_stop(&sim7020_handle->p_uart_dev->uart_rx_timer); 
+            atk_soft_timer_stop(&nbiot_handle->p_uart_dev->uart_rx_timer); 
                              
             recv_cnt=0; 
           
             //解析成功避免进入超时事件
-            sim7020_event_clr(sim7020_handle, SIM7020_TIMEOUT_EVENT);             
+            nbiot_event_clr(nbiot_handle, NBIOT_TIMEOUT_EVENT);             
           
             //提取AT指令返回的参数,在使用strok期间，不允许改变缓冲区的内容，中间出现再多的\r\n，也只会当做一个来处理
             while((at_response_par[index] = strtok(p_revc_buf_tmp,"\r\n")) != NULL)
@@ -267,70 +268,70 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
             if (index == 0)
             {             
                 //清缓存            
-                sim7020_recv_buf_reset();   
+                nbiot_recv_buf_reset();   
               
                                                                     
                 //未收到正确的数据帧
-                return  SIM7020_ERROR;
+                return  NBIOT_ERROR;
             }            
                                                             
-            SIM7020_DEBUG_INFO("%s cmd excute ok\r\n", g_at_cmd.p_atcmd);
+            NBIOT_DEBUG_INFO("%s cmd excute ok\r\n", g_at_cmd.p_atcmd);
           
             //代表命令发送成功了并得到正确的响应
-            sim7020_msg_send(sim7020_handle, at_response_par, TRUE);
+            nbiot_msg_send(nbiot_handle, at_response_par, TRUE);
               
-            next_cmd = sim7020_response_handle(sim7020_handle, TRUE);
+            next_cmd = nbiot_response_handle(nbiot_handle, TRUE);
             
             //清缓存            
-            sim7020_recv_buf_reset();                        
+            nbiot_recv_buf_reset();                        
        
         }       
         else if(cmd_is_pass == AT_CMD_RESULT_ERROR)
         { 
                        
             //接收在超时时间内正常完成，停止接收超时  
-            atk_soft_timer_stop(&sim7020_handle->p_uart_dev->uart_rx_timer);   
+            atk_soft_timer_stop(&nbiot_handle->p_uart_dev->uart_rx_timer);   
             recv_cnt=0;
           
             //解析到错误，在错误即可进行命令的外理，避免进入超时事件
-            sim7020_event_clr(sim7020_handle, SIM7020_TIMEOUT_EVENT);             
-            next_cmd = sim7020_response_handle(sim7020_handle, FALSE);     
+            nbiot_event_clr(nbiot_handle, NBIOT_TIMEOUT_EVENT);             
+            next_cmd = nbiot_response_handle(nbiot_handle, FALSE);     
         
             if (g_at_cmd.cmd_action & ACTION_ERROR_AND_TRY)
             {                                   
-                SIM7020_DEBUG_INFO("%s cmd is failed and try\r\n", g_at_cmd.p_atcmd);
+                NBIOT_DEBUG_INFO("%s cmd is failed and try\r\n", g_at_cmd.p_atcmd);
                 
                 at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char*)g_at_cmd.p_atcmd;
                 
                 //通知上层应用，此动作执行失败,但会重试
-                sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_RETRY);
+                nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], NBIOT_ERROR_RETRY);
                 
             } 
             else if (g_at_cmd.cmd_action & ACTION_ERROR_BUT_NEXT)
             {               
                 at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char*)g_at_cmd.p_atcmd;
                
-                SIM7020_DEBUG_INFO("%s cmd is failed and next\r\n", g_at_cmd.p_atcmd);
+                NBIOT_DEBUG_INFO("%s cmd is failed and next\r\n", g_at_cmd.p_atcmd);
                 
                 //通知上层应用，此动作执行失败后跳过该命令执行
-                sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_NEXT);
+                nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], NBIOT_ERROR_NEXT);
                 
             }
             else 
             {                
-                SIM7020_DEBUG_INFO("%s cmd is failed and exit\r\n", g_at_cmd.p_atcmd);        
+                NBIOT_DEBUG_INFO("%s cmd is failed and exit\r\n", g_at_cmd.p_atcmd);        
                 at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char*)g_at_cmd.p_atcmd;
                 
                 //通知上层应用，此动作执行失败后跳过该命令执行
-                sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], FALSE);  
+                nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], FALSE);  
 
                 //复位状态标志
-                sim7020_status_reset();              
+                nbiot_status_reset();              
 
             } 
                     
             //清缓存            
-            sim7020_recv_buf_reset();            
+            nbiot_recv_buf_reset();            
 
         } 
 
@@ -338,13 +339,13 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         {
           
             //命令未执行完成，正常情况下，收到的的是命令回显, 接下来的还是当前命令响应数据的接收, 重新启动接收超时               
-            atk_soft_timer_timeout_change(&sim7020_handle->p_uart_dev->uart_rx_timer, 500);
+            atk_soft_timer_timeout_change(&nbiot_handle->p_uart_dev->uart_rx_timer, 500);
             recv_cnt=0;
           
             //处于TCP/UDP创建状态时
-            if (g_sim7020_sm_status.main_status == SIM7020_TCPUDP_CR) {
+            if (g_nbiot_sm_status.main_status == NBIOT_TCPUDP_CR) {
                 //通知上层应用，获取相关的信息
-                sim7020_msg_send(sim7020_handle, at_response_par, SIM7020_ERROR_CONTINUE);
+                nbiot_msg_send(nbiot_handle, at_response_par, NBIOT_ERROR_CONTINUE);
             }          
              
             //命令未完成            
@@ -360,167 +361,167 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
             if (recv_cnt > AT_CMD_RESPONSE_PAR_NUM_MAX)                         
             {  
                //接收在超时时间内未正常完成，停止接收超时  
-               atk_soft_timer_stop(&sim7020_handle->p_uart_dev->uart_rx_timer);   
+               atk_soft_timer_stop(&nbiot_handle->p_uart_dev->uart_rx_timer);   
               
                //收到的是乱码,强制接收结束
-               next_cmd = sim7020_response_handle(sim7020_handle, FALSE);
+               next_cmd = nbiot_response_handle(nbiot_handle, FALSE);
                //清缓存            
-               sim7020_recv_buf_reset();                
+               nbiot_recv_buf_reset();                
             }
             else 
             {
               
                //命令未完成,收到的的是命令回显当中其中的一部分                
-               atk_soft_timer_timeout_change(&sim7020_handle->p_uart_dev->uart_rx_timer, 500);
+               atk_soft_timer_timeout_change(&nbiot_handle->p_uart_dev->uart_rx_timer, 500);
              
             }              
                                
         } 
             
-        sim7020_event_clr(sim7020_handle, SIM7020_RECV_EVENT); 
+        nbiot_event_clr(nbiot_handle, NBIOT_RECV_EVENT); 
     }
 
 
-    if (sim7020_handle->sim7020_event & SIM7020_REG_STA_EVENT) 
+    if (nbiot_handle->nbiot_event & NBIOT_REG_STA_EVENT) 
     {      
-        SIM7020_DEBUG_INFO("creg event ok\r\n");
+        NBIOT_DEBUG_INFO("creg event ok\r\n");
                              
         at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = "creg ok";        
           
         //通知上层应用网络注册结果
-        sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], TRUE);        
+        nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], TRUE);        
 
         //处理决定是否执行下一条命令        
-        next_cmd = sim7020_response_handle(sim7020_handle, TRUE);
+        next_cmd = nbiot_response_handle(nbiot_handle, TRUE);
         
-        sim7020_event_clr(sim7020_handle,   SIM7020_REG_STA_EVENT); 
+        nbiot_event_clr(nbiot_handle,   NBIOT_REG_STA_EVENT); 
       
         //清除缓存数据    
-        sim7020_recv_buf_reset();   
+        nbiot_recv_buf_reset();   
     }
     
-    if (sim7020_handle->sim7020_event & SIM7020_TCP_RECV_EVENT) 
+    if (nbiot_handle->nbiot_event & NBIOT_TCP_RECV_EVENT) 
     {
-        SIM7020_DEBUG_INFO("tcp recv event ok\r\n");
+        NBIOT_DEBUG_INFO("tcp recv event ok\r\n");
       
         //通知上层应用接收到TCP数据
-        sim7020_msg_send(sim7020_handle, NULL, TRUE);     
+        nbiot_msg_send(nbiot_handle, NULL, TRUE);     
         
-        sim7020_event_clr(sim7020_handle,SIM7020_TCP_RECV_EVENT);
+        nbiot_event_clr(nbiot_handle,NBIOT_TCP_RECV_EVENT);
       
         //清除缓存数据    
-        sim7020_recv_buf_reset();       
+        nbiot_recv_buf_reset();       
     }
 
-    if (sim7020_handle->sim7020_event & SIM7020_UDP_RECV_EVENT) 
+    if (nbiot_handle->nbiot_event & NBIOT_UDP_RECV_EVENT) 
     {
-        SIM7020_DEBUG_INFO("udp recv event ok\r\n");
+        NBIOT_DEBUG_INFO("udp recv event ok\r\n");
       
         //通知上层应用网络注册结果
-        sim7020_msg_send(sim7020_handle, NULL, TRUE);    
+        nbiot_msg_send(nbiot_handle, NULL, TRUE);    
         
-        sim7020_event_clr(sim7020_handle, SIM7020_UDP_RECV_EVENT); 
+        nbiot_event_clr(nbiot_handle, NBIOT_UDP_RECV_EVENT); 
       
         //清除缓存数据    
-        sim7020_recv_buf_reset();  
+        nbiot_recv_buf_reset();  
     }
         
-    if (sim7020_handle->sim7020_event & SIM7020_COAP_RECV_EVENT) 
+    if (nbiot_handle->nbiot_event & NBIOT_COAP_RECV_EVENT) 
     {
         
-        SIM7020_DEBUG_INFO("coap recv event ok\r\n");
+        NBIOT_DEBUG_INFO("coap recv event ok\r\n");
       
         //通知上层应用接收到CoAP数据
-        sim7020_msg_send(sim7020_handle, NULL, TRUE);          
+        nbiot_msg_send(nbiot_handle, NULL, TRUE);          
              
-        sim7020_event_clr(sim7020_handle, SIM7020_COAP_RECV_EVENT); 
+        nbiot_event_clr(nbiot_handle, NBIOT_COAP_RECV_EVENT); 
       
         //清除缓存数据    
-        sim7020_recv_buf_reset();  
+        nbiot_recv_buf_reset();  
     }
     
-    if (sim7020_handle->sim7020_event & SIM7020_CM2M_RECV_EVENT) 
+    if (nbiot_handle->nbiot_event & NBIOT_CM2M_RECV_EVENT) 
     {
         
-        SIM7020_DEBUG_INFO("cm2m recv event ok\r\n");
+        NBIOT_DEBUG_INFO("cm2m recv event ok\r\n");
       
         //通知上层应用接收到CM2M数据
-        sim7020_msg_send(sim7020_handle, NULL, TRUE);          
+        nbiot_msg_send(nbiot_handle, NULL, TRUE);          
              
-        sim7020_event_clr(sim7020_handle, SIM7020_CM2M_RECV_EVENT); 
+        nbiot_event_clr(nbiot_handle, NBIOT_CM2M_RECV_EVENT); 
       
         //清除缓存数据    
-        sim7020_recv_buf_reset();  
+        nbiot_recv_buf_reset();  
     }
 
-    if (sim7020_handle->sim7020_event & SIM7020_CM2M_STATUS_EVENT) 
+    if (nbiot_handle->nbiot_event & NBIOT_CM2M_STATUS_EVENT) 
     {
         
-        SIM7020_DEBUG_INFO("cm2m status event ok\r\n");
+        NBIOT_DEBUG_INFO("cm2m status event ok\r\n");
       
         //通知上层应用CM2M状态连接发生变化
-        sim7020_msg_send(sim7020_handle, NULL, TRUE);          
+        nbiot_msg_send(nbiot_handle, NULL, TRUE);          
              
-        sim7020_event_clr(sim7020_handle, SIM7020_CM2M_STATUS_EVENT); 
+        nbiot_event_clr(nbiot_handle, NBIOT_CM2M_STATUS_EVENT); 
       
         //清除缓存数据    
-        sim7020_recv_buf_reset();  
+        nbiot_recv_buf_reset();  
     }      
     
     
-    if (sim7020_handle->sim7020_event & SIM7020_SOCKET_ERR_EVENT) 
+    if (nbiot_handle->nbiot_event & NBIOT_SOCKET_ERR_EVENT) 
     {       
-        SIM7020_DEBUG_INFO("socket err event\r\n");
+        NBIOT_DEBUG_INFO("socket err event\r\n");
       
         //通知上层应用SOCKET失败了
-        sim7020_msg_send(sim7020_handle, NULL, TRUE);        
+        nbiot_msg_send(nbiot_handle, NULL, TRUE);        
               
-        sim7020_event_clr(sim7020_handle, SIM7020_SOCKET_ERR_EVENT); 
+        nbiot_event_clr(nbiot_handle, NBIOT_SOCKET_ERR_EVENT); 
       
         //清除缓存数据    
-        sim7020_recv_buf_reset();  
+        nbiot_recv_buf_reset();  
     }
 
-    if (sim7020_handle->sim7020_event & SIM7020_TIMEOUT_EVENT) 
+    if (nbiot_handle->nbiot_event & NBIOT_TIMEOUT_EVENT) 
     {        
         //超时处理，尝试重发命令        
-        next_cmd = sim7020_response_handle(sim7020_handle, FALSE);
+        next_cmd = nbiot_response_handle(nbiot_handle, FALSE);
       
         //通知上层应用，此动作执行超时
         if (g_at_cmd.cmd_action & ACTION_ERROR_BUT_NEXT) 
         {           
             at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char *)g_at_cmd.p_atcmd;
            
-            SIM7020_DEBUG_INFO("%s cmd not repsonse or send failed\r\n", g_at_cmd.p_atcmd);
+            NBIOT_DEBUG_INFO("%s cmd not repsonse or send failed\r\n", g_at_cmd.p_atcmd);
                                
             //通知上层应用，此动作执行失败后跳过该命令执行
-            sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_NEXT);            
+            nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], NBIOT_ERROR_NEXT);            
         }        
         else if (g_at_cmd.cmd_action & ACTION_ERROR_AND_TRY) 
         {           
             at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char *)g_at_cmd.p_atcmd;
            
-            SIM7020_DEBUG_INFO("%s cmd not repsonse or send failed\r\n", g_at_cmd.p_atcmd);
+            NBIOT_DEBUG_INFO("%s cmd not repsonse or send failed\r\n", g_at_cmd.p_atcmd);
                                
             //通知上层应用，此动作执行失败后跳过该命令执行
-            sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], SIM7020_ERROR_RETRY);            
+            nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], NBIOT_ERROR_RETRY);            
         }
         else        
         {            
-            SIM7020_DEBUG_INFO("%s cmd is failed and exit\r\n", g_at_cmd.p_atcmd);        
+            NBIOT_DEBUG_INFO("%s cmd is failed and exit\r\n", g_at_cmd.p_atcmd);        
             at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char*)g_at_cmd.p_atcmd;
             
             //通知上层应用，此动作执行失败后跳过该命令执行
-            sim7020_msg_send(sim7020_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], FALSE);  
+            nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], FALSE);  
 
             //复位状态标志
-            sim7020_status_reset();              
+            nbiot_status_reset();              
         } 
         
         //清除垃圾数据      
-        sim7020_recv_buf_reset();      
+        nbiot_recv_buf_reset();      
                                                     
-        sim7020_event_clr(sim7020_handle, SIM7020_TIMEOUT_EVENT); 
+        nbiot_event_clr(nbiot_handle, NBIOT_TIMEOUT_EVENT); 
     } 
     
     //根据事件及状态判断是否需要执行下一条命令
@@ -529,46 +530,46 @@ int sim7020_event_poll(sim7020_handle_t sim7020_handle)
         //执行下一条命令
         if (at_cmd_next())
         {
-            sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
+            nbiot_at_cmd_send(nbiot_handle, &g_at_cmd);
         }
         
         //返回FALSE表示子进程已经结束了
         else
         {
             //代表该主状态下所有的子状态命令已经成功执行完成了
-            sim7020_msg_send(sim7020_handle, NULL,TRUE);
+            nbiot_msg_send(nbiot_handle, NULL,TRUE);
 
             //复位状态标志
-            sim7020_status_reset();
+            nbiot_status_reset();
         }     
     }
    
-    return SIM7020_OK;    
+    return NBIOT_OK;    
 }
 
-static int  __sim7020_uart_data_tx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout)
+static int  __nbiot_uart_data_tx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout)
 {  
     int ret = 0;
     
-    sim7020_handle_t  sim7020_handle = (sim7020_handle_t)p_arg;
+    nbiot_handle_t  nbiot_handle = (nbiot_handle_t)p_arg;
     
-    uart_handle_t uart_handle = sim7020_handle->p_uart_dev; 
+    uart_handle_t uart_handle = nbiot_handle->p_uart_dev; 
     
     ret = uart_data_tx_poll(uart_handle, pData, size, Timeout); 
 
     return ret;    
 }
 
-static int  __sim7020_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout)
+static int  __nbiot_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout)
 {  
     int ret = 0;
     
     //超时参数保留使用
     (void)Timeout;
     
-    sim7020_handle_t  sim7020_handle = (sim7020_handle_t)p_arg;
+    nbiot_handle_t  nbiot_handle = (nbiot_handle_t)p_arg;
     
-    uart_handle_t uart_handle = sim7020_handle->p_uart_dev;
+    uart_handle_t uart_handle = nbiot_handle->p_uart_dev;
 
     uart_ring_buf_read(uart_handle, pData, size);    
     
@@ -579,7 +580,7 @@ static int  __sim7020_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, 
 //将1个字符转换为10进制数字
 //chr:字符,0~9/A~F/a~F
 //返回值:chr对应的10进制数值
-static u8 sim7020_chr2hex (u8 chr)
+static u8 nbiot_chr2hex (u8 chr)
 {
     if(chr>='0'&&chr<='9')
     {
@@ -604,7 +605,7 @@ static u8 sim7020_chr2hex (u8 chr)
 //将1个16进制数字转换为字符
 //hex:16进制数字,0~15;
 //返回值:字符
-static u8 sim7020_hex2chr (u8 hex)
+static u8 nbiot_hex2chr (u8 hex)
 {
     if(hex<=9)
     {
@@ -621,7 +622,7 @@ static u8 sim7020_hex2chr (u8 hex)
 }
 
 //将hex转换成一整串的字符,如0x12345678转换成字符串"12345678"
-void sim7020_hex2chrbuf (char *src_p_buf, char *dest_buf, int len)
+void nbiot_hex2chrbuf (char *src_p_buf, char *dest_buf, int len)
 {
     int i = 0; 
    
@@ -630,8 +631,8 @@ void sim7020_hex2chrbuf (char *src_p_buf, char *dest_buf, int len)
      
     for (i = 0; i < len; i=i+2)
     {
-        tmp = sim7020_chr2hex( src_p_buf[i]);       
-        tmp1 = sim7020_chr2hex(src_p_buf[i + 1]);      
+        tmp = nbiot_chr2hex( src_p_buf[i]);       
+        tmp1 = nbiot_chr2hex(src_p_buf[i + 1]);      
         dest_buf[i / 2] = (tmp << 4)  |  tmp1;                    
     } 
     
@@ -641,7 +642,7 @@ void sim7020_hex2chrbuf (char *src_p_buf, char *dest_buf, int len)
 //缓冲区当中每两个字节组成一个十六进制数，2个字节换算成1个字符
 //hex:16进制数字,0~15;
 //返回值:字符
-void sim7020_buf2chr (char *p_buf, int len)
+void nbiot_buf2chr (char *p_buf, int len)
 {
     int i = 0; 
    
@@ -650,8 +651,8 @@ void sim7020_buf2chr (char *p_buf, int len)
      
     for (i = 0; i < len; i=i+2)
     {
-        tmp  = sim7020_chr2hex(p_buf[i]);       
-        tmp1 = sim7020_chr2hex(p_buf[i + 1]);      
+        tmp  = nbiot_chr2hex(p_buf[i]);       
+        tmp1 = nbiot_chr2hex(p_buf[i + 1]);      
         p_buf[i / 2] = (tmp << 4)  |  tmp1;                    
     } 
     
@@ -661,7 +662,7 @@ void sim7020_buf2chr (char *p_buf, int len)
 //缓冲区当中每两个字节组成一个十六进制数，2个字节换算一个字节的十六进制数
 //hex:16进制数字,0~15;
 //返回值:字符
-void sim7020_buf2hex (char *p_buf , int len)
+void nbiot_buf2hex (char *p_buf , int len)
 {
     int i = 0; 
    
@@ -670,8 +671,8 @@ void sim7020_buf2hex (char *p_buf , int len)
      
     for (i = 0; i < len; i=i+2)
     {
-        tmp = sim7020_chr2hex(p_buf[i]);       
-        tmp1 = sim7020_chr2hex(p_buf[i + 1]);      
+        tmp = nbiot_chr2hex(p_buf[i]);       
+        tmp1 = nbiot_chr2hex(p_buf[i + 1]);      
         p_buf[i / 2] = (tmp << 4)  |  tmp1;                    
     } 
     
@@ -682,7 +683,7 @@ void sim7020_buf2hex (char *p_buf , int len)
 //缓冲区当中每两个字节组成一个十六进制数，2个字节换算成1个字符
 //hex:16进制数字,0~15;
 //返回值:字符
-void sim7020_srcbuf2chr (char *src_buf, char *dest_buf, int len)
+void nbiot_srcbuf2chr (char *src_buf, char *dest_buf, int len)
 {
     int i = 0; 
    
@@ -691,8 +692,8 @@ void sim7020_srcbuf2chr (char *src_buf, char *dest_buf, int len)
      
     for (i = 0; i < len; i=i+2)
     {
-        tmp  = sim7020_chr2hex(src_buf[i]);       
-        tmp1 = sim7020_chr2hex(src_buf[i + 1]);      
+        tmp  = nbiot_chr2hex(src_buf[i]);       
+        tmp1 = nbiot_chr2hex(src_buf[i + 1]);      
         dest_buf[i / 2] = (tmp << 4)  |  tmp1;                    
     } 
     
@@ -702,7 +703,7 @@ void sim7020_srcbuf2chr (char *src_buf, char *dest_buf, int len)
 //缓冲区当中每两个字节组成一个十六进制数，2个字节换算一个字节的十六进制数
 //hex:16进制数字,0~15;
 //返回值:字符
-void sim7020_srcbuf2hex (char *src_buf ,char *dest_buf, int len)
+void nbiot_srcbuf2hex (char *src_buf ,char *dest_buf, int len)
 {
     int i = 0; 
    
@@ -711,8 +712,8 @@ void sim7020_srcbuf2hex (char *src_buf ,char *dest_buf, int len)
      
     for (i = 0; i < len; i=i+2)
     {
-        tmp = sim7020_chr2hex(src_buf[i]);       
-        tmp1 = sim7020_chr2hex(src_buf[i + 1]);      
+        tmp = nbiot_chr2hex(src_buf[i]);       
+        tmp1 = nbiot_chr2hex(src_buf[i + 1]);      
         dest_buf[i / 2] = (tmp << 4)  |  tmp1;                    
     } 
     
@@ -720,7 +721,7 @@ void sim7020_srcbuf2hex (char *src_buf ,char *dest_buf, int len)
 }
 
 
-//sim7020 at指令初始化
+//nbiot at指令初始化
 void at_cmd_param_init (at_cmdhandle cmd_handle,
                         const char *at_cmd,
                         char *argument,
@@ -741,7 +742,7 @@ void at_cmd_param_init (at_cmdhandle cmd_handle,
     cmd_handle->p_atcmd     = at_cmd;
 }
 
-//生成sim7020 at指令的字符串及其对应的长度
+//生成nbiot at指令的字符串及其对应的长度
 static int cmd_generate(at_cmdhandle cmd_handle)
 {
     int cmdLen = 0;
@@ -750,37 +751,37 @@ static int cmd_generate(at_cmdhandle cmd_handle)
     {
         return cmdLen;
     }
-    memset(g_sim7020_send_desc.buf,0,SIM7020_SEND_BUF_MAX_LEN);
-    g_sim7020_send_desc.len = 0;
+    memset(g_nbiot_send_desc.buf,0,NBIOT_SEND_BUF_MAX_LEN);
+    g_nbiot_send_desc.len = 0;
 
     if(cmd_handle->property == CMD_TEST)
     {
-        cmdLen = snprintf(g_sim7020_send_desc.buf,SIM7020_SEND_BUF_MAX_LEN,
+        cmdLen = snprintf(g_nbiot_send_desc.buf,NBIOT_SEND_BUF_MAX_LEN,
                           "%s=?\r\n",
                           cmd_handle->p_atcmd);
     }    
     else if(cmd_handle->property == CMD_READ)
     {
-        cmdLen = snprintf(g_sim7020_send_desc.buf,SIM7020_SEND_BUF_MAX_LEN,
+        cmdLen = snprintf(g_nbiot_send_desc.buf,NBIOT_SEND_BUF_MAX_LEN,
                           "%s?\r\n",
                           cmd_handle->p_atcmd);
     }
     else if(cmd_handle->property == CMD_EXCUTE)
     {
-        cmdLen = snprintf(g_sim7020_send_desc.buf,SIM7020_SEND_BUF_MAX_LEN,
+        cmdLen = snprintf(g_nbiot_send_desc.buf,NBIOT_SEND_BUF_MAX_LEN,
                           "%s\r\n",
                           cmd_handle->p_atcmd);    
     }
 
     else if(cmd_handle->property == CMD_SET)
     {
-        cmdLen = snprintf(g_sim7020_send_desc.buf,SIM7020_SEND_BUF_MAX_LEN,
+        cmdLen = snprintf(g_nbiot_send_desc.buf,NBIOT_SEND_BUF_MAX_LEN,
                           "%s=%s\r\n",
                           cmd_handle->p_atcmd,cmd_handle->p_atcmd_arg);    
     }
     
     //cmdlen是有效的数据长度，不包括字符串结束标记符
-    g_sim7020_send_desc.len = cmdLen;
+    g_nbiot_send_desc.len = cmdLen;
     
     return cmdLen;
 }
@@ -793,9 +794,9 @@ static int8_t at_cmd_result_parse (char *buf)
 {
     int8_t result = -1;
   
-//    SIM7020_DEBUG_INFO("respones buf%s\r\n",buf); 
+//    NBIOT_DEBUG_INFO("respones buf%s\r\n",buf); 
 //  
-//    SIM7020_DEBUG_INFO("respones buf len %d \r\n", strlen(buf)); 
+//    NBIOT_DEBUG_INFO("respones buf len %d \r\n", strlen(buf)); 
   
     char *p_colon = strchr(g_at_cmd.p_atcmd,'+');
     char *p_colon_temp = strchr(buf,':');
@@ -858,8 +859,8 @@ static int8_t at_cmd_result_parse (char *buf)
 }
 
 
-//处理sim7020事件通知
-static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
+//处理nbiot事件通知
+static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
 {
     char *target_pos_start = NULL;
     
@@ -872,17 +873,17 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
             p_colon = p_colon + 4;
             
             //该命令后面直接跟的网络注册状态的信息，用字符来表示的，要转换成数字        
-            g_sim7020_connect_status.register_status = (*p_colon - '0');
+            g_nbiot_connect_status.register_status = (*p_colon - '0');
         }
         
         //产生注册事件
-        if (g_sim7020_connect_status.register_status == 1) {
+        if (g_nbiot_connect_status.register_status == 1) {
 
-            sim7020_event_set(sim7020_handle, SIM7020_REG_STA_EVENT);
+            nbiot_event_set(nbiot_handle, NBIOT_REG_STA_EVENT);
         }        
            
         //同时产生接收类事件
-        sim7020_event_set(sim7020_handle, SIM7020_RECV_EVENT);  
+        nbiot_event_set(nbiot_handle, NBIOT_RECV_EVENT);  
         
     }    
     else if((target_pos_start = strstr(buf,"+CSONMI")) != NULL)
@@ -918,20 +919,20 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         }               
         if (g_socket_info[0].socket_type == 2) 
         {
-            sim7020_event_set(sim7020_handle, SIM7020_UDP_RECV_EVENT);             
+            nbiot_event_set(nbiot_handle, NBIOT_UDP_RECV_EVENT);             
         }         
-        else if (g_socket_info[0].socket_type == SIM7020_TCP)
+        else if (g_socket_info[0].socket_type == NBIOT_TCP)
         {
 
-            sim7020_event_set(sim7020_handle, SIM7020_TCP_RECV_EVENT); 
+            nbiot_event_set(nbiot_handle, NBIOT_TCP_RECV_EVENT); 
         } 
         else 
         {
             //其它，默认产生接收事件
-            sim7020_event_set(sim7020_handle, SIM7020_RECV_EVENT);            
+            nbiot_event_set(nbiot_handle, NBIOT_RECV_EVENT);            
         }
         
-        sim7020_status_set(SIM7020_TCPUDP_RECV, SIM7020_SUB_TCPUDP_RECV);        
+        nbiot_status_set(NBIOT_TCPUDP_RECV, NBIOT_SUB_TCPUDP_RECV);        
     }  
     else if((target_pos_start = strstr(buf,"+CSOERR")) != NULL)
     {
@@ -959,8 +960,8 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
           g_socket_info[0].socket_errcode = socket_err; 
         }
                 
-        sim7020_event_set(sim7020_handle, SIM7020_SOCKET_ERR_EVENT); 
-        sim7020_status_set(SIM7020_SOCKET_ERR, SIM7020_SUB_SOCKET_ERR);        
+        nbiot_event_set(nbiot_handle, NBIOT_SOCKET_ERR_EVENT); 
+        nbiot_status_set(NBIOT_SOCKET_ERR, NBIOT_SUB_SOCKET_ERR);        
     }
     
     //收到Coap数据包
@@ -984,7 +985,7 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         if (pComma)
         {
             pComma++;
-            g_sim7020_connect_status.data_len = strtoul(pComma,0,10);
+            g_nbiot_connect_status.data_len = strtoul(pComma,0,10);
         }     
        
         //得到有效数据的起始地址
@@ -993,11 +994,11 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         if (p_data_offest)
         {
             p_data_offest++;
-            g_sim7020_connect_status.data_offest = p_data_offest;
+            g_nbiot_connect_status.data_offest = p_data_offest;
         }                   
       
-        sim7020_event_set(sim7020_handle, SIM7020_COAP_RECV_EVENT);  
-        sim7020_status_set(SIM7020_CoAP_RECV, SIM7020_SUB_CoAP_RECV);  
+        nbiot_event_set(nbiot_handle, NBIOT_COAP_RECV_EVENT);  
+        nbiot_status_set(NBIOT_CoAP_RECV, NBIOT_SUB_CoAP_RECV);  
     } 
     else if ((target_pos_start = strstr(buf,"+CM2MCLI:")) != NULL)
     {
@@ -1008,11 +1009,11 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         if (p_colon)
         {
             p_colon++;
-            g_sim7020_connect_status.m2m_status = strtoul(p_colon,0,10);
+            g_nbiot_connect_status.m2m_status = strtoul(p_colon,0,10);
         } 
                               
-        sim7020_event_set(sim7020_handle, SIM7020_CM2M_STATUS_EVENT);  
-        sim7020_status_set(SIM7020_CM2M_STATUS, SIM7020_SUB_CM2M_STATUS);          
+        nbiot_event_set(nbiot_handle, NBIOT_CM2M_STATUS_EVENT);  
+        nbiot_status_set(NBIOT_CM2M_STATUS, NBIOT_SUB_CM2M_STATUS);          
     }
 
     else if ((target_pos_start = strstr(buf,"+CM2MCLIRECV")) != NULL)
@@ -1024,27 +1025,27 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
         if (p_colon)
         {
             p_colon =  p_colon + 2;
-            g_sim7020_connect_status.data_offest = p_colon;
+            g_nbiot_connect_status.data_offest = p_colon;
                      
         } 
                               
-        sim7020_event_set(sim7020_handle, SIM7020_CM2M_RECV_EVENT);  
-        sim7020_status_set(SIM7020_CM2M_RECV, SIM7020_SUB_CM2M_RECV);           
+        nbiot_event_set(nbiot_handle, NBIOT_CM2M_RECV_EVENT);  
+        nbiot_status_set(NBIOT_CM2M_RECV, NBIOT_SUB_CM2M_RECV);           
     }    
     else if((target_pos_start = strstr(buf,"+CLMOBSERVE")) != NULL)
     {
-        sim7020_event_set(sim7020_handle, SIM7020_LWM2M_RECV_EVENT);          
+        nbiot_event_set(nbiot_handle, NBIOT_LWM2M_RECV_EVENT);          
     } 
 
     //收到MQTT数据包    
     else if ((target_pos_start = strstr(buf,"+CMQPUB")) != NULL)
     {        
-        sim7020_event_set(sim7020_handle, SIM7020_MQTT_RECV_EVENT);  
+        nbiot_event_set(nbiot_handle, NBIOT_MQTT_RECV_EVENT);  
     }    
     else 
     {
         //如果收到回复，其它是命令响应的数据
-        sim7020_event_set(sim7020_handle, SIM7020_RECV_EVENT);  
+        nbiot_event_set(nbiot_handle, NBIOT_RECV_EVENT);  
     }
     
     return 0;
@@ -1053,29 +1054,29 @@ static uint8_t sim7020_event_notify (sim7020_handle_t sim7020_handle, char *buf)
 //产生下一条AT指令
 static uint8_t at_cmd_next (void)
 { 
-    if (g_sim7020_sm_status.main_status == SIM7020_NBLOT_INIT)
+    if (g_nbiot_sm_status.main_status == NBIOT_NBLOT_INIT)
     {
-        g_sim7020_sm_status.sub_status++;
+        g_nbiot_sm_status.sub_status++;
       
-        if (g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
         {
             return FALSE;
         }
 
-        switch(g_sim7020_sm_status.sub_status)
+        switch(g_nbiot_sm_status.sub_status)
         {
           
-        case SIM7020_SUB_SYNC:
+        case NBIOT_SUB_SYNC:
             
             break;
         
-        case SIM7020_SUB_CMEE:
+        case NBIOT_SUB_CMEE:
           
             at_cmd_param_init(&g_at_cmd, AT_CMEE, "1", CMD_SET, 3000);
           
             break;
         
-        case SIM7020_SUB_ATI:
+        case NBIOT_SUB_ATI:
           
             at_cmd_param_init(&g_at_cmd, AT_ATI, NULL, CMD_EXCUTE, 3000);
             g_at_cmd.p_expectres = "SIM";         //设置期望回复消息，如果指令执行完成
@@ -1084,7 +1085,7 @@ static uint8_t at_cmd_next (void)
             break;
                       
         //查询NB卡状态是否准备好    
-        case SIM7020_SUB_CPIN:
+        case NBIOT_SUB_CPIN:
           {
             at_cmd_param_init(&g_at_cmd, AT_CPIN, NULL, CMD_READ, 3000);
             g_at_cmd.p_expectres = "+CPIN: READY"; //设置期望回复消息，如果指令执行完成
@@ -1095,14 +1096,14 @@ static uint8_t at_cmd_next (void)
                     
           
         //查询射频模块信号质量   
-        case SIM7020_SUB_CSQ:
+        case NBIOT_SUB_CSQ:
           {
              at_cmd_param_init(&g_at_cmd, AT_CSQ, NULL, CMD_EXCUTE, 3000);
           }
           break;
 
         //使能模块射频信号,响应等待的最长时间为10S      
-        case SIM7020_SUB_CFUN:                                   
+        case NBIOT_SUB_CFUN:                                   
           {
             at_cmd_param_init(&g_at_cmd, AT_CFUN,"1",CMD_SET, 11000);
           }
@@ -1110,14 +1111,14 @@ static uint8_t at_cmd_next (void)
           break;
           
         // 使能NBlot网络注册   
-        case SIM7020_SUB_CEREG:
+        case NBIOT_SUB_CEREG:
           {
             at_cmd_param_init(&g_at_cmd, AT_CGREG, "1", CMD_SET, 3000);
           }
           break;  
           
 //        //先禁能PDN， 命令在150S之内会有回应     
-//        case SIM7020_SUB_CGACT_DISABLE:
+//        case NBIOT_SUB_CGACT_DISABLE:
 //          {
 //            at_cmd_param_init(&g_at_cmd, AT_CGACT,"0,1",CMD_SET, 151000);
 //          }
@@ -1125,14 +1126,14 @@ static uint8_t at_cmd_next (void)
 //    
 //          
         //再使能PDN， 命令在150S之内会有回应，不先禁能的话，再使能状态执行执命令会出错     
-//        case SIM7020_SUB_CGACT:
+//        case NBIOT_SUB_CGACT:
 //          {
 //            at_cmd_param_init(&g_at_cmd, AT_CGACT,"1,1",CMD_SET, 151000);
 //          }
 //          break;
         
         //查询PDN激活信息          
-        case SIM7020_SUB_CGACT_QUERY:
+        case NBIOT_SUB_CGACT_QUERY:
           {
             at_cmd_param_init(&g_at_cmd, AT_CGACT, NULL, CMD_READ, 151000);
             g_at_cmd.p_expectres = ",1"; //设置期望回复消息，如果指令执行完成
@@ -1143,14 +1144,14 @@ static uint8_t at_cmd_next (void)
                
           
         //使能网络附着,最大响应时间不详      
-        case SIM7020_SUB_CGATT:
+        case NBIOT_SUB_CGATT:
           {
             at_cmd_param_init(&g_at_cmd, AT_CGATT, "1", CMD_SET, 3000);
           }
           break;
 
         //查询网络附着信息,最大响应时间不详       
-        case SIM7020_SUB_CGATT_QUERY:
+        case NBIOT_SUB_CGATT_QUERY:
           {
             at_cmd_param_init(&g_at_cmd, AT_CGATT, NULL, CMD_READ, 3000);
             
@@ -1162,7 +1163,7 @@ static uint8_t at_cmd_next (void)
           break;
           
         //查询是否是使用NBlot网络,最大响应时间不详       
-        case SIM7020_SUB_COPS_QUERY:
+        case NBIOT_SUB_COPS_QUERY:
           {
             at_cmd_param_init(&g_at_cmd, AT_COPS, NULL, CMD_READ, 3000);
             
@@ -1175,7 +1176,7 @@ static uint8_t at_cmd_next (void)
           
  
         //查询分配的APN信息及IP地址     
-        case SIM7020_SUB_CGCONTRDP_QUERY:
+        case NBIOT_SUB_CGCONTRDP_QUERY:
           {
             at_cmd_param_init(&g_at_cmd, AT_CGCONTRDP, NULL, CMD_EXCUTE, 3000);
                
@@ -1184,7 +1185,7 @@ static uint8_t at_cmd_next (void)
                     
           
         //查询NBlot网络是否注册,最大响应时间不详       
-        case SIM7020_SUB_CEREG_QUERY:
+        case NBIOT_SUB_CEREG_QUERY:
           {
             at_cmd_param_init(&g_at_cmd, AT_CGREG, NULL, CMD_READ, 3000);             
 
@@ -1194,26 +1195,26 @@ static uint8_t at_cmd_next (void)
         default: 
           
           //强制表示子进程结束
-          g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+          g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
         
           return FALSE;
                    
          }
     }
     
-    else if (g_sim7020_sm_status.main_status == SIM7020_NBLOT_INFO)
+    else if (g_nbiot_sm_status.main_status == NBIOT_NBLOT_INFO)
     {
-        g_sim7020_sm_status.sub_status++;
+        g_nbiot_sm_status.sub_status++;
       
-        if (g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
         {
             return FALSE;
         }
         
-        switch(g_sim7020_sm_status.sub_status)
+        switch(g_nbiot_sm_status.sub_status)
         {
           
-        case  SIM7020_SUB_CGMI:
+        case  NBIOT_SUB_CGMI:
           
           {
             at_cmd_param_init(&g_at_cmd,AT_CGMI,NULL,CMD_EXCUTE,3000);
@@ -1221,25 +1222,25 @@ static uint8_t at_cmd_next (void)
           break;
 
                    
-        case SIM7020_SUB_CGMM:
+        case NBIOT_SUB_CGMM:
           {
             at_cmd_param_init(&g_at_cmd,AT_CGMM,NULL,CMD_EXCUTE,3000);
           }
           break;
           
-        case SIM7020_SUB_CGMR:
+        case NBIOT_SUB_CGMR:
           {
             at_cmd_param_init(&g_at_cmd,AT_CGMR,NULL,CMD_EXCUTE,3000);
           }
           break;
           
-        case SIM7020_SUB_CIMI:
+        case NBIOT_SUB_CIMI:
           {
             at_cmd_param_init(&g_at_cmd,AT_CIMI,NULL,CMD_EXCUTE,3000);
           }
           break;
 
-        case SIM7020_SUB_CGSN:
+        case NBIOT_SUB_CGSN:
           {
             at_cmd_param_init(&g_at_cmd, AT_CGSN, NULL, CMD_EXCUTE, 3000);
             
@@ -1251,7 +1252,7 @@ static uint8_t at_cmd_next (void)
           break;             
           
           
-        case SIM7020_SUB_CBAND:
+        case NBIOT_SUB_CBAND:
           {
             at_cmd_param_init(&g_at_cmd,AT_CBAND,NULL,CMD_READ,3000);
             //设置期望回复消息为络
@@ -1264,34 +1265,34 @@ static uint8_t at_cmd_next (void)
         default: 
           
           //强制表示子进程结束
-          g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+          g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
         
           return FALSE;          
         
         }
     }
-    else if (g_sim7020_sm_status.main_status == SIM7020_SIGNAL)
+    else if (g_nbiot_sm_status.main_status == NBIOT_SIGNAL)
     {
         
-        g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
         return FALSE;
     }
     
-    else if (g_sim7020_sm_status.main_status == SIM7020_TCPUDP_CR)
+    else if (g_nbiot_sm_status.main_status == NBIOT_TCPUDP_CR)
     {
         
-        g_sim7020_sm_status.sub_status++;
+        g_nbiot_sm_status.sub_status++;
       
       
-        if (g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
         {
             return FALSE;
         }
         
-        switch(g_sim7020_sm_status.sub_status)
+        switch(g_nbiot_sm_status.sub_status)
         {
           
-        case SIM7020_SUB_TCPUDP_CONNECT:
+        case NBIOT_SUB_TCPUDP_CONNECT:
           
           {
           
@@ -1300,7 +1301,7 @@ static uint8_t at_cmd_next (void)
             //不能使用栈上的内存来分配数据
             memset(cmd_buf_temp,0,sizeof(cmd_buf_temp));
             
-            if (g_socket_info[0].socket_type == SIM7020_TCP)
+            if (g_socket_info[0].socket_type == NBIOT_TCP)
             { 
                 p_remote_port = REMOTE_TCP_PORT;
             }
@@ -1317,9 +1318,9 @@ static uint8_t at_cmd_next (void)
                                         p_remote_port,                                         
                                         REMOTE_SERVER_IP);
                                         
-//            SIM7020_DEBUG_INFO("tcpudp_cn_len = %d\r\n", tcpudp_cn_len);
+//            NBIOT_DEBUG_INFO("tcpudp_cn_len = %d\r\n", tcpudp_cn_len);
 //                                        
-//            SIM7020_DEBUG_INFO("tcpudp_cn_buf = %s\r\n", buf);                            
+//            NBIOT_DEBUG_INFO("tcpudp_cn_buf = %s\r\n", buf);                            
             
             //最大响应时间不详                                        
             at_cmd_param_init(&g_at_cmd,AT_CSOCON, cmd_buf_temp, CMD_SET, 3000);
@@ -1331,88 +1332,88 @@ static uint8_t at_cmd_next (void)
         default: 
           
           //强制表示子进程结束
-          g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+          g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
         
           return FALSE;          
         
         }
     } 
-    else if (g_sim7020_sm_status.main_status == SIM7020_TCPUDP_CL) 
+    else if (g_nbiot_sm_status.main_status == NBIOT_TCPUDP_CL) 
     {
       
-        g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
       
         return FALSE;    
       
     }  
-    else if (g_sim7020_sm_status.main_status == SIM7020_TCPUDP_SEND) 
+    else if (g_nbiot_sm_status.main_status == NBIOT_TCPUDP_SEND) 
     {
       
-        g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
       
         return FALSE;     
     }
 
-    else if (g_sim7020_sm_status.main_status == SIM7020_CoAP_SEVER) 
+    else if (g_nbiot_sm_status.main_status == NBIOT_CoAP_SEVER) 
     {
       
-        g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
       
         return FALSE;    
       
     } 
     
-    else if (g_sim7020_sm_status.main_status == SIM7020_CoAP_CLIENT) 
+    else if (g_nbiot_sm_status.main_status == NBIOT_CoAP_CLIENT) 
     {
       
-        g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
       
         return FALSE;     
     }
    
-     else if (g_sim7020_sm_status.main_status == SIM7020_CoAP_SEND) 
+     else if (g_nbiot_sm_status.main_status == NBIOT_CoAP_SEND) 
     {
       
-        g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
       
         return FALSE;    
       
     } 
     
-    else if (g_sim7020_sm_status.main_status == SIM7020_CoAP_CL) 
+    else if (g_nbiot_sm_status.main_status == NBIOT_CoAP_CL) 
     {
       
-        g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
       
         return FALSE;     
     }
 
-    else if (g_sim7020_sm_status.main_status == SIM7020_CM2M_CLIENT) 
+    else if (g_nbiot_sm_status.main_status == NBIOT_CM2M_CLIENT) 
     {
       
-        g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
       
         return FALSE;     
     }
    
-     else if (g_sim7020_sm_status.main_status == SIM7020_CM2M_SEND) 
+     else if (g_nbiot_sm_status.main_status == NBIOT_CM2M_SEND) 
     {
       
-        g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
       
         return FALSE;    
       
     } 
     
-    else if (g_sim7020_sm_status.main_status == SIM7020_CM2M_CL) 
+    else if (g_nbiot_sm_status.main_status == NBIOT_CM2M_CL) 
     {
       
-        g_sim7020_sm_status.sub_status = SIM7020_SUB_END;
+        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
       
         return FALSE;     
     } 
        
-    else if (g_sim7020_sm_status.main_status == SIM7020_NONE)   
+    else if (g_nbiot_sm_status.main_status == NBIOT_NONE)   
     {  //防止意外重发
        return FALSE; 
     }
@@ -1426,533 +1427,534 @@ static uint8_t at_cmd_next (void)
 }
 
 //发送消息与应用层交互
-static void sim7020_msg_send (sim7020_handle_t sim7020_handle, char**buf, int8_t is_ok)
+static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok)
 {
-  if (sim7020_handle == NULL)
-  {
+    if (nbiot_handle == NULL)
+    {
       return;
-  }
-  
-  if ((is_ok == SIM7020_ERROR_RETRY) || 
-      (is_ok == SIM7020_ERROR_TIMEOUT)) {
-        
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_CMD_RETRY, strlen(buf[0]), buf[0]);  
-        
-      return;      
-  }
-      
-  else if (is_ok == SIM7020_ERROR_NEXT)
-  {
+    }
 
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_CMD_NEXT, strlen(buf[0]), buf[0]);  
+    if ((is_ok == NBIOT_ERROR_RETRY) || 
+        (is_ok == NBIOT_ERROR_TIMEOUT)) {
         
-      return;
-  }    
+         nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_CMD_RETRY, strlen(buf[0]), buf[0]);  
+        
+         return;      
+    }
+
+    //出错及跳过该指令执行  
+    else if (is_ok == NBIOT_ERROR_NEXT)
+    {
+
+        nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_CMD_NEXT, strlen(buf[0]), buf[0]);  
+        
+        return;
+    }    
            
-  //出错，则上报此流程执行失败
-  else if(is_ok == FALSE)
-  {
-    sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_CMD_FAIL, strlen(buf[0]), buf[0]);
-    return;
-  }
-  
-  if (g_sim7020_sm_status.main_status == SIM7020_NBLOT_INIT)
-  {
-    switch(g_sim7020_sm_status.sub_status)
+    //出错，则上报此流程执行失败
+    else if(is_ok == FALSE)
     {
-        
-    case SIM7020_SUB_SYNC:
-        
-      break;
-    
-    case SIM7020_SUB_CMEE:
-      
-      break;    
-    
-    case SIM7020_SUB_ATI:
-      
-      //得到模块的名字
-      memcpy(g_firmware_info.name, buf[1], strlen(buf[1])); 
-        
-      break;    
-    
-    case SIM7020_SUB_CPIN:
-        
-      break;
-      
-    case SIM7020_SUB_CSQ:
-    {
-        char *p_colon = strchr(buf[1],':');
-        p_colon++;
-      
-        //转换成10进制数字
-        uint8_t lqi =strtoul(p_colon,0, 10);
-      
-        //运算取得每个数值对应的dbm范围
-        int8_t rssi = -110 + (lqi << 1);
-      
-        g_sim7020_connect_status.rssi = rssi; 
-      
-        break;
-    }  
-              
-    case SIM7020_SUB_CFUN:
-        break;
-    
-
-    case SIM7020_SUB_CEREG:
-            
-        break;
-    
-    
-//    case SIM7020_SUB_CGACT_DISABLE:
-//           
-//    
-//    case SIM7020_SUB_CGACT:
-//        
-//        break;
-//    
-//    
-    case SIM7020_SUB_CGACT_QUERY:
-    {
-        char *p_colon = strchr(buf[1],':');
-                    
-        if (p_colon != NULL) 
-        {                
-            p_colon++;
-            
-            //转换成10进制数字,得到当前创建的cid
-            g_sim7020_connect_status.cid =strtoul(p_colon,0, 10);
-        }
-        
-        break;
-     }
-           
-    case SIM7020_SUB_CGATT:
-        
-        break;
-    
-    
-    case SIM7020_SUB_CGATT_QUERY:
-        
-        break;
-    
-    case SIM7020_SUB_COPS_QUERY:
-        
-        break;  
-
-    case SIM7020_SUB_CGCONTRDP_QUERY:
-        
-        break;       
-       
-    case SIM7020_SUB_END:
-        
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_NBLOT_INIT,1,"S");
-    
-        break;
-    
-    default:
-      
-        break;
+        nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_CMD_FAIL, strlen(buf[0]), buf[0]);
+        return;
     }
-  }
-  else if(g_sim7020_sm_status.main_status == SIM7020_NBLOT_INFO)
-  {
-    switch(g_sim7020_sm_status.sub_status)
+
+    if (g_nbiot_sm_status.main_status == NBIOT_NBLOT_INIT)
     {
-        
-    //查询网络注册状态    
-    case SIM7020_SUB_CEREG_QUERY:
-
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_REG, strlen(buf[1]), buf[1]);
-    
-      break;        
-        
-                 
-    case SIM7020_SUB_CGMI:
-      {
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_MID, strlen(buf[1]), buf[1]);
-      }
-      break;
-      
-    case SIM7020_SUB_CGMM:
-      {
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_MMODEL,strlen(buf[1]),buf[1]);
-      }
-      break;
-      
-    case SIM7020_SUB_CGMR:
-      {
-
-         sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_MREV,strlen(buf[1]),buf[1]);
-        
-      }
-      break;
-      
-      
-    case SIM7020_SUB_CIMI:
-      {
-        memcpy(g_firmware_info.IMSI,buf[1],15);
-        g_firmware_info.IMSI[15] = 0;
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_IMSI,strlen(buf[1]),buf[1]);
-      }
-      break;
-      
-    
-    case SIM7020_SUB_CGSN:
-      {
-        char *p_colon = strchr(buf[1],':');
-        
-        if(p_colon)
+        switch(g_nbiot_sm_status.sub_status)
         {
-          p_colon = p_colon + 2;
-          memcpy(g_firmware_info.IMEI ,p_colon,15);
-          g_firmware_info.IMEI[15] = 0;
-          sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_IMEI,15,(char*)g_firmware_info.IMEI);
-        }
-      }
-      break;            
-      
-    case SIM7020_SUB_CBAND:
-      {
-        char *p_colon = strchr(buf[1],':');
-        char *pFreq = NULL;
-        if(p_colon)
-        {
-          p_colon++;
-          uint8_t hz_id = strtoul(p_colon,0,10);
-          if(hz_id == BAND_850MHZ_ID)
-          {
-            //850MHZ
-            pFreq = BAND_850MHZ_STR;
-          }
-          else if(hz_id == BAND_900MHZ_ID)
-          {
-            //900MHZ
-            pFreq = BAND_900MHZ_STR;
-          }
-          else if(hz_id == BAND_800MHZ_ID)
-          {
-            //800MHZ 
-            pFreq = BAND_800MHZ_STR;
-          }
-          else 
-          {
-            //700MHZ
-            pFreq = BAND_700MHZ_STR;
-          }
-          sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_BAND,strlen(pFreq),pFreq);
-        }
-      }
-      break;
-
-    case SIM7020_SUB_END:
-      {
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_NBLOT_INFO, 1, "S");
-      }
-      break;
-    }
-  }
-  else if(g_sim7020_sm_status.main_status == SIM7020_SIGNAL)
-  {
-    switch(g_sim7020_sm_status.sub_status) 
-    { 
-    case SIM7020_SUB_CSQ:
-    {
-        char *p_colon = strchr(buf[1],':');
-        if (p_colon != NULL) 
-        {            
-          p_colon++;
-          //转换成10进制数字
-          uint8_t lqi =strtoul(p_colon,0, 10);
-          //运算取得每个数值对应的dbm范围
-          int8_t rssi = -110 + (lqi << 1);
-          uint8_t len = snprintf(buf[1],10,"%d",rssi);
-          *(buf[1]+len) = 0;
-          
-          g_sim7020_connect_status.rssi = rssi;
-          
-          sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CSQ,len,buf[1]);
-          
-        }
-      
-        break;
-    } 
-      
-    case SIM7020_SUB_END:
-    {
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_SIGNAL,1,"S");
-        break;
-    }
-    
-    default:
-      
-        break;
-    }
-    
-  }
-  else if(g_sim7020_sm_status.main_status == SIM7020_TCPUDP_CR)
-  {
-    switch(g_sim7020_sm_status.sub_status)
-    {
-    case SIM7020_SUB_TCPUDP_CR:
-      {
-
-        char *p_colon = strchr(buf[1],':');
-                    
-        if (p_colon != NULL) 
-        {                
-            p_colon++;
             
-            //转换成10进制数字,得到当前创建的socket id
-            g_socket_info[0].socket_id =strtoul(p_colon,0, 10);
-        }
+        case NBIOT_SUB_SYNC:
+            
+          break;
+
+        case NBIOT_SUB_CMEE:
+          
+          break;    
+
+        case NBIOT_SUB_ATI:
+          
+          //得到模块的名字
+          memcpy(g_firmware_info.name, buf[1], strlen(buf[1])); 
+            
+          break;    
+
+        case NBIOT_SUB_CPIN:
+            
+          break;
+          
+        case NBIOT_SUB_CSQ:
+        {
+            char *p_colon = strchr(buf[1],':');
+            p_colon++;
+          
+            //转换成10进制数字
+            uint8_t lqi =strtoul(p_colon,0, 10);
+          
+            //运算取得每个数值对应的dbm范围
+            int8_t rssi = -110 + (lqi << 1);
+          
+            g_nbiot_connect_status.rssi = rssi; 
+          
+            break;
+        }  
+                  
+        case NBIOT_SUB_CFUN:
+            break;
+
+
+        case NBIOT_SUB_CEREG:
                 
-      }
-      break;
-      
-    case SIM7020_SUB_TCPUDP_CONNECT:
-      {                                             
-      }
-      break;
-      
-    case SIM7020_SUB_END:
-      {              
-         char *p_buf_tmep = NULL;
-              
-         g_sim7020_connect_status.connect_status = 1;  
-               
-         if (g_socket_info[0].socket_type == SIM7020_TCP)
-         {
-             p_buf_tmep = "tcp create ok";
+            break;
+
+
+        //    case NBIOT_SUB_CGACT_DISABLE:
+        //           
+        //    
+        //    case NBIOT_SUB_CGACT:
+        //        
+        //        break;
+        //    
+        //    
+        case NBIOT_SUB_CGACT_QUERY:
+        {
+            char *p_colon = strchr(buf[1],':');
+                        
+            if (p_colon != NULL) 
+            {                
+                p_colon++;
+                
+                //转换成10进制数字,得到当前创建的cid
+                g_nbiot_connect_status.cid =strtoul(p_colon,0, 10);
+            }
+            
+            break;
          }
-        
-         else 
-         {   
-             p_buf_tmep = "udp create ok";
-         } 
-                                                       
-         sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_TCPUDP_CREATE, strlen(p_buf_tmep), p_buf_tmep);
-                
-      }
-      break;
-    }
-  } 
-  else if(g_sim7020_sm_status.main_status == SIM7020_TCPUDP_CL)
-  {
-    if (g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
-    {
-         g_sim7020_connect_status.connect_status = 0;  
-      
-         char *p_buf_tmep = NULL;
-                                    
-         if (g_socket_info[0].socket_type == SIM7020_TCP)
-         {
-             p_buf_tmep = "tcp close";
-         }         
-         else 
-         {   
-             p_buf_tmep = "udp close";
-         }         
-         sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
-     }
-  }   
-  else if(g_sim7020_sm_status.main_status == SIM7020_TCPUDP_SEND)
-  {
-    switch(g_sim7020_sm_status.sub_status)
-    {
-      
-    case SIM7020_SUB_END:
-      {
-        char *p_buf_tmep = g_sim7020_send_desc.buf;
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_TCPUDP_SEND,strlen(p_buf_tmep),p_buf_tmep);
-      }
-      break;
-      
-    default:
-      
-      break;
-    }
-  }
-  else if(g_sim7020_sm_status.main_status == SIM7020_TCPUDP_RECV)
-  {
-    if(g_sim7020_sm_status.sub_status == SIM7020_SUB_TCPUDP_RECV)
-    {
-      char *data_buf = g_socket_info[0].data_offest; 
-      //复位状态标志
-      sim7020_status_reset();      
-
-//      SIM7020_DEBUG_INFO("data_buf = %s", data_buf);      
-           
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_TCPUDP_RECV,strlen(data_buf),data_buf);
-      
-    }
-    
-  }
-  
-  else if(g_sim7020_sm_status.main_status == SIM7020_SOCKET_ERR)
-  {
-    if (g_sim7020_sm_status.sub_status == SIM7020_SUB_SOCKET_ERR)
-    {
-
-        SIM7020_DEBUG_INFO("the socket err, the err code is %d\r\n", g_socket_info[0].socket_errcode); 
-      
-        //复位状态标志
-        sim7020_status_reset();      
-             
-        sim7020_handle->sim7020_cb(sim7020_handle->p_arg,
-                                   (sim7020_msg_id_t)SIM7020_MSG_SOCKET_ERROR, 
-                                    1, 
-                                    (char *)&g_socket_info[0].socket_errcode);
-
-    }
-    
-  }
-  
-  else if(g_sim7020_sm_status.main_status == SIM7020_CoAP_SEVER)
-  {
-    if(g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
-    {     
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_COAP_SERVER, 1, "S");
-    }
-  }
-  else if(g_sim7020_sm_status.main_status == SIM7020_CoAP_CLIENT)
-  {
-    if (g_sim7020_sm_status.sub_status == SIM7020_SUB_CoAP_CLIENT)
-    { 
-        //记录连接的id
-        char *p_colon = strchr(buf[1],':');
-                    
-        if (p_colon != NULL) 
-        {                
-            p_colon++;
+               
+        case NBIOT_SUB_CGATT:
             
-            //转换成10进制数字,得到当前创建的socket id
-            g_sim7020_connect_status.connect_id =strtoul(p_colon, 0, 10);
+            break;
+
+
+        case NBIOT_SUB_CGATT_QUERY:
+            
+            break;
+
+        case NBIOT_SUB_COPS_QUERY:
+            
+            break;  
+
+        case NBIOT_SUB_CGCONTRDP_QUERY:
+            
+            break;       
+           
+        case NBIOT_SUB_END:
+            
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_NBLOT_INIT,1,"S");
+
+            break;
+
+        default:
+          
+            break;
         }
-    }    
-    
-    if(g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
-    { 
-      g_sim7020_connect_status.connect_status = 1;         
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_COAP_CLIENT, 1, "S");
     }
-  }  
-  
-  else if(g_sim7020_sm_status.main_status == SIM7020_CoAP_SEND)
-  {
-    if(g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
+    else if(g_nbiot_sm_status.main_status == NBIOT_NBLOT_INFO)
     {
-       char *p_buf_tmep = g_sim7020_send_desc.buf;
-      
-       sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_COAP_SEND,strlen(p_buf_tmep),p_buf_tmep);
-    }
-  }
-  else if(g_sim7020_sm_status.main_status == SIM7020_CoAP_RECV)
-  {
-    if(g_sim7020_sm_status.sub_status == SIM7020_SUB_CoAP_RECV)
-    {
-      char *data_buf = g_sim7020_connect_status.data_offest; 
-      
-      //复位状态标志
-      sim7020_status_reset();      
-                   
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_COAP_RECV,strlen(data_buf),data_buf);
-               
-    }
-  }
-  
-  else if(g_sim7020_sm_status.main_status == SIM7020_CoAP_CL)
-  {
-    if (g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
-    {
-         g_sim7020_connect_status.connect_status = 0;  
-      
-         char *p_buf_tmep = NULL;
-                                    
-         if (g_sim7020_connect_status.connect_type == SIM7020_COAP)
-         {
-             p_buf_tmep = "coap close";
-         }         
-        
-         sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_COAP_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
-     }
-  }
+        switch(g_nbiot_sm_status.sub_status)
+        {
+            
+        //查询网络注册状态    
+        case NBIOT_SUB_CEREG_QUERY:
 
-  else if(g_sim7020_sm_status.main_status == SIM7020_CM2M_CLIENT)
-  {
-    if (g_sim7020_sm_status.sub_status == SIM7020_SUB_CM2M_CLIENT)
-    { 
-        
-    }    
-    
-    if(g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
-    { 
-      g_sim7020_connect_status.connect_status = 1;         
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_CM2M_CLIENT, 1, "S");
+          nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_REG, strlen(buf[1]), buf[1]);
+
+          break;        
+            
+                     
+        case NBIOT_SUB_CGMI:
+          {
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_MID, strlen(buf[1]), buf[1]);
+          }
+          break;
+          
+        case NBIOT_SUB_CGMM:
+          {
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_MMODEL,strlen(buf[1]),buf[1]);
+          }
+          break;
+          
+        case NBIOT_SUB_CGMR:
+          {
+
+             nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_MREV,strlen(buf[1]),buf[1]);
+            
+          }
+          break;
+          
+          
+        case NBIOT_SUB_CIMI:
+          {
+            memcpy(g_firmware_info.IMSI,buf[1],15);
+            g_firmware_info.IMSI[15] = 0;
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_IMSI,strlen(buf[1]),buf[1]);
+          }
+          break;
+          
+
+        case NBIOT_SUB_CGSN:
+          {
+            char *p_colon = strchr(buf[1],':');
+            
+            if(p_colon)
+            {
+              p_colon = p_colon + 2;
+              memcpy(g_firmware_info.IMEI ,p_colon,15);
+              g_firmware_info.IMEI[15] = 0;
+              nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_IMEI,15,(char*)g_firmware_info.IMEI);
+            }
+          }
+          break;            
+          
+        case NBIOT_SUB_CBAND:
+          {
+            char *p_colon = strchr(buf[1],':');
+            char *pFreq = NULL;
+            if(p_colon)
+            {
+              p_colon++;
+              uint8_t hz_id = strtoul(p_colon,0,10);
+              if(hz_id == BAND_850MHZ_ID)
+              {
+                //850MHZ
+                pFreq = BAND_850MHZ_STR;
+              }
+              else if(hz_id == BAND_900MHZ_ID)
+              {
+                //900MHZ
+                pFreq = BAND_900MHZ_STR;
+              }
+              else if(hz_id == BAND_800MHZ_ID)
+              {
+                //800MHZ 
+                pFreq = BAND_800MHZ_STR;
+              }
+              else 
+              {
+                //700MHZ
+                pFreq = BAND_700MHZ_STR;
+              }
+              nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_BAND,strlen(pFreq),pFreq);
+            }
+          }
+          break;
+
+        case NBIOT_SUB_END:
+          {
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_NBLOT_INFO, 1, "S");
+          }
+          break;
+        }
     }
-  }  
-  
-  else if(g_sim7020_sm_status.main_status == SIM7020_CM2M_SEND)
-  {
-    if(g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
+    else if(g_nbiot_sm_status.main_status == NBIOT_SIGNAL)
     {
-       char *p_buf_tmep = g_sim7020_send_desc.buf;
-      
-       sim7020_handle->sim7020_cb(sim7020_handle->p_arg, (sim7020_msg_id_t)SIM7020_MSG_CM2M_SEND, strlen(p_buf_tmep), p_buf_tmep);
+        switch(g_nbiot_sm_status.sub_status) 
+        { 
+        case NBIOT_SUB_CSQ:
+        {
+            char *p_colon = strchr(buf[1],':');
+            if (p_colon != NULL) 
+            {            
+              p_colon++;
+              //转换成10进制数字
+              uint8_t lqi =strtoul(p_colon,0, 10);
+              //运算取得每个数值对应的dbm范围
+              int8_t rssi = -110 + (lqi << 1);
+              uint8_t len = snprintf(buf[1],10,"%d",rssi);
+              *(buf[1]+len) = 0;
+              
+              g_nbiot_connect_status.rssi = rssi;
+              
+              nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_CSQ,len,buf[1]);
+              
+            }
+          
+            break;
+        } 
+          
+        case NBIOT_SUB_END:
+        {
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_SIGNAL,1,"S");
+            break;
+        }
+
+        default:
+          
+            break;
+        }
+
     }
-  }
-  else if(g_sim7020_sm_status.main_status == SIM7020_CM2M_RECV)
-  {
-    if(g_sim7020_sm_status.sub_status == SIM7020_SUB_CM2M_RECV)
+    else if(g_nbiot_sm_status.main_status == NBIOT_TCPUDP_CR)
     {
-      char *data_buf = g_sim7020_connect_status.data_offest; 
-      
-      //复位状态标志
-      sim7020_status_reset();      
+        switch(g_nbiot_sm_status.sub_status)
+        {
+        case NBIOT_SUB_TCPUDP_CR:
+          {
+
+            char *p_colon = strchr(buf[1],':');
+                        
+            if (p_colon != NULL) 
+            {                
+                p_colon++;
+                
+                //转换成10进制数字,得到当前创建的socket id
+                g_socket_info[0].socket_id =strtoul(p_colon,0, 10);
+            }
                     
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CM2M_RECV,strlen(data_buf),data_buf);
-      
-         
-    }
-  }
-  
-  else if(g_sim7020_sm_status.main_status == SIM7020_CM2M_STATUS)
-  {
-    if(g_sim7020_sm_status.sub_status == SIM7020_SUB_CM2M_STATUS)
+          }
+          break;
+          
+        case NBIOT_SUB_TCPUDP_CONNECT:
+          {                                             
+          }
+          break;
+          
+        case NBIOT_SUB_END:
+          {              
+             char *p_buf_tmep = NULL;
+                  
+             g_nbiot_connect_status.connect_status = 1;  
+                   
+             if (g_socket_info[0].socket_type == NBIOT_TCP)
+             {
+                 p_buf_tmep = "tcp create ok";
+             }
+            
+             else 
+             {   
+                 p_buf_tmep = "udp create ok";
+             } 
+                                                           
+             nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_TCPUDP_CREATE, strlen(p_buf_tmep), p_buf_tmep);
+                    
+          }
+          break;
+        }
+    } 
+    else if(g_nbiot_sm_status.main_status == NBIOT_TCPUDP_CL)
     {
-      //复位状态标志
-      sim7020_status_reset();                         
-      sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CM2M_STATUS,1, (char *)&g_sim7020_connect_status.m2m_status);
-               
-    }
-  }  
-  
-  else if(g_sim7020_sm_status.main_status == SIM7020_CM2M_CL)
-  {
-    if (g_sim7020_sm_status.sub_status == SIM7020_SUB_END)
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
+        {
+             g_nbiot_connect_status.connect_status = 0;  
+          
+             char *p_buf_tmep = NULL;
+                                        
+             if (g_socket_info[0].socket_type == NBIOT_TCP)
+             {
+                 p_buf_tmep = "tcp close";
+             }         
+             else 
+             {   
+                 p_buf_tmep = "udp close";
+             }         
+             nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_TCPUDP_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
+         }
+    }   
+    else if(g_nbiot_sm_status.main_status == NBIOT_TCPUDP_SEND)
     {
-         g_sim7020_connect_status.connect_status = 0;  
-      
-         char *p_buf_tmep = NULL;
-                                    
-         if (g_sim7020_connect_status.connect_type == SIM7020_CM2M)
-         {
-             p_buf_tmep = "cm2m close";
-         }         
-        
-         sim7020_handle->sim7020_cb(sim7020_handle->p_arg,(sim7020_msg_id_t)SIM7020_MSG_CM2M_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
-     }
-  }
-  
-  else
-  {
+        switch(g_nbiot_sm_status.sub_status)
+        {
+          
+        case NBIOT_SUB_END:
+          {
+            char *p_buf_tmep = g_nbiot_send_desc.buf;
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_TCPUDP_SEND,strlen(p_buf_tmep),p_buf_tmep);
+          }
+          break;
+          
+        default:
+          
+          break;
+        }
+    }
+    else if(g_nbiot_sm_status.main_status == NBIOT_TCPUDP_RECV)
+    {
+        if(g_nbiot_sm_status.sub_status == NBIOT_SUB_TCPUDP_RECV)
+        {
+          char *data_buf = g_socket_info[0].data_offest; 
+          //复位状态标志
+          nbiot_status_reset();      
 
-  }    
+        //      NBIOT_DEBUG_INFO("data_buf = %s", data_buf);      
+               
+          nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_TCPUDP_RECV,strlen(data_buf),data_buf);
+          
+        }
+
+    }
+
+    else if(g_nbiot_sm_status.main_status == NBIOT_SOCKET_ERR)
+    {
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_SOCKET_ERR)
+        {
+
+            NBIOT_DEBUG_INFO("the socket err, the err code is %d\r\n", g_socket_info[0].socket_errcode); 
+          
+            //复位状态标志
+            nbiot_status_reset();      
+                 
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg,
+                                       (nbiot_msg_id_t)NBIOT_MSG_SOCKET_ERROR, 
+                                        1, 
+                                        (char *)&g_socket_info[0].socket_errcode);
+
+        }
+
+    }
+
+    else if(g_nbiot_sm_status.main_status == NBIOT_CoAP_SEVER)
+    {
+        if(g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
+        {     
+          nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_COAP_SERVER, 1, "S");
+        }
+    }
+    else if(g_nbiot_sm_status.main_status == NBIOT_CoAP_CLIENT)
+    {
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_CoAP_CLIENT)
+        { 
+            //记录连接的id
+            char *p_colon = strchr(buf[1],':');
+                        
+            if (p_colon != NULL) 
+            {                
+                p_colon++;
+                
+                //转换成10进制数字,得到当前创建的socket id
+                g_nbiot_connect_status.connect_id =strtoul(p_colon, 0, 10);
+            }
+        }    
+
+        if(g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
+        { 
+          g_nbiot_connect_status.connect_status = 1;         
+          nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_COAP_CLIENT, 1, "S");
+        }
+    }  
+
+    else if(g_nbiot_sm_status.main_status == NBIOT_CoAP_SEND)
+    {
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
+        {
+            char *p_buf_tmep = g_nbiot_send_desc.buf;
+          
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_COAP_SEND,strlen(p_buf_tmep),p_buf_tmep);
+        }
+    }
+    else if(g_nbiot_sm_status.main_status == NBIOT_CoAP_RECV)
+    {
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_CoAP_RECV)
+        {
+            char *data_buf = g_nbiot_connect_status.data_offest; 
+          
+            //复位状态标志
+            nbiot_status_reset();      
+                       
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_COAP_RECV,strlen(data_buf),data_buf);
+                   
+        }
+    }
+
+    else if(g_nbiot_sm_status.main_status == NBIOT_CoAP_CL)
+    {
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
+        {
+             g_nbiot_connect_status.connect_status = 0;  
+          
+             char *p_buf_tmep = NULL;
+                                        
+             if (g_nbiot_connect_status.connect_type == NBIOT_COAP)
+             {
+                 p_buf_tmep = "coap close";
+             }         
+            
+             nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_COAP_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
+         }
+    }
+
+    else if(g_nbiot_sm_status.main_status == NBIOT_CM2M_CLIENT)
+    {
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_CM2M_CLIENT)
+        { 
+            
+        }    
+
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
+        { 
+            g_nbiot_connect_status.connect_status = 1;         
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_CM2M_CLIENT, 1, "S");
+        }
+    }  
+
+    else if(g_nbiot_sm_status.main_status == NBIOT_CM2M_SEND)
+    {
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
+        {
+            char *p_buf_tmep = g_nbiot_send_desc.buf;
+          
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_CM2M_SEND, strlen(p_buf_tmep), p_buf_tmep);
+        }
+    }
+    else if(g_nbiot_sm_status.main_status == NBIOT_CM2M_RECV)
+    {
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_CM2M_RECV)
+        {
+            char *data_buf = g_nbiot_connect_status.data_offest; 
+          
+            //复位状态标志
+            nbiot_status_reset();      
+                        
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_CM2M_RECV,strlen(data_buf),data_buf);
+          
+             
+        }
+    }
+
+    else if(g_nbiot_sm_status.main_status == NBIOT_CM2M_STATUS)
+    {
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_CM2M_STATUS)
+        {
+            //复位状态标志
+            nbiot_status_reset();                         
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_CM2M_STATUS,1, (char *)&g_nbiot_connect_status.m2m_status);
+                   
+        }
+    }  
+
+    else if(g_nbiot_sm_status.main_status == NBIOT_CM2M_CL)
+    {
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
+        {
+             g_nbiot_connect_status.connect_status = 0;  
+          
+             char *p_buf_tmep = NULL;
+                                        
+             if (g_nbiot_connect_status.connect_type == NBIOT_CM2M)
+             {
+                 p_buf_tmep = "cm2m close";
+             }         
+            
+             nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_CM2M_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
+        }
+    }
+
+    else
+    {
+
+    }    
 }
 
 //指令响应结果处理，这个函数利用命令的状态属性，来结束状态的执行。
-uint8_t sim7020_response_handle (sim7020_handle_t sim7020_handle, uint8_t cmd_response)
+uint8_t nbiot_response_handle (nbiot_handle_t nbiot_handle, uint8_t cmd_response)
 {
     uint8_t next_cmd = 0;
       
@@ -1976,7 +1978,7 @@ uint8_t sim7020_response_handle (sim7020_handle_t sim7020_handle, uint8_t cmd_re
 
             if (g_at_cmd.have_tried < g_at_cmd.cmd_try)
             {
-              sim7020_at_cmd_send(sim7020_handle, &g_at_cmd);
+              nbiot_at_cmd_send(nbiot_handle, &g_at_cmd);
             }
             else
             {
@@ -2001,77 +2003,75 @@ uint8_t sim7020_response_handle (sim7020_handle_t sim7020_handle, uint8_t cmd_re
 }
 
 
-//sim7020发送AT指令
-//sim7020_handle   sim7020_handle设备句柄
+//给nbiot模块发送AT指令
+//nbiot_handle     nbiot_handle模块设备句柄
 //cmd_handle       将要发送指令信息句柄
 //note 调用该函数前先构造好命令的参数
-int sim7020_at_cmd_send(sim7020_handle_t sim7020_handle, at_cmdhandle cmd_handle)
+int nbiot_at_cmd_send(nbiot_handle_t nbiot_handle, at_cmdhandle cmd_handle)
 {
     int strLen = 0;
     
     int ret = 0;
         
-    if (sim7020_handle == NULL || cmd_handle == NULL)
+    if (nbiot_handle == NULL || cmd_handle == NULL)
     {
-       return SIM7020_ERROR;
+       return NBIOT_ERROR;
     }
         
     strLen = cmd_generate(cmd_handle);
 
-    ret = sim7020_handle->p_drv_funcs->sim7020_send_data(sim7020_handle, 
-                                                         (uint8_t*)g_sim7020_send_desc.buf, 
+    ret = nbiot_handle->p_drv_funcs->nbiot_send_data(nbiot_handle, 
+                                                         (uint8_t*)g_nbiot_send_desc.buf, 
                                                          strLen,                                                    
                                                          cmd_handle->max_timeout);   
     return ret;
 }
 
-//sim7020接收数据
-//sim7020_handle 设备句柄
-static int sim7020_data_recv(sim7020_handle_t sim7020_handle, uint8_t *pData, uint16_t size, uint32_t Timeout)
+//nbiot模块接收数据
+//nbiot_handle模块设备句柄
+static int nbiot_data_recv(nbiot_handle_t nbiot_handle, uint8_t *pData, uint16_t size, uint32_t Timeout)
 {   
     int ret = 0;
         
-    if (sim7020_handle == NULL)
+    if (nbiot_handle == NULL)
     {
-       return SIM7020_ERROR;
+       return NBIOT_ERROR;
     }
         
-    ret = sim7020_handle->p_drv_funcs->sim7020_recv_data(sim7020_handle, pData, size, Timeout);      
-    //在后面添加字符串结束符
-//    pData[size]=0;
+    ret = nbiot_handle->p_drv_funcs->nbiot_recv_data(nbiot_handle, pData, size, Timeout);      
     
     return ret;
 }
 
 
-//sim7020初始化 
-sim7020_handle_t sim7020_init(uart_handle_t lpuart_handle)
+//nbiot模块初始化 
+nbiot_handle_t nbiot_dev_init(uart_handle_t nbiot_handle)
 {
      //填充设备结构体
-     g_sim7020_dev.p_uart_dev    = lpuart_handle;
-     g_sim7020_dev.p_drv_funcs   = &drv_funcs; 
+     g_nbiot_dev.p_uart_dev    = nbiot_handle;
+     g_nbiot_dev.p_drv_funcs   = &drv_funcs; 
 
-     g_sim7020_dev.p_sim7020_cmd  = &g_at_cmd;    
-     g_sim7020_dev.p_socket_info = g_socket_info;
-     g_sim7020_dev.firmware_info = &g_firmware_info;
-     g_sim7020_dev.sim7020_sm_status = &g_sim7020_sm_status;
-     g_sim7020_dev.sim7020_connect_status = &g_sim7020_connect_status;
+     g_nbiot_dev.p_nbiot_cmd  = &g_at_cmd;    
+     g_nbiot_dev.p_socket_info = g_socket_info;
+     g_nbiot_dev.firmware_info = &g_firmware_info;
+     g_nbiot_dev.nbiot_sm_status = &g_nbiot_sm_status;
+     g_nbiot_dev.nbiot_connect_status = &g_nbiot_connect_status;
   
-     g_sim7020_dev.frame_format  = 0;  
+     g_nbiot_dev.frame_format  = 0;  
     
-     /* 注册sim7020串口收发事件回调函数 */
-     lpuart_event_registercb(lpuart_handle, __uart_event_cb_handle, &g_sim7020_dev);     
+     /* 注册nbiot串口收发事件回调函数 */
+     uart_event_registercb(nbiot_handle, __uart_event_cb_handle, &g_nbiot_dev);     
     
-     return &g_sim7020_dev;    
+     return &g_nbiot_dev;    
 }
 
-//注册sim7020事件回调函数
-void sim7020_event_registercb (sim7020_handle_t sim7020_handle, sim7020_cb cb, void *p_arg)
+//注册nbiot模块事件回调函数
+void nbiot_event_registercb (nbiot_handle_t nbiot_handle, nbiot_cb cb, void *p_arg)
 {  
     if(cb != 0)
     {
-        sim7020_handle->sim7020_cb  = (sim7020_cb)cb;
-        sim7020_handle->p_arg       = p_arg;
+        nbiot_handle->nbiot_cb  = (nbiot_cb)cb;
+        nbiot_handle->p_arg       = p_arg;
     }
 }
 

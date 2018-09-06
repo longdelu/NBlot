@@ -7,7 +7,7 @@
 
   <Targets>
     <Target>
-      <TargetName>NBlot</TargetName>
+      <TargetName>NBIoT</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <pCCUsed>5060300::V5.06 update 3 (build 300)::ARMCC</pCCUsed>
@@ -48,7 +48,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>NBlot\</OutputDirectory>
-          <OutputName>NBlot</OutputName>
+          <OutputName>NBIoT</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32L476xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../Drivers/STM32L4xx_HAL_Driver/Inc;../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../Drivers/CMSIS/Include;..\HARDWARE\KEY;..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\NBLOT_UART;..\HARDWARE\TIMER;..\HARDWARE\LPTIMER;..\EXAMPLE;..\HARDWARE\SIM7020;..\ATK_SOFT_TIMER;..\EXAMPLE\sim7020;..\ATK_RING_BUF;..\HARDWARE\BC28</IncludePath>
+              <IncludePath>../Inc;../Drivers/STM32L4xx_HAL_Driver/Inc;../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../Drivers/CMSIS/Include;..\HARDWARE\KEY;..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\TIMER;..\HARDWARE\LPTIMER;..\EXAMPLE;..\ATK_SOFT_TIMER;..\ATK_RING_BUF;..\HARDWARE\BC28;..\EXAMPLE\atk_nbiot_bc28;..\EXAMPLE\uart;..\HARDWARE\NBIOT_UART</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -549,6 +549,11 @@
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\TIMER\atk_timer.c</FilePath>
             </File>
+            <File>
+              <FileName>atk_nbiot_usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\NBIOT_UART\atk_nbiot_usart.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -590,64 +595,69 @@
               <FilePath>..\EXAMPLE\demo_entry.h</FilePath>
             </File>
             <File>
-              <FileName>demo_uart_poll_entry.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\nb_uart\demo_uart_poll_entry.c</FilePath>
-            </File>
-            <File>
               <FileName>demo_timer_entry.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\timer\demo_timer_entry.c</FilePath>
             </File>
             <File>
-              <FileName>demo_uart_int_entry.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\nb_uart\demo_uart_int_entry.c</FilePath>
-            </File>
-            <File>
               <FileName>demo_uart_any_data_len_recv_entry .c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\nb_uart\demo_uart_any_data_len_recv_entry .c</FilePath>
+              <FilePath>..\EXAMPLE\uart\demo_uart_any_data_len_recv_entry .c</FilePath>
             </File>
             <File>
-              <FileName>demo_sim7020_gprs_attach_entry.c</FileName>
+              <FileName>demo_uart_int_entry.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_gprs_attach_entry.c</FilePath>
+              <FilePath>..\EXAMPLE\uart\demo_uart_int_entry.c</FilePath>
             </File>
             <File>
-              <FileName>demo_sim7020_info.c</FileName>
+              <FileName>demo_uart_poll_entry.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_info.c</FilePath>
+              <FilePath>..\EXAMPLE\uart\demo_uart_poll_entry.c</FilePath>
             </File>
             <File>
-              <FileName>demo_sim7020_tcp_entry.c</FileName>
+              <FileName>demo_bc28_coap_entry.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_tcp_entry.c</FilePath>
+              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_coap_entry.c</FilePath>
             </File>
             <File>
-              <FileName>demo_sim7020_udp_entry.c</FileName>
+              <FileName>demo_bc28_easyiot_entry.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_udp_entry.c</FilePath>
+              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_easyiot_entry.c</FilePath>
             </File>
             <File>
-              <FileName>demo_sim7020_coap_entry.c</FileName>
+              <FileName>demo_bc28_gprs_attach_entry.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_coap_entry.c</FilePath>
+              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_gprs_attach_entry.c</FilePath>
             </File>
             <File>
-              <FileName>demo_sim7020_iot_entry.c</FileName>
+              <FileName>demo_bc28_info.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_iot_entry.c</FilePath>
+              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_info.c</FilePath>
             </File>
             <File>
-              <FileName>demo_sim7020_low_power_entry.c</FileName>
+              <FileName>demo_bc28_iot_entry.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_low_power_entry.c</FilePath>
+              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_iot_entry.c</FilePath>
             </File>
             <File>
-              <FileName>demo_sim7020_easyiot_entry.c</FileName>
+              <FileName>demo_bc28_low_power_entry.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\sim7020\demo_sim7020_easyiot_entry.c</FilePath>
+              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_low_power_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_bc28_tcp_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_tcp_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_bc28_udp_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_udp_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_bc28_huaweiiot_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_huaweiiot_entry.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -694,7 +704,7 @@
       <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="4.3.0" condition="CMSIS Core">
         <package name="CMSIS" schemaVersion="1.3" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0"/>
         <targetInfos>
-          <targetInfo name="NBlot"/>
+          <targetInfo name="NBIoT"/>
         </targetInfos>
       </component>
     </components>

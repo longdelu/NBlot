@@ -20,15 +20,15 @@ void demo_uart_poll_entry(void)
 { 
   uint8_t buf[32]; 
 
-  uart_handle_t lpuart_handle = NULL;      
+  uart_handle_t nbiot_handle = NULL;      
     
-  lpuart_handle = lpuart1_init(115200);  
+  nbiot_handle = atk_nbiot_uart_init(115200);  
     
-  uart_data_tx_poll(lpuart_handle, (uint8_t *)"nblot_uart test\r\n", sizeof("nblot_uart test\r\n"), HAL_MAX_DELAY);   
+  uart_data_tx_poll(nbiot_handle, (uint8_t *)"nblot_uart test\r\n", sizeof("nblot_uart test\r\n"), HAL_MAX_DELAY);   
         
-  uart_data_rx_poll(lpuart_handle, buf, sizeof("nblot_uart rx tx test ok") - 1, HAL_MAX_DELAY);   
+  uart_data_rx_poll(nbiot_handle, buf, sizeof("nblot_uart rx tx test ok") - 1, HAL_MAX_DELAY);   
     
-  uart_data_tx_poll(lpuart_handle, buf, sizeof("nblot_uart rx tx test ok") - 1, HAL_MAX_DELAY);
+  uart_data_tx_poll(nbiot_handle, buf, sizeof("nblot_uart rx tx test ok") - 1, HAL_MAX_DELAY);
     
   while (1)
   {

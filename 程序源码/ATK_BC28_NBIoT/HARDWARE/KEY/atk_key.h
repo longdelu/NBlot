@@ -13,6 +13,7 @@
 //Copyright(C) 广州市星翼电子科技有限公司 2014-2024
 //All rights reserved									  
 //////////////////////////////////////////////////////////////////////////////////
+
 #define KEY0        HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_3)  //KEY0按键PC3
 #define KEY1        HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)  //KEY1按键PC2
 #define KEY2        HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_1)  //KEY2按键PC1
@@ -42,14 +43,18 @@ typedef struct key_dev
     
 }key_dev_t;
 
-void key_init(int mode);
+//按键设备句柄
+typedef key_dev_t *key_handle_t;
 
-u8 KEY_Scan(u8 mode);
+key_handle_t key_init(int mode);
 
-//KEY_RegisterCb
-void key_registercb(key_cb cb, void *p_arg);
+u8 key_scan(u8 mode);
+
+
+//注册按键事件回调
+void atk_key_registercb (key_handle_t key_handle, key_cb cb, void *p_arg);
 
 // 轮询按钮事件
-void key_poll(void);
+void atk_key_event_poll(key_handle_t key_handle);
 
 #endif

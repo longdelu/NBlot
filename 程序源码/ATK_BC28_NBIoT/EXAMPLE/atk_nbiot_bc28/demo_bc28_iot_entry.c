@@ -4,13 +4,13 @@
   * @brief          : sim7020 电信iot平台对接数据实验
   */
 /* Includes ------------------------------------------------------------------*/
-#include "sys.h"
-#include "led.h"
-#include "delay.h"
-#include "nblot_usart.h"
-#include "sim7020.h"
-#include "sim7020_nblot.h"
-#include "key.h"
+#include "atk_sys.h"
+#include "atk_led.h"
+#include "atk_delay.h"
+#include "atk_bc28_nbiot.h"
+#include "atk_bc28.h"
+#include "atk_bc28_nbiot.h"
+#include "atk_key.h"
 #include "stm32l4xx_hal.h"
 
 static int sm7020_main_status = SIM7020_NBLOT_INIT;
@@ -314,7 +314,7 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
            
     case SIM7020_NBLOT_INIT:
       {
-        printf("sim7020 init start\r\n");
+        printf("atk_sim7020 init start\r\n");
                 
         sim7020_nblot_init(sim7020_handle);        
 
@@ -324,7 +324,7 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
       
     case SIM7020_NBLOT_INFO:
       {
-         printf("sim7020 get signal start\r\n");
+         printf("atk_sim7020 get signal start\r\n");
                 
          sim7020_nblot_info_get(sim7020_handle);
 
@@ -335,7 +335,7 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
       
     case SIM7020_SIGNAL:
       {
-        printf("sim7020 rssi(db) start\r\n");
+        printf("atk_sim7020 rssi(db) start\r\n");
         
         sim7020_nblot_signal_get(sim7020_handle);
         
@@ -455,7 +455,7 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
         //创建完成CM2M客户端之后，需要根据当前网络的状态延时一段时间保证数据连接稳定
         delay_ms(5000);        
                
-        sim7020_nblot_cm2m_send_hex(sim7020_handle, strlen("00023132"), "00023132", SIM7020_CM2M); 
+        sim7020_nblot_cm2m_send_hex(sim7020_handle, strlen("0001"), "0001", SIM7020_CM2M); 
                   
         *sim7020_main_status = SIM7020_END;               
       }
@@ -519,18 +519,21 @@ static void key_event_handle(u32 key_event,void *p_arg)
   *
   * @retval None
   */
-void demo_sim7020_huaweiiot_entry(void)
+void demo_sim7020_iot_entry(void)
 {         
-    uart_handle_t lpuart_handle = NULL; 
+    uart_handle_t nbiot_handle = NULL; 
 
     sim7020_handle_t  sim7020_handle = NULL; 
-
-    key_init(1);  
-    key_registercb(key_event_handle, NULL);  
-  
-    lpuart_handle = lpuart1_init(115200);  
     
-    sim7020_handle = sim7020_init(lpuart_handle);
+    key_handle_t  key_handle = NULL;
+
+    key_handle = key_init(1);
+
+    atk_key_registercb(key_handle, key_event_handle, NULL);  
+  
+    nbiot_handle = atk_nbiot_uart_init(115200);  
+    
+    sim7020_handle = sim7020_init(nbiot_handle);
      
     sim7020_event_registercb(sim7020_handle, __sim7020_event_cb_handler, sim7020_handle);
     
@@ -541,8 +544,8 @@ void demo_sim7020_huaweiiot_entry(void)
     {
         sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);      
         sim7020_event_poll(sim7020_handle);      
-        uart_event_poll(lpuart_handle);         
-        key_poll();
+        uart_event_poll(nbiot_handle);         
+        atk_key_event_poll(key_handle);
     }
 }
 

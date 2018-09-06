@@ -1,5 +1,5 @@
-#include "nblot_usart.h"
-#include "delay.h"
+#include "atk_nbiot_usart.h"
+#include "atk_delay.h"
 #include "stdio.h"
 
 //////////////////////////////////////////////////////////////////////////////////     
@@ -22,13 +22,13 @@ static uart_dev_t uart_dev;
 static atk_ring_buf_t g_uart_ring_buf;  
 
 //HAL库串口设备结构体
-static UART_HandleTypeDef hlpuart1;
+static UART_HandleTypeDef nbiot_uart;
 
 //函数提前声明
 static void __lpuart_rx_timeout_cb (void *p_arg);
 
 //注册串口事件回调函数
-void lpuart_event_registercb(uart_handle_t uart_handle, uart_cb cb, void *p_arg)
+void uart_event_registercb(uart_handle_t uart_handle, uart_cb cb, void *p_arg)
 {  
     if(cb != 0)
     {
@@ -38,19 +38,19 @@ void lpuart_event_registercb(uart_handle_t uart_handle, uart_cb cb, void *p_arg)
 }
 
 //设置串口事件
-void lpuart_event_set (uart_handle_t uart_handle, int uart_event)
+void uart_event_set (uart_handle_t uart_handle, int uart_event)
 { 
     uart_handle->uart_event |= uart_event;   
 }
 
 //获取串口事件
-int lpuart_event_get (uart_handle_t uart_handle, int uart_event)
+int uart_event_get (uart_handle_t uart_handle, int uart_event)
 { 
     return (uart_handle->uart_event & uart_event); 
 }
 
 //清除串口事件
-void lpuart_event_clr (uart_handle_t uart_handle, int uart_event)
+void uart_event_clr (uart_handle_t uart_handle, int uart_event)
 { 
     uart_handle->uart_event &= ~uart_event;
 }
@@ -119,24 +119,24 @@ void HAL_LPUART1_MspInit(UART_HandleTypeDef *huart)
 
 //初始化IO LPUART1
 //bound:波特率
-uart_dev_t *lpuart1_init (u32 bound)
+uart_dev_t *atk_nbiot_uart_init (u32 bound)
 {      
     int err = 0;
     
-    hlpuart1.Instance = LPUART1;
-    hlpuart1.Init.BaudRate = bound;
-    hlpuart1.Init.WordLength = UART_WORDLENGTH_8B;
-    hlpuart1.Init.StopBits = UART_STOPBITS_1;
-    hlpuart1.Init.Parity = UART_PARITY_NONE;
-    hlpuart1.Init.Mode = UART_MODE_TX_RX;
-    hlpuart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-    hlpuart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-    hlpuart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+    nbiot_uart.Instance = LPUART1;
+    nbiot_uart.Init.BaudRate = bound;
+    nbiot_uart.Init.WordLength = UART_WORDLENGTH_8B;
+    nbiot_uart.Init.StopBits = UART_STOPBITS_1;
+    nbiot_uart.Init.Parity = UART_PARITY_NONE;
+    nbiot_uart.Init.Mode = UART_MODE_TX_RX;
+    nbiot_uart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    nbiot_uart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+    nbiot_uart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
-    HAL_LPUART1_MspInit(&hlpuart1); 
+    HAL_LPUART1_MspInit(&nbiot_uart); 
     
        
-    if (HAL_UART_Init(&hlpuart1) != HAL_OK)
+    if (HAL_UART_Init(&nbiot_uart) != HAL_OK)
     {
        _Error_Handler(__FILE__, __LINE__);
     }
@@ -148,7 +148,7 @@ uart_dev_t *lpuart1_init (u32 bound)
     err = atk_ring_buf_init(&g_uart_ring_buf);
    
     //填充这个串口设备结构体    
-    uart_dev.p_huart    = &hlpuart1; 
+    uart_dev.p_huart    = &nbiot_uart; 
     uart_dev.uart_event = UART_NONE_EVENT;   
     uart_dev.bound      = bound; 
     
@@ -163,28 +163,28 @@ uart_dev_t *lpuart1_init (u32 bound)
 
 
     //禁能串口
-     __HAL_UART_DISABLE(&hlpuart1);    
+     __HAL_UART_DISABLE(&nbiot_uart);    
 
-    __HAL_UART_DISABLE_IT(&hlpuart1, UART_IT_TXE);  //禁止发送中断 
-    __HAL_UART_DISABLE_IT(&hlpuart1, UART_IT_TC);   //禁能发送完成中断   
+    __HAL_UART_DISABLE_IT(&nbiot_uart, UART_IT_TXE);  //禁止发送中断 
+    __HAL_UART_DISABLE_IT(&nbiot_uart, UART_IT_TC);   //禁能发送完成中断   
     
     //清除rx中断标记
-    __HAL_UART_SEND_REQ(&hlpuart1, UART_RXDATA_FLUSH_REQUEST);
+    __HAL_UART_SEND_REQ(&nbiot_uart, UART_RXDATA_FLUSH_REQUEST);
       
     //清除ilde中断标记
-    __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_IDLEF); 
+    __HAL_UART_CLEAR_IT(&nbiot_uart, UART_CLEAR_IDLEF); 
      
-    __HAL_UART_ENABLE_IT(&hlpuart1, UART_IT_RXNE);    //开启接收中断      
-    __HAL_UART_ENABLE_IT(&hlpuart1, UART_IT_IDLE);    //开启空闲中断 
+    __HAL_UART_ENABLE_IT(&nbiot_uart, UART_IT_RXNE);    //开启接收中断      
+    __HAL_UART_ENABLE_IT(&nbiot_uart, UART_IT_IDLE);    //开启空闲中断 
     
      //清除ilde中断标记
-    __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_IDLEF); 
+    __HAL_UART_CLEAR_IT(&nbiot_uart, UART_CLEAR_IDLEF); 
 
     HAL_NVIC_EnableIRQ(LPUART1_IRQn);                //使能USART1中断通道
     HAL_NVIC_SetPriority(LPUART1_IRQn,3,3);          //抢占优先级3，子优先级3
     
     //使能串口
-     __HAL_UART_ENABLE(&hlpuart1);   
+     __HAL_UART_ENABLE(&nbiot_uart);   
        
     return  &uart_dev;   
 }
@@ -238,10 +238,10 @@ static void __lpuart_rx_timeout_cb (void *p_arg)
     printf("rx timer happen\r\n");    
     
     //发声超时事件时，不可能再产生接收事件了
-    lpuart_event_clr(p_lpuart_dev, UART_RX_EVENT);  
+    uart_event_clr(p_lpuart_dev, UART_RX_EVENT);  
        
     //设置串口接收超时事件
-    lpuart_event_set(p_lpuart_dev, UART_RX_TIMEOUT_EVENT);    
+    uart_event_set(p_lpuart_dev, UART_RX_TIMEOUT_EVENT);    
 }
 
 
@@ -266,7 +266,7 @@ static void __lpuart_tx_timeout_cb (void *p_arg)
     lphuart->gState= HAL_UART_STATE_READY;  
         
     //设置串口发送超时事件
-    lpuart_event_set(p_lpuart_dev, UART_TX_TIMEOUT_EVENT);    
+    uart_event_set(p_lpuart_dev, UART_TX_TIMEOUT_EVENT);    
 }
 
 #ifdef UART_ANY_DATA_LEN_RECV  
@@ -276,11 +276,11 @@ static void __lpuart_tx_timeout_cb (void *p_arg)
 void LPUART1_IRQHandler(void)                    
 { 
     
-    if ((__HAL_UART_GET_IT(&hlpuart1, UART_IT_RXNE)!=RESET))  
+    if ((__HAL_UART_GET_IT(&nbiot_uart, UART_IT_RXNE)!=RESET))  
     { 
       
         //把数据写入环形缓冲区
-        atk_ring_buf_write(&g_uart_ring_buf, hlpuart1.Instance->RDR);  
+        atk_ring_buf_write(&g_uart_ring_buf, nbiot_uart.Instance->RDR);  
           
              
         //收到一个数据，重置超时为500ms 
@@ -292,61 +292,60 @@ void LPUART1_IRQHandler(void)
     }
     
     //ilde中断产生，代表当前数据帧接收结束
-    if ((__HAL_UART_GET_IT(&hlpuart1, UART_IT_IDLE)!=RESET))  
-    {
-        
+    if ((__HAL_UART_GET_IT(&nbiot_uart, UART_IT_IDLE)!=RESET))  
+    {        
         //如果是空闲中断一开始是使能的
-       if (__HAL_UART_GET_IT_SOURCE(&hlpuart1, UART_IT_IDLE)!=RESET) 
+       if (__HAL_UART_GET_IT_SOURCE(&nbiot_uart, UART_IT_IDLE)!=RESET) 
        {
            
            //接收在超时时间内正常完成，停止接收超时  
            atk_soft_timer_stop(&uart_dev.uart_rx_timer);
            
            //设置串口接收完成事件
-           lpuart_event_set(&uart_dev, UART_RX_EVENT); 
+           uart_event_set(&uart_dev, UART_RX_EVENT); 
          
           #if !UART_ANY_DATA_LEN_RECV 
            
               /* Disable the UART Parity Error Interrupt and RXNE interrupts */
           #if defined(USART_CR1_FIFOEN)
-              CLEAR_BIT(hlpuart1.Instance->CR1, (USART_CR1_RXNEIE_RXFNEIE | USART_CR1_PEIE));
+              CLEAR_BIT(nbiot_uart.Instance->CR1, (USART_CR1_RXNEIE_RXFNEIE | USART_CR1_PEIE));
           #else
-              CLEAR_BIT(hlpuart1.Instance->CR1, (USART_CR1_RXNEIE | USART_CR1_PEIE));
+              CLEAR_BIT(nbiot_uart.Instance->CR1, (USART_CR1_RXNEIE | USART_CR1_PEIE));
           #endif //endif  USART_CR1_FIFOEN
               
               /* Disable the UART Error Interrupt: (Frame error, noise error, overrun error) */
-              CLEAR_BIT(hlpuart1.Instance->CR3, USART_CR3_EIE);     
+              CLEAR_BIT(nbiot_uart.Instance->CR3, USART_CR3_EIE);     
               
           #endif //endif    UART_ANY_DATA_LEN_RECV
               
               //reset the lphuart->RxState
-              hlpuart1.RxState= HAL_UART_STATE_READY; 
+              nbiot_uart.RxState= HAL_UART_STATE_READY; 
                       
               //清除溢出中断标记
-              __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_OREF); 
+              __HAL_UART_CLEAR_IT(&nbiot_uart, UART_CLEAR_OREF); 
                                             
               //清除帧错误中断标记
-              __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_FEF); 
+              __HAL_UART_CLEAR_IT(&nbiot_uart, UART_CLEAR_FEF); 
                                                     
               //清除校验中断标记
-              __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_PEF); 
+              __HAL_UART_CLEAR_IT(&nbiot_uart, UART_CLEAR_PEF); 
                                                         
               //清除接收中断
-              __HAL_UART_SEND_REQ(&hlpuart1, UART_RXDATA_FLUSH_REQUEST);
+              __HAL_UART_SEND_REQ(&nbiot_uart, UART_RXDATA_FLUSH_REQUEST);
               
               //重新开启接收中断 
-              __HAL_UART_ENABLE_IT(&hlpuart1, UART_IT_RXNE);          
+              __HAL_UART_ENABLE_IT(&nbiot_uart, UART_IT_RXNE);          
          
          
        } 
 
         //清除ilde中断标记
-        __HAL_UART_CLEAR_IT(&hlpuart1, UART_CLEAR_IDLEF);       
+        __HAL_UART_CLEAR_IT(&nbiot_uart, UART_CLEAR_IDLEF);       
                             
     }
     
     //调用HAL中断处理程序
-//    HAL_UART_IRQHandler(&hlpuart1);    
+//    HAL_UART_IRQHandler(&nbiot_uart);    
 }   
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
@@ -357,7 +356,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
        atk_soft_timer_stop(&uart_dev.uart_tx_timer);
        
        //设置串口发送完成事件
-       lpuart_event_set(&uart_dev, UART_TX_EVENT);              
+       uart_event_set(&uart_dev, UART_TX_EVENT);              
     }
 }
 
@@ -372,7 +371,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
        atk_soft_timer_stop(&uart_dev.uart_rx_timer);
        
        //设置串口接收完成事件
-       lpuart_event_set(&uart_dev,UART_RX_EVENT);
+       uart_event_set(&uart_dev,UART_RX_EVENT);
               
     }
 }
@@ -380,14 +379,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 //串口1中断服务程序
 void LPUART1_IRQHandler(void)                    
 {         
-    HAL_UART_IRQHandler(&hlpuart1);    //调用HAL库中断处理公用函数 
+    HAL_UART_IRQHandler(&nbiot_uart);    //调用HAL库中断处理公用函数 
 
     //ilde中断产生，代表当前数据帧接收结束
-    if ((__HAL_UART_GET_FLAG(&hlpuart1, UART_FLAG_IDLE)!=RESET))  
+    if ((__HAL_UART_GET_FLAG(&nbiot_uart, UART_FLAG_IDLE)!=RESET))  
     {
      
         //清除ilde中断标记
-        __HAL_UART_CLEAR_IT(&hlpuart1, UART_FLAG_IDLE); 
+        __HAL_UART_CLEAR_IT(&nbiot_uart, UART_FLAG_IDLE); 
                                          
     }    
 }
@@ -421,14 +420,14 @@ int uart_data_tx_poll(uart_handle_t uart_handle, uint8_t *pData,uint16_t size, u
     if (ret == HAL_TIMEOUT) {
       
         //设置串口发送超时事件
-        lpuart_event_set(uart_handle, UART_TX_TIMEOUT_EVENT); 
+        uart_event_set(uart_handle, UART_TX_TIMEOUT_EVENT); 
       
         return ret;
         
     } else if (ret == HAL_OK) {
         
         //设置串口发送完成事件
-        lpuart_event_set(uart_handle, UART_TX_EVENT);         
+        uart_event_set(uart_handle, UART_TX_EVENT);         
     }   
     
     if (tx_int_flag) {
@@ -469,12 +468,12 @@ int uart_data_rx_poll(uart_handle_t uart_handle, uint8_t *pData, uint16_t size, 
     
     if (ret == HAL_TIMEOUT) {     
         //设置串口接收超时事件
-        lpuart_event_set(uart_handle, UART_RX_TIMEOUT_EVENT); 
+        uart_event_set(uart_handle, UART_RX_TIMEOUT_EVENT); 
         
     } else if (ret == HAL_OK) {
         
         //设置串口接收完成事件
-        lpuart_event_set(uart_handle, UART_RX_EVENT);         
+        uart_event_set(uart_handle, UART_RX_EVENT);         
     }
         
     if (rx_int_flag) {

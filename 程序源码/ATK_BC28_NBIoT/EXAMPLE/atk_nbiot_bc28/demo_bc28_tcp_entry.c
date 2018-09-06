@@ -1,25 +1,20 @@
 /**
   *
-  * @file           : demo_sim7020_gprs_attach_entry.c
-  * @brief          : sim7020 ÍøÂç¸½×ÅÊµÑé
+  * @file           : demo_sim7020_tcp_entry.c
+  * @brief          : sim7020 tcp æ”¶å‘æ•°æ®å®éªŒ
   */
 /* Includes ------------------------------------------------------------------*/
 #include "atk_sys.h"
 #include "atk_led.h"
 #include "atk_delay.h"
 #include "atk_bc28_nbiot.h"
-#include "atk_sim7020.h"
+#include "atk_bc28.h"
 #include "atk_bc28_nbiot.h"
 #include "stm32l4xx_hal.h"
 
+static int sm7020_main_status = SIM7020_TCPUDP_CR;
 
-static int sm7020_main_status =  SIM7020_NBLOT_INFO;
-static sim7020_handle_t  sim7020_handle = NULL;  
-
-
-
-
-//sim7020ÏûÏ¢ÊÂ¼ş´¦Àíº¯Êı
+//sim7020æ¶ˆæ¯äº‹ä»¶å¤„ç†å‡½æ•°
 static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *msg)
 { 
     sim7020_handle_t sim7020_handle = (sim7020_handle_t)p_arg; 
@@ -30,75 +25,73 @@ static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *
     {
         case SIM7020_MSG_CMD_RETRY:
           printf("%s cmd error and retry\r\n",msg);      
-        break;  
-
+        break;
+        
         case SIM7020_MSG_CMD_FAIL:
         {
           printf("%s cmd failed\r\n",msg);
           
           break;                     
-        }          
-      
+        }
+        
         case SIM7020_MSG_NBLOT_INIT:
         {
-          printf("init=%s\r\n",msg);
+          printf("msg init=%s\r\n",msg);
                      
         }
         break;
 
         case SIM7020_MSG_IMSI:
         {
-           printf("\r\nIMSI=%s\r\n",msg);
+           printf("\r\nmsg imsi=%s\r\n",msg);
         }
         break;
         
         case SIM7020_MSG_REG:
-        {       
-             printf("\r\nmsg creg status=%s\r\n", msg);
-                                        
+        {
+             printf("\r\nmsg reg status=%s\r\n", msg);
+                                                    
         }
         break;
-                  
-        case SIM7020_MSG_CSQ:
-          printf("rssi=%sdbm\r\n",msg);      
-        break;        
         
         case SIM7020_MSG_SIGNAL:
-          printf("signal=%s\r\n",msg);      
+        {         
+          printf("r\nmsg rssi=%sdbm\r\n",msg);
+        }
+              
         break;
         
         case SIM7020_MSG_NBLOT_INFO:
           
         {
-          printf("info get=%s\r\n",msg);
-          
-          sm7020_main_status =  SIM7020_SIGNAL;                     
+          printf("msg info get=%s\r\n",msg);
+                     
         }
 
         break;
 
         case SIM7020_MSG_BAND:
-             printf("\r\nfreq=%s\r\n",msg);
+             printf("\r\nmsg freq=%s\r\n",msg);
         break;
         
-        //²úÉÌID
+        //äº§å•†ID
         case SIM7020_MSG_MID:
         {
             printf("\r\nmid=%s\r\n",msg);
         }
         break;
         
-        //Ä£¿éĞÍºÅ
+        //æ¨¡å—å‹å·
         case SIM7020_MSG_MMODEL:
         {
-            printf("\r\nmmodel=%s\r\n",msg);
+            printf("\r\nmsg mmodel=%s\r\n",msg);
         }
         break;        
 
-        //Èí¼ş°æ±¾ºÅ
+        //è½¯ä»¶ç‰ˆæœ¬å·
         case SIM7020_MSG_MREV:
         {
-            printf("\r\nmrev=%s\r\n",msg);
+            printf("\r\nmsg mrev=%s\r\n",msg);
         }
         break;        
         
@@ -110,43 +103,59 @@ static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *
         
         case SIM7020_MSG_TCPUDP_CREATE:
         {
-          printf("\r\nudp_cr=%s\r\n",msg);
+            printf("\r\n%smsg create and connect\r\n",msg);
+            sm7020_main_status = SIM7020_TCPUDP_SEND;
         }
         break;
         
         case SIM7020_MSG_TCPUDP_CLOSE:
         {
-          printf("\r\nUDP_CL=%s\r\n",msg);
+            printf("\r\nmsg tcpudp close=%s\r\n",msg);
         }
         break;
         
         case SIM7020_MSG_TCPUDP_SEND:
         {
-          printf("\r\nUDP_SEND=%s\r\n",msg);
+            printf("\r\nmsg tcp udp_send=%s\r\n",msg);
+          
         }
         break;
         
         case SIM7020_MSG_TCPUDP_RECV:
+          
         {
-          printf("\r\nUDP_RECE=%s\r\n",msg);
+            //æ”¶åˆ°çš„æ•°æ®æ˜¯åå…­è¿›åˆ¶çš„æ•°å­—, data_bufç¼“å†²åŒºå½“ä¸­
+            //æ¯ä¸¤ä¸ªå­—èŠ‚ç»„æˆä¸€ä¸ªåå…­è¿›åˆ¶æ•°ï¼Œ2ä¸ªå­—èŠ‚æ¢ç®—æˆ1ä¸ªå­—ç¬¦
+            sim7020_buf2chr(msg, strlen(msg));
+          
+            printf("\r\nmsg tcp recv=%s\r\n",msg);
+          
+            sm7020_main_status = SIM7020_TCPUDP_CL;
         }
         break;
         
+        case SIM7020_MSG_SOCKET_ERROR:
+        {
+            printf("\r\nmsg socket err=%d\r\n",*msg);
+          
+        }
+        break;        
+        
         case SIM7020_MSG_COAP_SERVER:
         {
-          printf("\r\nCOAP=%s\r\n",msg);
+          printf("\r\nmsg COAP=%s\r\n",msg);
         }
         break;
         
         case SIM7020_MSG_COAP_SEND:
         {
-          printf("\r\nCOAP_SENT=%s\r\n",msg);
+          printf("\r\nmsg COAP_SENT=%s\r\n",msg);
         }
         break;
 
         case SIM7020_MSG_COAP_RECV:
         {
-            printf("\r\nCOAP_RECE=%s\r\n",msg);
+            printf("\r\nmsg COAP_RECEV=%s\r\n",msg);
         }
         break;
 
@@ -157,9 +166,8 @@ static void __sim7020_event_cb_handler (void *p_arg, int msg_id, int len, char *
     }             
 }
 
-
-//sim7020 ×´Ì¬´¦Àíº¯Êı
-//sim7020_main_status£»sim7020Ëù´¦µÄÖ÷×´Ì¬½×¶Î
+//sim7020 çŠ¶æ€å¤„ç†å‡½æ•°
+//sim7020_main_statusï¼›sim7020æ‰€å¤„çš„ä¸»çŠ¶æ€é˜¶æ®µ
 static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim7020_main_status)
 {    
     switch(*sim7020_main_status)
@@ -281,34 +289,33 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
     }
 }
 
-
 /**
-  * @brief  The demo sim7020 nblot info get application entry point.
+  * @brief  The uart poll application entry point.
   *
   * @retval None
   */
-void demo_sim7020_nblot_info_get_entry(void)
-{ 
-       
-    uart_handle_t lpuart_handle = NULL; 
- 
-    lpuart_handle = lpuart1_init(115200);  
+void demo_sim7020_tcp_entry(void)
+{         
+    uart_handle_t nbiot_handle = NULL; 
+
+    sim7020_handle_t  sim7020_handle = NULL;   
+
+    nbiot_handle = atk_nbiot_uart_init(115200);  
     
-    sim7020_handle = sim7020_init(lpuart_handle);
+    sim7020_handle = sim7020_init(nbiot_handle);
      
     sim7020_event_registercb(sim7020_handle, __sim7020_event_cb_handler, sim7020_handle);
     
-    //sim7020ÉÏµçĞèÒªµÈ´ı10s
+    //sim7020ä¸Šç”µéœ€è¦ç­‰å¾…10s
     delay_ms(1000);
              
     while (1)
-    {   
+    {                        
         sim7020_app_status_poll(sim7020_handle, &sm7020_main_status);      
         sim7020_event_poll(sim7020_handle);      
-        uart_event_poll(lpuart_handle);       
+        uart_event_poll(nbiot_handle);       
     }
 }
 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-
