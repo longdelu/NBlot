@@ -11,8 +11,8 @@
 //Copyright(C) 广州市星翼电子科技有限公司 2009-2019
 //All rights reserved
 //********************************************************************************
-#include "sim7020_nblot.h"
-#include "delay.h"
+#include "atk_bc28_nbiot.h"
+#include "atk_delay.h"
 
 #define SIM7020_NBLOT_DEBUG                   
 #ifdef SIM7020_NBLOT_DEBUG

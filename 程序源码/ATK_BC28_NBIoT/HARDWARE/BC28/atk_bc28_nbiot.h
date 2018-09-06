@@ -1,7 +1,7 @@
 #ifndef _SIM7020_NBIOT_H
 #define _SIM7020_NBIOT_H
 
-#include "sim7020.h"
+#include "atk_bc28.h"
 #include "delay.h"
 
 ////////////////////////////////////////////////////////////////////////////////// 

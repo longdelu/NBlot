@@ -1,6 +1,6 @@
 #ifndef _KEY_H
 #define _KEY_H
-#include "sys.h"
+#include "atk_sys.h"
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F7开发板
@@ -46,24 +46,10 @@ void key_init(int mode);
 
 u8 KEY_Scan(u8 mode);
 
-//**************************************
-// fn : KEY_RegisterCb
-//
-// brief : 注册按钮事件回调
-//
-// param : cb -> 处理按钮事件函数指针
-//
-// return : none
+//KEY_RegisterCb
 void key_registercb(key_cb cb, void *p_arg);
 
-//**************************************
-// fn : key_poll
-//
-// brief : 轮询按钮事件
-//
-// param : none
-//
-// return : none
+// 轮询按钮事件
 void key_poll(void);
 
 #endif

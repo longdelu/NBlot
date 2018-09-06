@@ -4,12 +4,12 @@
   * @brief          : sim7020 ÍøÂç¸½×ÅÊµÑé
   */
 /* Includes ------------------------------------------------------------------*/
-#include "sys.h"
-#include "led.h"
-#include "delay.h"
-#include "nblot_usart.h"
-#include "sim7020.h"
-#include "sim7020_nblot.h"
+#include "atk_sys.h"
+#include "atk_led.h"
+#include "atk_delay.h"
+#include "atk_bc28_nbiot.h"
+#include "atk_sim7020.h"
+#include "atk_bc28_nbiot.h"
 #include "stm32l4xx_hal.h"
 
 
@@ -172,7 +172,7 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
            
     case SIM7020_NBLOT_INIT:
       {
-        printf("sim7020 init start\r\n");
+        printf("atk_sim7020 init start\r\n");
                 
         sim7020_nblot_init(sim7020_handle);        
 
@@ -182,7 +182,7 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
       
     case SIM7020_NBLOT_INFO:
       {
-         printf("sim7020 get signal start\r\n");
+         printf("atk_sim7020 get signal start\r\n");
                 
          sim7020_nblot_info_get(sim7020_handle);
 
@@ -193,7 +193,7 @@ static void sim7020_app_status_poll(sim7020_handle_t sim7020_handle, int *sim702
       
     case SIM7020_SIGNAL:
       {
-        printf("sim7020 rssi(db) start\r\n");
+        printf("atk_sim7020 rssi(db) start\r\n");
         
         sim7020_nblot_signal_get(sim7020_handle);
         

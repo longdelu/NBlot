@@ -1,6 +1,6 @@
-#include "sim7020.h"
-#include "delay.h"
-#include "sim7020_nblot.h"
+#include "atk_sim7020.h"
+#include "atk_delay.h"
+#include "atk_bc28_nbiot.h"
 
 ////////////////////////////////////////////////////////////////////////////////// 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
@@ -139,7 +139,7 @@ static void __uart_event_cb_handle (void *p_arg)
     if (p_uart_dev->uart_event & UART_TX_EVENT)
     {
                
-        SIM7020_DEBUG_INFO("sim7020 uart tx ok %s", g_sim7020_send_desc.buf);  
+        SIM7020_DEBUG_INFO("atk_sim7020 uart tx ok %s", g_sim7020_send_desc.buf);  
 
         lpuart_event_clr(p_uart_dev, UART_TX_EVENT);                 
     }
@@ -156,7 +156,7 @@ static void __uart_event_cb_handle (void *p_arg)
             //产生异步事件等待处理
             sim7020_event_notify(sim7020_handle, g_sim7020_recv_desc.buf);
                         
-            SIM7020_DEBUG_INFO("sim7020 uart rx ok %s\r\n", &g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]);
+            SIM7020_DEBUG_INFO("atk_sim7020 uart rx ok %s\r\n", &g_sim7020_recv_desc.buf[g_sim7020_recv_desc.len]);
           
             g_sim7020_recv_desc.len = g_sim7020_recv_desc.len + size;
             
@@ -169,7 +169,7 @@ static void __uart_event_cb_handle (void *p_arg)
     //或者模块工作异常，没有回应命令的数据
     if (p_uart_dev->uart_event & UART_TX_TIMEOUT_EVENT) 
     {        
-        SIM7020_DEBUG_INFO("sim7020 uart tx timeout %s", g_sim7020_send_desc.buf);  
+        SIM7020_DEBUG_INFO("atk_sim7020 uart tx timeout %s", g_sim7020_send_desc.buf);  
 
         sim7020_event_set(sim7020_handle, SIM7020_TIMEOUT_EVENT);
       
@@ -211,7 +211,7 @@ static void __uart_event_cb_handle (void *p_arg)
             sim7020_event_set(sim7020_handle, SIM7020_TIMEOUT_EVENT);
        }
        
-       SIM7020_DEBUG_INFO("sim7020 uart rx timeout %s\r\n", g_sim7020_recv_desc.buf);  
+       SIM7020_DEBUG_INFO("atk_sim7020 uart rx timeout %s\r\n", g_sim7020_recv_desc.buf);  
        
        lpuart_event_clr(p_uart_dev, UART_RX_TIMEOUT_EVENT);
     }            

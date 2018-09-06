@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32L476xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../Drivers/STM32L4xx_HAL_Driver/Inc;../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../Drivers/CMSIS/Include;..\HARDWARE\KEY;..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\NBLOT_UART;..\HARDWARE\TIMER;..\HARDWARE\LPTIMER;..\EXAMPLE;..\HARDWARE\SIM7020;..\ATK_SOFT_TIMER;..\EXAMPLE\sim7020;..\ATK_RING_BUF</IncludePath>
+              <IncludePath>../Inc;../Drivers/STM32L4xx_HAL_Driver/Inc;../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32L4xx/Include;../Drivers/CMSIS/Include;..\HARDWARE\KEY;..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\NBLOT_UART;..\HARDWARE\TIMER;..\HARDWARE\LPTIMER;..\EXAMPLE;..\HARDWARE\SIM7020;..\ATK_SOFT_TIMER;..\EXAMPLE\sim7020;..\ATK_RING_BUF;..\HARDWARE\BC28</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -520,39 +520,34 @@
           <GroupName>HARDWARE</GroupName>
           <Files>
             <File>
-              <FileName>key.c</FileName>
+              <FileName>atk_key.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\HARDWARE\KEY\key.c</FilePath>
+              <FilePath>..\HARDWARE\KEY\atk_key.c</FilePath>
             </File>
             <File>
-              <FileName>nblot_usart.c</FileName>
+              <FileName>atk_led.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\HARDWARE\NBLOT_UART\nblot_usart.c</FilePath>
+              <FilePath>..\HARDWARE\LED\atk_led.c</FilePath>
             </File>
             <File>
-              <FileName>led.c</FileName>
+              <FileName>atk_lptimer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\HARDWARE\LED\led.c</FilePath>
+              <FilePath>..\HARDWARE\LPTIMER\atk_lptimer.c</FilePath>
             </File>
             <File>
-              <FileName>lptimer.c</FileName>
+              <FileName>atk_bc28.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\HARDWARE\LPTIMER\lptimer.c</FilePath>
+              <FilePath>..\HARDWARE\BC28\atk_bc28.c</FilePath>
             </File>
             <File>
-              <FileName>timer.c</FileName>
+              <FileName>atk_bc28_nbiot.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\HARDWARE\TIMER\timer.c</FilePath>
+              <FilePath>..\HARDWARE\BC28\atk_bc28_nbiot.c</FilePath>
             </File>
             <File>
-              <FileName>sim7020.c</FileName>
+              <FileName>atk_timer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\HARDWARE\SIM7020\sim7020.c</FilePath>
-            </File>
-            <File>
-              <FileName>sim7020_nblot.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\HARDWARE\SIM7020\sim7020_nblot.c</FilePath>
+              <FilePath>..\HARDWARE\TIMER\atk_timer.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -560,19 +555,19 @@
           <GroupName>SYSTEM</GroupName>
           <Files>
             <File>
-              <FileName>delay.c</FileName>
+              <FileName>atk_delay.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\SYSTEM\delay\delay.c</FilePath>
+              <FilePath>..\SYSTEM\delay\atk_delay.c</FilePath>
             </File>
             <File>
-              <FileName>usart.c</FileName>
+              <FileName>atk_sys.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\SYSTEM\usart\usart.c</FilePath>
+              <FilePath>..\SYSTEM\sys\atk_sys.c</FilePath>
             </File>
             <File>
-              <FileName>sys.c</FileName>
+              <FileName>atk_usart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\SYSTEM\sys\sys.c</FilePath>
+              <FilePath>..\SYSTEM\usart\atk_usart.c</FilePath>
             </File>
           </Files>
         </Group>

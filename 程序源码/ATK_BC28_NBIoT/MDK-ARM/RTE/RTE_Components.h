@@ -3,7 +3,7 @@
  * Auto generated Run-Time-Environment Component Configuration File
  *      *** Do not modify ! ***
  *
- * Project: 'NBlot' 
+ * Project: 'ATK_BC28_NBIoT' 
  * Target:  'NBlot' 
  */
 

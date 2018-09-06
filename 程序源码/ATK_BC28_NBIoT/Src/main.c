@@ -38,14 +38,14 @@
   */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "sys.h"
-#include "led.h"
-#include "key.h"
-#include "timer.h"
-#include "delay.h"
-#include "usart.h"
-#include "nblot_usart.h"
-#include "sim7020.h"
+#include "atk_sys.h"
+#include "atk_led.h"
+#include "atk_key.h"
+#include "atk_timer.h"
+#include "atk_delay.h"
+#include "atk_usart.h"
+#include "atk_bc28_nbiot.h"
+#include "atk_sim7020.h"
 #include "demo_entry.h"
 
 

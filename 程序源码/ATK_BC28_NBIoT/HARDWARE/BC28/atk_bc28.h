@@ -1,6 +1,6 @@
 #ifndef _SIM7020_H
 #define _SIM7020_H
-#include "sys.h"
+#include "atk_sys.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

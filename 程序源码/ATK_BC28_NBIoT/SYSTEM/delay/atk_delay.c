@@ -1,5 +1,5 @@
-#include "delay.h"
-#include "sys.h"
+#include "atk_delay.h"
+#include "atk_sys.h"
 #include "atk_soft_timer.h"
 //////////////////////////////////////////////////////////////////////////////////      
 //如果使用ucos,则包括下面的头文件即可.
