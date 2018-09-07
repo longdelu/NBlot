@@ -42,6 +42,7 @@ typedef enum nbiot_app_status
     NBIOT_APP_CM2M_STATUS = NBIOT_CM2M_STATUS,  // CM2M返回状态消息
     NBIOT_APP_CM2M_CL     = NBIOT_CM2M_CL,      // 关闭CM2M 
     NBIOT_APP_RESET       = NBIOT_RESET,        // 复位NB
+    NBIOT_APP_NCONFIG     = NBIOT_NCONFIG,      // 使能/禁能自动入网设置
     NBIOT_APP_END          
 }nbiot_app_status_t;
 
@@ -51,22 +52,22 @@ typedef enum nbiot_msg_id
 {
     NBIOT_MSG_NONE,
 
-    NBIOT_MSG_INIT,
+    NBIOT_MSG_INIT,       //初始化完成消息
 
-    NBIOT_MSG_INFO,
+    NBIOT_MSG_INFO,       //固件信息获取完成消息
     
-    NBIOT_MSG_REG,
+    NBIOT_MSG_REG,        //注册信息获取完成消息      
   
-    NBIOT_MSG_IMEI,       //移动设备身份码   
+    NBIOT_MSG_IMEI,       //移动设备身份码获取完成消息   
     NBIOT_MSG_IMSI,
   
-    NBIOT_MSG_MID,        //产商ID
-    NBIOT_MSG_MMODEL,     //模块型号
-    NBIOT_MSG_MREV,       //软件版本号
-    NBIOT_MSG_BAND,       //工作频段
+    NBIOT_MSG_MID,        //产商ID获取完成消息
+    NBIOT_MSG_MMODEL,     //模块型号获取完成消息
+    NBIOT_MSG_MREV,       //软件版本号获取完成消息
+    NBIOT_MSG_BAND,       //工作频段获取完成消息
   
     NBIOT_MSG_CSQ,        
-    NBIOT_MSG_SIGNAL,     //信号强度
+    NBIOT_MSG_SIGNAL,     //信号强度获取完成消息
     
 
     NBIOT_MSG_TCPUDP_CREATE,
@@ -74,7 +75,7 @@ typedef enum nbiot_msg_id
     NBIOT_MSG_TCPUDP_SEND,
     NBIOT_MSG_TCPUDP_RECV,
     
-    NBIOT_MSG_SOCKET_ERROR, //socket错误    
+    NBIOT_MSG_SOCKET_ERROR, //收到socket错误消息    
 
     NBIOT_MSG_COAP_SERVER,
     NBIOT_MSG_COAP_CLIENT,
@@ -86,16 +87,18 @@ typedef enum nbiot_msg_id
     NBIOT_MSG_CM2M_SEND,
     NBIOT_MSG_CM2M_RECV,
     NBIOT_MSG_CM2M_STATUS,
-    NBIOT_MSG_CM2M_CLOSE,   
+    NBIOT_MSG_CM2M_CLOSE,
 
+    NBIOT_MSG_RESET,        //NB复位完成消息
+    NBIOT_MSG_NCONFIG,      //自动入网设置完成消息
 
-    NBIOT_MSG_CMD_RETRY,
+    NBIOT_MSG_CMD_RETRY,    //命令出错重试消息
     
-    NBIOT_MSG_CMD_NEXT,
+    NBIOT_MSG_CMD_NEXT,     //命令出错后跳过出错命令执行下一条命令消息
     
-    NBIOT_MSG_CMD_FAIL,    
+    NBIOT_MSG_CMD_FAIL,     //命令出错后退出执行消息 
 
-    NBIOT_MSG_END
+    NBIOT_MSG_END           
   
 }nbiot_msg_id_t;
 

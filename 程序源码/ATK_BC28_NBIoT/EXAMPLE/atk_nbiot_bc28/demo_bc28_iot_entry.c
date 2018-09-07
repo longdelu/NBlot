@@ -306,13 +306,14 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
 {    
     switch(*nbiot_main_status)
     {
-    case NBIOT_NONE:
+    case NBIOT_APP_NONE:
       {
         
       }
       break;
            
-    case NBIOT_INIT:
+           
+    case NBIOT_APP_INIT:
       {
         printf("atk_nbiot init start\r\n");
                 
@@ -322,7 +323,27 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       }
       break;
       
-    case NBIOT_INFO:
+    case NBIOT_APP_RESET:
+      {
+        printf("atk_nbiot reboot start\r\n");
+                
+        nbiot_init(nbiot_handle);        
+
+        *nbiot_main_status = NBIOT_END;
+      }
+      break;
+
+    case NBIOT_APP_NCONFIG:
+      {
+        printf("atk_nbiot auto reg start\r\n");
+                
+        nbiot_init(nbiot_handle);        
+
+        *nbiot_main_status = NBIOT_END;
+      }
+      break;      
+      
+    case NBIOT_APP_INFO:
       {
          printf("atk_nbiot get signal start\r\n");
                 
@@ -333,7 +354,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
             
       break;
       
-    case NBIOT_SIGNAL:
+    case NBIOT_APP_SIGNAL:
       {
         printf("atk_nbiot rssi(db) start\r\n");
         
@@ -343,7 +364,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       }
       break;
       
-    case NBIOT_TCPUDP_CR:
+    case NBIOT_APP_TCPUDP_CR:
       {
         printf("tcp/udp socket creat start\r\n");  
         
@@ -356,7 +377,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       }
       break;
       
-    case NBIOT_TCPUDP_CL:
+    case NBIOT_APP_TCPUDP_CL:
       {          
         //do nothing
         printf("tcp/udp socket close start\r\n");  
@@ -369,7 +390,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       }
       break;
       
-    case NBIOT_TCPUDP_SEND:
+    case NBIOT_APP_TCPUDP_SEND:
       {
           
         printf("tcp/udp send start\r\n"); 
@@ -383,7 +404,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       }
       break;
       
-    case NBIOT_TCPUDP_RECV:
+    case NBIOT_APP_TCPUDP_RECV:
       {         
         printf("tcp/udp recv start\r\n");    
         //do nothing
@@ -391,7 +412,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       }
       break;
       
-    case NBIOT_CoAP_SEVER:
+    case NBIOT_APP_CoAP_SEVER:
       {
         printf("CoAP Server set start\r\n");
         
@@ -402,7 +423,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       break;
       
       
-    case NBIOT_CoAP_CLIENT:
+    case NBIOT_APP_CoAP_CLIENT:
       {
         printf("CoAP client set start\r\n");
         
@@ -412,7 +433,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       }
       break;    
       
-    case NBIOT_CoAP_SEND:
+    case NBIOT_APP_CoAP_SEND:
       {
         printf("CoAP send start\r\n");      
         
@@ -423,13 +444,13 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       }
       break;
       
-    case NBIOT_CoAP_RECV:
+    case NBIOT_APP_CoAP_RECV:
       {
         printf("CoAP recv start\r\n");
         *nbiot_main_status = NBIOT_END;        
       }
       
-    case NBIOT_CoAP_CL:
+    case NBIOT_APP_CoAP_CL:
       {
         printf("CoAP close start\r\n");
         nbiot_coap_close(nbiot_handle, NBIOT_CM2M);
@@ -438,7 +459,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       
       break; 
 
-    case NBIOT_CM2M_CLIENT:
+    case NBIOT_APP_CM2M_CLIENT:
       {
         printf("CM2M client set start\r\n");
         
@@ -448,7 +469,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       }
       break;    
       
-    case NBIOT_CM2M_SEND:
+    case NBIOT_APP_CM2M_SEND:
       {
         printf("CM2M send start\r\n");
         
@@ -461,13 +482,13 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       }
       break;
       
-    case NBIOT_CM2M_RECV:
+    case NBIOT_APP_CM2M_RECV:
       {
         printf("CM2M recv start\r\n");
         *nbiot_main_status = NBIOT_END;        
       }
       
-    case NBIOT_CM2M_CL:
+    case NBIOT_APP_CM2M_CL:
       {
         printf("CM2M close start\r\n");
         //创建完成CM2M客户端之后，需要根据当前网络的状态延时一段时间保证数据连接稳定

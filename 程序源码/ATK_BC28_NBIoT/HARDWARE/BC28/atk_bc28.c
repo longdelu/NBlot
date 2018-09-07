@@ -72,12 +72,11 @@ static uint8_t nbiot_response_handle (nbiot_handle_t nbiot_handle, uint8_t cmd_r
 //产生下一条AT指令
 static uint8_t at_cmd_next (void);
    
-//nbiot事件通知
+//nbiot事件通知,被串口事件回调函数中调用
 static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf);
 
 //发送消息与应用层交互
 static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok);
-
 
 
 //nbiot接收数据
@@ -296,7 +295,9 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
             recv_cnt=0;
           
             //解析到错误，在错误即可进行命令的外理，避免进入超时事件
-            nbiot_event_clr(nbiot_handle, NBIOT_TIMEOUT_EVENT);             
+            nbiot_event_clr(nbiot_handle, NBIOT_TIMEOUT_EVENT);
+
+            //错误后尝试重试            
             next_cmd = nbiot_response_handle(nbiot_handle, FALSE);     
         
             if (g_at_cmd.cmd_action & ACTION_ERROR_AND_TRY)
@@ -365,7 +366,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
                //接收在超时时间内未正常完成，停止接收超时  
                atk_soft_timer_stop(&nbiot_handle->p_uart_dev->uart_rx_timer);   
               
-               //收到的是乱码,强制接收结束
+               //收到的是乱码,强制接收结束，同时根据命令的属性判断命令接下来的一部分
                next_cmd = nbiot_response_handle(nbiot_handle, FALSE);
                //清缓存            
                nbiot_recv_buf_reset();                
@@ -374,13 +375,32 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
             {
               
                //命令未完成,收到的的是命令回显当中其中的一部分                
-               atk_soft_timer_timeout_change(&nbiot_handle->p_uart_dev->uart_rx_timer, 500);
+               atk_soft_timer_timeout_change(&nbiot_handle->p_uart_dev->uart_rx_timer, 3000);
              
             }              
                                
         } 
             
         nbiot_event_clr(nbiot_handle, NBIOT_RECV_EVENT); 
+    }
+    
+    
+    if (nbiot_handle->nbiot_event & NBIOT_REBOOT_EVENT) 
+    {      
+        NBIOT_DEBUG_INFO("reboot event ok\r\n");
+                             
+        at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = "reboot ok";        
+          
+        //通知上层应用网络注册结果
+        nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], TRUE);        
+
+        //处理决定是否执行下一条命令        
+        next_cmd = nbiot_response_handle(nbiot_handle, TRUE);
+        
+        nbiot_event_clr(nbiot_handle, NBIOT_REBOOT_EVENT); 
+      
+        //清除缓存数据    
+        nbiot_recv_buf_reset();   
     }
 
 
@@ -486,7 +506,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
 
     if (nbiot_handle->nbiot_event & NBIOT_TIMEOUT_EVENT) 
     {        
-        //超时处理，尝试重发命令        
+        //超时处理，根据命令的属性尝试重发命令或者跳过该命令执行下一条命令        
         next_cmd = nbiot_response_handle(nbiot_handle, FALSE);
       
         //通知上层应用，此动作执行超时
@@ -496,7 +516,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
            
             NBIOT_DEBUG_INFO("%s cmd not repsonse or send failed\r\n", g_at_cmd.p_atcmd);
                                
-            //通知上层应用，此动作执行失败后跳过该命令执行
+            //通知上层应用，此动作因超时执行失败后跳过该命令执行
             nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], NBIOT_ERROR_NEXT);            
         }        
         else if (g_at_cmd.cmd_action & ACTION_ERROR_AND_TRY) 
@@ -505,7 +525,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
            
             NBIOT_DEBUG_INFO("%s cmd not repsonse or send failed\r\n", g_at_cmd.p_atcmd);
                                
-            //通知上层应用，此动作执行失败后跳过该命令执行
+            //通知上层应用，此动作因超时执行失败后跳过该命令执行
             nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], NBIOT_ERROR_RETRY);            
         }
         else        
@@ -513,7 +533,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
             NBIOT_DEBUG_INFO("%s cmd is failed and exit\r\n", g_at_cmd.p_atcmd);        
             at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = (char*)g_at_cmd.p_atcmd;
             
-            //通知上层应用，此动作执行失败后跳过该命令执行
+            //通知上层应用，此动作因超时执行失败后结束命令执行
             nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], FALSE);  
 
             //复位状态标志
@@ -541,7 +561,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
             //代表该主状态下所有的子状态命令已经成功执行完成了
             nbiot_msg_send(nbiot_handle, NULL,TRUE);
 
-            //复位状态标志
+            //复位sm状态标志
             nbiot_status_reset();
         }     
     }
@@ -868,8 +888,14 @@ static int8_t at_cmd_result_parse (char *buf)
 static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
 {
     char *target_pos_start = NULL;
-    
-    if((target_pos_start = strstr(buf, "+CGREG:")) != NULL)
+       
+    if(((target_pos_start = strstr(buf, "Neul")) != NULL) &&
+       ((target_pos_start = strstr(buf, "REBOOT")) != NULL) )
+    {        
+        //产生重启事件
+        nbiot_event_set(nbiot_handle, NBIOT_REBOOT_EVENT);        
+    }       
+    else if((target_pos_start = strstr(buf, "+CGREG:")) != NULL)
     {
         char *p_colon = strchr(target_pos_start,':');
       
@@ -896,13 +922,13 @@ static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
         //收到服务器端发来TCP/UDP数据
         char *p_colon = strchr(target_pos_start, ':');
       
-        int8_t socket_id = 0;
+//        int8_t socket_id = 0;
         
         //得到是哪个socket收到数据
         if (p_colon)
         {
             p_colon++;
-            socket_id = strtoul(p_colon,0,10);
+//            socket_id = strtoul(p_colon,0,10);
         } 
         
         //得到收到的数据长度
@@ -944,7 +970,7 @@ static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
         //收到服务器端发来TCP/UDP错误码
         char *p_colon = strchr(target_pos_start,':');
       
-        int8_t socket_id = 0;
+//        int8_t socket_id = 0;
       
         int8_t socket_err = 0;
         
@@ -952,7 +978,7 @@ static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
         if (p_colon)
         {
             p_colon++;          
-            socket_id = strtoul(p_colon,0,10);
+//            socket_id = strtoul(p_colon,0,10);
         }
         
         //得到收到的socket错误码
@@ -975,13 +1001,13 @@ static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
         //收到服务器端发来CoAP数据
         char *p_colon = strchr(target_pos_start, ':');
       
-        int8_t coap_id = 0;
+//        int8_t coap_id = 0;
         
         //得到是哪个coap收到的数据
         if (p_colon)
         {
             p_colon++;
-            coap_id = strtoul(p_colon,0,10);
+//            coap_id = strtoul(p_colon,0,10);
         } 
         
         //得到收到的数据长度
@@ -1276,13 +1302,25 @@ static uint8_t at_cmd_next (void)
         
         }
     }
+    
     else if (g_nbiot_sm_status.main_status == NBIOT_SIGNAL)
     {
         
         g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
         return FALSE;
+    }    
+    else if (g_nbiot_sm_status.main_status == NBIOT_RESET)
+    {
+        
+        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
+        return FALSE;
     }
-    
+    else if (g_nbiot_sm_status.main_status == NBIOT_NCONFIG)
+    {
+        
+        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
+        return FALSE;
+    }     
     else if (g_nbiot_sm_status.main_status == NBIOT_TCPUDP_CR)
     {
         
@@ -1554,7 +1592,7 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
            
         case NBIOT_SUB_END:
             
-            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_INIT,1,"S");
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_NCONFIG,1,"S");
 
             break;
 
@@ -1563,6 +1601,26 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
             break;
         }
     }
+    else if(g_nbiot_sm_status.main_status == NBIOT_NCONFIG)  
+    {          
+      if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
+      {
+          nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_RESET,1,"S"); 
+      }        
+
+    }
+
+    else if(g_nbiot_sm_status.main_status == NBIOT_RESET)  
+    {
+        
+   
+      if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
+      {
+          nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_RESET,1,"S"); 
+      }        
+
+    }    
+    
     else if(g_nbiot_sm_status.main_status == NBIOT_INFO)
     {
         switch(g_nbiot_sm_status.sub_status)
@@ -1995,7 +2053,7 @@ uint8_t nbiot_response_handle (nbiot_handle_t nbiot_handle, uint8_t cmd_response
         }
         else if (!(g_at_cmd.cmd_action & ACTION_ERROR_EXIT))  
         {
-            //ACTION_ERROR_BUT_NEXT
+            
             next_cmd = TRUE;
         }
         else 
@@ -2026,9 +2084,9 @@ int nbiot_at_cmd_send(nbiot_handle_t nbiot_handle, at_cmdhandle cmd_handle)
     strLen = cmd_generate(cmd_handle);
 
     ret = nbiot_handle->p_drv_funcs->nbiot_send_data(nbiot_handle, 
-                                                         (uint8_t*)g_nbiot_send_desc.buf, 
-                                                         strLen,                                                    
-                                                         cmd_handle->max_timeout);   
+                                                     (uint8_t*)g_nbiot_send_desc.buf, 
+                                                     strLen,                                                    
+                                                     cmd_handle->max_timeout);   
     return ret;
 }
 

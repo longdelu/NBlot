@@ -24,16 +24,17 @@
 #define AT_SYNC        "AT"
 #define AT_CMEE        "AT+CMEE"
 #define AT_ATI         "ATI"
-#define AT_CPIN        "AT+CPIN"
+#define AT_CPIN        "AT+CPIN"       //查询SIM卡的状态
 #define AT_CSQ         "AT+CSQ"
 #define AT_CFUN        "AT+CFUN"
 #define AT_CGREG       "AT+CGREG"
-#define AT_CGACT       "AT+CGACT"      //PDP上下文设置 
+#define AT_CGACT       "AT+CGACT"      //PDP上下文设置(SIM7020） 
 #define AT_CIPCA       "AT+CIPCA"      //PDP上下文设置 
 #define AT_CGATT       "AT+CGATT"
 #define AT_COPS        "AT+COPS"
 #define AT_CGCONTRDP   "AT+CGCONTRDP"
-
+#define AT_NRB         "AT+NRB"        //重启命令  
+#define AT_NCONFIG     "AT+NCONFIG"    //使能/禁能自动入网命令
 
 //信息查询相关命令
 #define AT_CGMI        "AT+CGMI"        //获取产商ID命令
@@ -221,6 +222,7 @@ typedef enum nbiot_main_status
     NBIOT_EDRX,         // eDRX 
     NBIOT_SLEEP,        // SLEEP      
     NBIOT_RESET,        // 复位NB
+    NBIOT_NCONFIG,      // 自动入网设置
     NBIOT_END    
 }nbiot_main_status_t;
 
@@ -275,17 +277,18 @@ typedef enum nbiot_sub_status
     NBIOT_SUB_CM2M_CL,      // 关闭CM2M 
     NBIOT_SUB_PSM,          // PSM
     NBIOT_SUB_EDRX,         // eDRX 
-    NBIOT_SUB_SLEEP,        // SLEEP        
-    NBIOT_SUB_END   
-    
+    NBIOT_SUB_SLEEP,        // SLEEP 
+    NBIOT_SUB_RESET,        // 复位NB
+    NBIOT_SUB_NCONFIG,      // 自动入网设置
+    NBIOT_SUB_END       
 }nbiot_sub_status_t;
 
 
 //nbiot 状态信息,用于状态机
 typedef struct nbiot_status_sm
 {
-    nbiot_main_status_t  main_status;         //命令运行主阶段
-    nbiot_sub_status_t   sub_status;          //命令运行子阶段，用于状态嵌套     
+    int   main_status;         //命令运行主阶段
+    int   sub_status;          //命令运行子阶段，用于状态嵌套     
 }nbiot_status_sm_t;
 
 //nbiot 连接状态信息,用于指示使用哪种协议进行连接
@@ -384,6 +387,7 @@ struct nbiot_drv_funcs {
 #define    NBIOT_CM2M_STATUS_EVENT   0X0400           //CM2M状态事件
 #define    NBIOT_ENTER_LPOWER_EVENT  0X0800           //进入低功耗事件
 #define    NBIOT_EXIT_LPOWER_EVENT   0X1000           //退出低功耗事件
+#define    NBIOT_REBOOT_EVENT        0X2000           //重启事件
 
 //定义NBIOT事件回调函数指针
 typedef void (*nbiot_cb)(void *p_arg, int, int ,char*);

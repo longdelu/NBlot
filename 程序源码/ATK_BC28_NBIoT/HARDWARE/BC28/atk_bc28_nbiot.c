@@ -42,6 +42,64 @@ int nbiot_init (nbiot_handle_t nbiot_handle)
     return NBIOT_OK;
 }
 
+
+//重启nbiot模块
+int nbiot_reboot(nbiot_handle_t nbiot_handle)
+{
+
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
+    {
+        return NBIOT_ERROR;
+    }
+    
+    //命令最大超时时间为300ms，为留余量，这里超时设置为500ms    
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_NRB, NULL, CMD_EXCUTE, 500);
+
+    //进入NBIOT_REBOOT状态
+    nbiot_handle->p_sm_status->main_status = NBIOT_RESET;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_RESET;
+
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
+    
+    return NBIOT_OK;
+}
+
+//
+int nbiot_nconfig(nbiot_handle_t nbiot_handle, uint8_t auto_flag)
+{
+    char *p_auto_nconfig = NULL;
+    
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
+    {
+        return NBIOT_ERROR;
+    }
+    
+    
+    if (auto_flag == 0) 
+    {
+        
+        p_auto_nconfig =  "AUTOCONNECT,FALSE";
+    }    
+    else 
+    {
+       p_auto_nconfig =  "AUTOCONNECT,TRUE"; 
+    }
+    
+    
+    //命令最大超时时间为300ms，为留余量，这里超时设置为500ms    
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_NCONFIG, p_auto_nconfig, CMD_SET, 500);
+
+    //进入NBIOT_REBOOT状态
+    nbiot_handle->p_sm_status->main_status = NBIOT_NCONFIG;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_NCONFIG;
+
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
+    
+    return NBIOT_OK;
+}
+
+
+
 //获取NB模块的信息
 int nbiot_info_get(nbiot_handle_t nbiot_handle)
 {
@@ -50,7 +108,6 @@ int nbiot_info_get(nbiot_handle_t nbiot_handle)
     {
         return NBIOT_ERROR;
     }
-    
     
     nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CGREG, NULL, CMD_READ, 3000);
 
