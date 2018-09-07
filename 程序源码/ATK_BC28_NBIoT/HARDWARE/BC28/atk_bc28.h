@@ -1,5 +1,5 @@
-#ifndef _NBIOT_H
-#define _NBIOT_H
+#ifndef _NBIOT_DEV_H
+#define _NBIOT_DEV_H
 #include "atk_sys.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -199,8 +199,8 @@ typedef at_cmd_info_t *at_cmdhandle;
 typedef enum nbiot_main_status
 {
     NBIOT_NONE,
-    NBIOT_NBLOT_INIT,   // 初始化操作
-    NBIOT_NBLOT_INFO,   // 获取 NB 模块厂商及固件，频段等信息
+    NBIOT_INIT,         // 初始化操作
+    NBIOT_INFO,         // 获取 NB 模块厂商及固件，频段等信息
     NBIOT_SIGNAL,       // 获取信号质量
     NBIOT_TCPUDP_CR,    // 创建 TCP/UDP
     NBIOT_TCPUDP_CL,    // 关闭 TCP/UDP
@@ -321,11 +321,11 @@ typedef enum nbiot_connect_type {
 }nbiot_connect_type_t;
 
 //NBIOT固件信息
-typedef struct sim020_firmware_info
+typedef struct nbiot_firmware_info
 {   char         name[32];
     uint8_t      IMSI[16];
     uint8_t      IMEI[16];      
-}sim020_firmware_info_t;
+}nbiot_firmware_info_t;
 
 
 //连接的协议类型
@@ -336,10 +336,10 @@ typedef enum nbiot_lpower_type {
 }nbiot_lpower_type_t;
 
 //NBIOT低功耗信息结构体
-typedef struct sim020_lpower_info_t
+typedef struct nbiot_lpower_info_t
 {   nbiot_lpower_type_t lpower_type;
     char time[4]; 
-}sim020_lpower_info_t;
+}nbiot_lpower_info_t;
 
 //定义收发数据缓冲区长度
 #define NBIOT_RECV_BUF_MAX_LEN    (RING_BUF_LEN + 1)
@@ -397,7 +397,7 @@ typedef struct nbiot_dev
     uart_dev_t               *p_uart_dev;
     
     //nbiot设备事件回调函数
-    nbiot_cb                nbiot_cb;  
+    nbiot_cb                  nbiot_cb;  
     
     void                     *p_arg;
 
@@ -408,16 +408,16 @@ typedef struct nbiot_dev
     at_cmd_info_t            *p_nbiot_cmd; 
 
     //nbiot指令执行状态信息
-    nbiot_socket_info_t    *p_socket_info;    
+    nbiot_socket_info_t      *p_socket_info;    
 
     //nbiot sm状态信息
-    nbiot_status_sm_t      *nbiot_sm_status;
+    nbiot_status_sm_t        *p_sm_status;
 
     //nbiot 连接状态信息
-    nbiot_status_connect_t *nbiot_connect_status;
+    nbiot_status_connect_t   *p_connect_status;
   
     //nbiot固件信息
-    sim020_firmware_info_t   *firmware_info; 
+    nbiot_firmware_info_t   *p_firmware_info; 
 
     //帧格式，超时成帧或者ILDE成帧
     uint8_t                   frame_format;  
@@ -452,11 +452,11 @@ void nbiot_srcbuf2chr (char *src_buf ,char *dest_buf, int len);
 void nbiot_srcbuf2hex (char *src_buf ,char *dest_buf, int len);
 
 //nbiot at指令初始化
-void at_cmd_param_init (at_cmdhandle cmd_handle,
-                        const char *at_cmd,
-                        char *argument,
-                        cmd_property_t property,
-                        uint32_t at_cmd_time_out);
+void nbiot_at_cmd_param_init (at_cmdhandle cmd_handle,
+                              const char *at_cmd,
+                              char *argument,
+                              cmd_property_t property,
+                              uint32_t at_cmd_time_out);
                               
 //给nbiot模块发送AT指令
 //nbiot_handle  nbiot_handle模块设备句柄
@@ -484,4 +484,4 @@ void nbiot_event_registercb (nbiot_handle_t nbiot_handle, nbiot_cb cb, void *p_a
 //nbiot模块事件处理函数
 int nbiot_event_poll (nbiot_handle_t nbiot_handle);
                                                                                                     
-#endif
+#endif /* NBIOT_DEV_H */

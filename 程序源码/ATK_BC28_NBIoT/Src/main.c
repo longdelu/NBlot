@@ -59,14 +59,14 @@ int main(void)
 { 
     /* HALø‚≥ı ºªØ */
     HAL_Init();
-	
+    
     /* Configure the system clock */
     SystemClock_Config();
-	
+    
     delay_init(HAL_RCC_GetHCLKFreq()/1000000);
-	
+    
     uart1_init(115200);
-	
+    
     led_init();    
     
 //    demo_key_entry();
@@ -81,21 +81,21 @@ int main(void)
     
 //    demo_uart_any_data_len_recv_entry();
     
-//    demo_sim7020_gprs_attach_entry();
+//    demo_nbiot_gprs_attach_entry();
     
-//    demo_sim7020_nblot_info_get_entry();
+//    demo_nbiot_info_get_entry();
 
-//    demo_sim7020_udp_entry();
+//    demo_nbiot_udp_entry();
 
-//    demo_sim7020_tcp_entry();
+//    demo_nbiot_tcp_entry();
 
-//    demo_sim7020_coap_entry();
+//    demo_nbiot_coap_entry();
 
-//    demo_sim7020_iot_entry();
+//    demo_nbiot_iot_entry();
 
-      demo_sim7020_huaweiiot_entry();
+      demo_nbiot_huaweiiot_entry();
 
-//    demo_sim7020_easyiot_entry();    
+//    demo_nbiot_easyiot_entry();    
     
     while (1)
     {            
@@ -120,7 +120,7 @@ void _Error_Handler(char *file, int line)
   {
       
   }
-	
+    
   /* USER CODE END Error_Handler_Debug */
 }
 

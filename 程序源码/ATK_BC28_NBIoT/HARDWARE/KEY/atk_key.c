@@ -1,16 +1,16 @@
 #include "atk_key.h"
 #include "atk_delay.h"
-//////////////////////////////////////////////////////////////////////////////////	 
+//////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F7开发板
-//KEY驱动代码	   
+//KEY驱动代码       
 //正点原子@ALIENTEK
 //技术论坛:www.openedv.com
 //创建日期:2015/11/27
 //版本：V1.0
 //版权所有，盗版必究。
 //Copyright(C) 广州市星翼电子科技有限公司 2014-2024
-//All rights reserved									  
+//All rights reserved                                      
 //////////////////////////////////////////////////////////////////////////////////
 
 static key_dev_t key_dev = {0,0, NULL, NULL};
@@ -54,7 +54,7 @@ key_handle_t key_init(int mode)
         HAL_NVIC_SetPriority(EXTI3_IRQn,12,0);       //抢占优先级为12，子优先级为0
         HAL_NVIC_EnableIRQ(EXTI3_IRQn);              //使能中断线13          
     }
-		
+        
     return &key_dev;
 }
 

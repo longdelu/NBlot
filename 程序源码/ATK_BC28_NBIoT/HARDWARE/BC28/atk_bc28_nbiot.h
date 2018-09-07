@@ -1,5 +1,5 @@
-#ifndef _NBIOT_NBIOT_H
-#define _NBIOT_NBIOT_H
+#ifndef _NBIOT_H
+#define _NBIOT_H
 
 #include "atk_bc28.h"
 #include "atk_delay.h"
@@ -17,14 +17,14 @@
 //All rights reserved
 //********************************************************************************
 
-
-
+     
+     
 //nbiot app状态定义
 typedef enum nbiot_app_status
 {
     NBIOT_APP_NONE,        
-    NBIOT_APP_NBLOT_INIT  = NBIOT_NBLOT_INIT,   // 初始化操作
-    NBIOT_APP_NBLOT_INFO  = NBIOT_NBLOT_INFO,   // 获取 NB 模块厂商及固件，频段等信息
+    NBIOT_APP_INIT        = NBIOT_INIT,         // 初始化操作
+    NBIOT_APP_INFO        = NBIOT_INFO,         // 获取 NB 模块厂商及固件，频段等信息
     NBIOT_APP_SIGNAL      = NBIOT_SIGNAL,       // 获取信号质量
     NBIOT_APP_TCPUDP_CR   = NBIOT_TCPUDP_CR,    // 创建 TCP/UDP
     NBIOT_APP_TCPUDP_CL   = NBIOT_TCPUDP_CL,    // 关闭 TCP/UDP
@@ -51,9 +51,9 @@ typedef enum nbiot_msg_id
 {
     NBIOT_MSG_NONE,
 
-    NBIOT_MSG_NBLOT_INIT,
+    NBIOT_MSG_INIT,
 
-    NBIOT_MSG_NBLOT_INFO,
+    NBIOT_MSG_INFO,
     
     NBIOT_MSG_REG,
   
@@ -99,8 +99,7 @@ typedef enum nbiot_msg_id
   
 }nbiot_msg_id_t;
 
-
-//nbiot nblot初始化及完成网络注册
+//NB模块初始化及完成网络注册
 int nbiot_init (nbiot_handle_t nbiot_handle);
 
 //获取NB模块的信息

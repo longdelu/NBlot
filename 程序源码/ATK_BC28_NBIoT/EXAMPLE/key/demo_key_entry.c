@@ -41,32 +41,32 @@ static void key_event_handle(u32 key_event,void *p_arg)
   */
 void demo_key_entry(void)
 { 
-	int key = 0;
-	int key_mode = 1;
+    int key = 0;
+    int key_mode = 1;
 
-	key_handle_t  key_handle = NULL;
+    key_handle_t  key_handle = NULL;
 
-	key_handle = key_init(1); 
+    key_handle = key_init(1); 
 
-	atk_key_registercb(key_handle, key_event_handle, NULL);
+    atk_key_registercb(key_handle, key_event_handle, NULL);
 
-	if (key_mode == 1) {    
-	    atk_key_registercb(key_handle, key_event_handle, NULL);
-	}
+    if (key_mode == 1) {    
+        atk_key_registercb(key_handle, key_event_handle, NULL);
+    }
 
-	while (1)
-	{  
-		if (key_mode == 0) {
-		  key = key_scan(0); 
+    while (1)
+    {  
+        if (key_mode == 0) {
+          key = key_scan(0); 
 
-		  key_event_handle(key, NULL);
-		  delay_ms(10);          
-		} else {
-		  
-		  atk_key_event_poll(key_handle);
-		  
-		}          
-	}
+          key_event_handle(key, NULL);
+          delay_ms(10);          
+        } else {
+          
+          atk_key_event_poll(key_handle);
+          
+        }          
+    }
   /* USER CODE END 3 */
 }
 

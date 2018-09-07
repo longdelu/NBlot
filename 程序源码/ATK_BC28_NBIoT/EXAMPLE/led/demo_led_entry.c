@@ -19,8 +19,8 @@ void demo_led_entry(void)
 { 
   while (1)
   {
-	  LED0_Toggle;  
-	  delay_ms(100);	  
+      LED0_Toggle;  
+      delay_ms(100);      
   }
   /* USER CODE END 3 */
 

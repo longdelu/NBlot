@@ -56,18 +56,18 @@ void demo_uart_int_entry(void)
 { 
     uint8_t buf[32];  
 
-    uart_handle_t nbiot_handle = NULL;  
+    uart_handle_t uart_handle = NULL;  
 
-    nbiot_handle = atk_nbiot_uart_init(115200);  
+    uart_handle = atk_nbiot_uart_init(115200);  
      
-    uart_event_registercb(nbiot_handle, uart_event_callback_handle, nbiot_handle);  
+    uart_event_registercb(uart_handle, uart_event_callback_handle, nbiot_handle);  
 
-    uart_data_rx_int(nbiot_handle,  buf, sizeof("nblot_uart rx tx test ok\r\n") - 1, 20000); 
-    uart_data_tx_poll(nbiot_handle, buf, sizeof("nblot_uart rx tx test ok\r\n") - 1, 20000);    
+    uart_data_rx_int(uart_handle,  buf, sizeof("nblot_uart rx tx test ok\r\n") - 1, 20000); 
+    uart_data_tx_poll(uart_handle, buf, sizeof("nblot_uart rx tx test ok\r\n") - 1, 20000);    
 
     while (1)
     {
-        uart_event_poll(nbiot_handle);
+        uart_event_poll(uart_handle);
         LED0_Toggle;        
         delay_ms(100);  
     }  

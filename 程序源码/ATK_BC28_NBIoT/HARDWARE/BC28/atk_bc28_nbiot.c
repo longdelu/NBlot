@@ -23,86 +23,86 @@
 
 static char cmd_buf_temp[NBIOT_RECV_BUF_MAX_LEN] = {0};
 
-//nblot初始化,用于完成网络注册
-int nblot_init (nbiot_handle_t handle)
+//NB模块初始化及完成网络注册
+int nbiot_init (nbiot_handle_t nbiot_handle)
 {    
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
 
-    at_cmd_param_init(handle->p_cmd, AT_SYNC, NULL, CMD_EXCUTE, 3000);
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_SYNC, NULL, CMD_EXCUTE, 3000);
 
     //进入NBIOT_INIT状态
-    handle->sm_status->main_status = NBIOT_INIT;
-    handle->sm_status->sub_status  = NBIOT_SUB_SYNC;
+    nbiot_handle->p_sm_status->main_status = NBIOT_INIT;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_SYNC;
 
-    at_cmd_send(handle, handle->p_cmd);
-
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
+  
     return NBIOT_OK;
 }
 
 //获取NB模块的信息
-int nblot_info_get(nbiot_handle_t handle)
+int nbiot_info_get(nbiot_handle_t nbiot_handle)
 {
 
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
     
     
-    at_cmd_param_init(handle->p_cmd, AT_CGREG, NULL, CMD_READ, 3000);
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CGREG, NULL, CMD_READ, 3000);
 
     //进入NBIOT_INFO状态
-    handle->sm_status->main_status = NBIOT_INFO;
-    handle->sm_status->sub_status  = NBIOT_SUB_CEREG_QUERY;
+    nbiot_handle->p_sm_status->main_status = NBIOT_INFO;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CEREG_QUERY;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
     
     return NBIOT_OK;
 }
 
 
 //获取NB模块的信号质量
-int nblot_signal_get(nbiot_handle_t handle)
+int nbiot_signal_get(nbiot_handle_t nbiot_handle)
 {
 
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
         
-    at_cmd_param_init(handle->p_cmd, AT_CSQ, NULL, CMD_EXCUTE, 3000);
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CSQ, NULL, CMD_EXCUTE, 3000);
 
     //进入NBIOT_SIGNAL状态
-    handle->sm_status->main_status = NBIOT_SIGNAL;
-    handle->sm_status->sub_status  = NBIOT_SUB_CSQ;
+    nbiot_handle->p_sm_status->main_status = NBIOT_SIGNAL;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CSQ;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
     
     return NBIOT_OK;
 }
 
 //创建tcpudp 
-int nblot_tcpudp_create(nbiot_handle_t handle, connect_type_t type)
+int nbiot_tcpudp_create(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
 {
     char *p_tcpudp = NULL;
   
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
     
     if (type == NBIOT_TCP)
     {
-        handle->p_socket_info[0].socket_type = NBIOT_TCP;
+        nbiot_handle->p_socket_info[0].socket_type = NBIOT_TCP;
         p_tcpudp = "1,1,1";
     }
     
     else if(type == NBIOT_UDP)
     {   
-        handle->p_socket_info[0].socket_type = NBIOT_UDP;
+        nbiot_handle->p_socket_info[0].socket_type = NBIOT_UDP;
         p_tcpudp = "1,2,1";
     } 
     else 
@@ -111,23 +111,23 @@ int nblot_tcpudp_create(nbiot_handle_t handle, connect_type_t type)
       
     }
             
-    at_cmd_param_init(handle->p_cmd, AT_CSOC, p_tcpudp, CMD_SET, 3000);
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CSOC, p_tcpudp, CMD_SET, 3000);
     
     //进入创建TCP/UDP状态
-    handle->sm_status->main_status = NBIOT_TCPUDP_CR;
-    handle->sm_status->sub_status  = NBIOT_SUB_TCPUDP_CR;
+    nbiot_handle->p_sm_status->main_status = NBIOT_TCPUDP_CR;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_TCPUDP_CR;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
     
     return NBIOT_OK;
 }
 
 
 //关闭tcpudp
-int nblot_tcpudp_close(nbiot_handle_t handle, connect_type_t type)
+int nbiot_tcpudp_close(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
 {
 
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
@@ -141,36 +141,36 @@ int nblot_tcpudp_close(nbiot_handle_t handle, connect_type_t type)
     int16_t msg_len = snprintf(cmd_buf_temp,
                                 sizeof(cmd_buf_temp),
                                 "%d",
-                                handle->p_socket_info[0].socket_id);
+                                nbiot_handle->p_socket_info[0].socket_id);
                                 
     if (msg_len < 0) {
       
         return NBIOT_ERROR;
     }
                                                    
-    at_cmd_param_init(handle->p_cmd, AT_CSOCL, cmd_buf_temp, CMD_SET, 3000);
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CSOCL, cmd_buf_temp, CMD_SET, 3000);
 
     //进入tcp/udp关闭状态
-    handle->sm_status->main_status = NBIOT_TCPUDP_CL;
-    handle->sm_status->sub_status  = NBIOT_SUB_TCPUDP_CL;
+    nbiot_handle->p_sm_status->main_status = NBIOT_TCPUDP_CL;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_TCPUDP_CL;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
         
     return NBIOT_OK;
 }
 
 
 //以hex数据格式发送数据,必须是偶数个长度
-int nblot_tcpudp_send_hex(nbiot_handle_t handle, int len, char *msg, connect_type_t type)
+int nbiot_tcpudp_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type)
 {
   
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
   
     //判断SOCKET ID是否正确
-    if (handle->p_socket_info[0].socket_id  < 0 || handle->p_socket_info[0].socket_id > 5 )
+    if (nbiot_handle->p_socket_info[0].socket_id  < 0 || nbiot_handle->p_socket_info[0].socket_id > 5 )
     {
         return NBIOT_ERROR;
     }
@@ -185,7 +185,7 @@ int nblot_tcpudp_send_hex(nbiot_handle_t handle, int len, char *msg, connect_typ
     uint16_t msg_len = snprintf(cmd_buf_temp,
                                 str_len,
                                 "%d,%d,",
-                                 handle->p_socket_info[0].socket_id, 
+                                 nbiot_handle->p_socket_info[0].socket_id, 
                                 len);
                                 
     for(uint16_t i = 0 ; i < len ; i++)
@@ -194,28 +194,28 @@ int nblot_tcpudp_send_hex(nbiot_handle_t handle, int len, char *msg, connect_typ
     }                             
  
     //构建TCP/UDP数据发送命令，最大响应时间不详
-    at_cmd_param_init(handle->p_cmd, AT_CSOSEND, cmd_buf_temp, CMD_SET, 3000);
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CSOSEND, cmd_buf_temp, CMD_SET, 3000);
     
     //进入tcp/udp数据发送状态
-    handle->sm_status->main_status = NBIOT_TCPUDP_SEND;
-    handle->sm_status->sub_status  = NBIOT_SUB_TCPUDP_SEND;
+    nbiot_handle->p_sm_status->main_status = NBIOT_TCPUDP_SEND;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_TCPUDP_SEND;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
 
     return NBIOT_OK;
 }
 
 //以字符串格式发送数据
-int nblot_tcpudp_send_str(nbiot_handle_t handle, int len, char *msg, connect_type_t type)
+int nbiot_tcpudp_send_str(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type)
 {
   
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
   
     //判断SOCKET ID是否正确
-    if (handle->p_socket_info[0].socket_id  < 0 || handle->p_socket_info[0].socket_id > 5 )
+    if (nbiot_handle->p_socket_info[0].socket_id  < 0 || nbiot_handle->p_socket_info[0].socket_id > 5 )
     {
         return NBIOT_ERROR;
     }
@@ -231,7 +231,7 @@ int nblot_tcpudp_send_str(nbiot_handle_t handle, int len, char *msg, connect_typ
     int16_t msg_len = snprintf(cmd_buf_temp,
                                str_len,
                                "%d,%d,%s%s%s",
-                                handle->p_socket_info[0].socket_id,
+                                nbiot_handle->p_socket_info[0].socket_id,
                                 0,
                                 "\"",                                  
                                 msg,
@@ -244,22 +244,22 @@ int nblot_tcpudp_send_str(nbiot_handle_t handle, int len, char *msg, connect_typ
     
                                                           
     //构建TCP/UDP数据发送命令，最大响应时间不详
-    at_cmd_param_init(handle->p_cmd, AT_CSOSEND, cmd_buf_temp, CMD_SET, 3000);
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CSOSEND, cmd_buf_temp, CMD_SET, 3000);
     
     //进入tcp/udp数据发送状态
-    handle->sm_status->main_status = NBIOT_TCPUDP_SEND;
-    handle->sm_status->sub_status  = NBIOT_SUB_TCPUDP_SEND;
+    nbiot_handle->p_sm_status->main_status = NBIOT_TCPUDP_SEND;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_TCPUDP_SEND;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
     
     return NBIOT_OK;
 }   
 
 //创建coap服务器 
-int nblot_coap_server_create(nbiot_handle_t handle, connect_type_t type)
+int nbiot_coap_server_create(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
 {
    
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
@@ -269,9 +269,9 @@ int nblot_coap_server_create(nbiot_handle_t handle, connect_type_t type)
         return NBIOT_NOTSUPPORT;
     }
     
-    handle->connect_status->connect_type = NBIOT_COAP;  
-    handle->connect_status->cid          = 1;
-    handle->connect_status->connect_id   = 1;
+    nbiot_handle->p_connect_status->connect_type = NBIOT_COAP;  
+    nbiot_handle->p_connect_status->cid          = 1;
+    nbiot_handle->p_connect_status->connect_id   = 1;
     
     
     //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
@@ -283,28 +283,28 @@ int nblot_coap_server_create(nbiot_handle_t handle, connect_type_t type)
                                     sizeof(cmd_buf_temp) -1,"%s,%s,%d",                                                                                             
                                     REMOTE_SERVER_IP,
                                     REMOTE_COAP_PORT,
-                                    handle->connect_status->cid);
+                                    nbiot_handle->p_connect_status->cid);
                                         
                      
             
     //最大响应时间不详                                              
-    at_cmd_param_init(handle->p_cmd, AT_CCOAPSTA, cmd_buf_temp, CMD_SET, 3000);
-    handle->p_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT;                                
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CCOAPSTA, cmd_buf_temp, CMD_SET, 3000);
+    nbiot_handle->p_nbiot_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT;                                
     
     //进入设置COAP服务器状态
-    handle->sm_status->main_status = NBIOT_CoAP_SEVER;
-    handle->sm_status->sub_status  = NBIOT_SUB_CoAP_SEVER;
+    nbiot_handle->p_sm_status->main_status = NBIOT_CoAP_SEVER;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CoAP_SEVER;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
     
     return NBIOT_OK;
 }
 
 //创建coap客户端
-int nblot_coap_client_create(nbiot_handle_t handle, connect_type_t type)
+int nbiot_coap_client_create(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
 {
      
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
@@ -314,8 +314,8 @@ int nblot_coap_client_create(nbiot_handle_t handle, connect_type_t type)
         return NBIOT_NOTSUPPORT;
     }
     
-    handle->connect_status->connect_type = NBIOT_COAP;
-    handle->connect_status->cid          = 1;  
+    nbiot_handle->p_connect_status->connect_type = NBIOT_COAP;
+    nbiot_handle->p_connect_status->cid          = 1;  
 
     //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
     memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));       
@@ -325,27 +325,27 @@ int nblot_coap_client_create(nbiot_handle_t handle, connect_type_t type)
                                     sizeof(cmd_buf_temp) -1,"%s,%s,%d",                                                                                             
                                     REMOTE_SERVER_IP,
                                     REMOTE_COAP_PORT,
-                                    handle->connect_status->cid);
+                                    nbiot_handle->p_connect_status->cid);
                                                                        
     //最大响应时间不详                                              
-    at_cmd_param_init(handle->p_cmd, AT_CCOAPNEW, cmd_buf_temp, CMD_SET, 3000);
-    handle->p_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CCOAPNEW, cmd_buf_temp, CMD_SET, 3000);
+    nbiot_handle->p_nbiot_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
                                        
     //进入创建客户端状态
-    handle->sm_status->main_status = NBIOT_CoAP_CLIENT;
-    handle->sm_status->sub_status  = NBIOT_SUB_CoAP_CLIENT;
+    nbiot_handle->p_sm_status->main_status = NBIOT_CoAP_CLIENT;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CoAP_CLIENT;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
     
     return NBIOT_OK;
 }
 
 
 //关闭coap
-int nblot_coap_close(nbiot_handle_t handle, connect_type_t type)
+int nbiot_coap_close(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
 {
   
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
@@ -355,20 +355,20 @@ int nblot_coap_close(nbiot_handle_t handle, connect_type_t type)
         return NBIOT_NOTSUPPORT;
     }
     
-    handle->connect_status->connect_type = NBIOT_COAP;  
+    nbiot_handle->p_connect_status->connect_type = NBIOT_COAP;  
 
     //通过客户端id来销毁COAP链接
-    cmd_buf_temp[0] = handle->connect_status->connect_id + '0'; 
+    cmd_buf_temp[0] = nbiot_handle->p_connect_status->connect_id + '0'; 
     cmd_buf_temp[1] = 0;
     cmd_buf_temp[2] = 0;     
                                                                                    
-    at_cmd_param_init(handle->p_cmd, AT_CCOAPDEL, cmd_buf_temp, CMD_SET, 3000);
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CCOAPDEL, cmd_buf_temp, CMD_SET, 3000);
 
     //进入coap关闭状态,最大响应时间不详
-    handle->sm_status->main_status = NBIOT_CoAP_CL;
-    handle->sm_status->sub_status  = NBIOT_SUB_CoAP_CL;
+    nbiot_handle->p_sm_status->main_status = NBIOT_CoAP_CL;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CoAP_CL;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
     
     
     return NBIOT_OK;
@@ -376,15 +376,15 @@ int nblot_coap_close(nbiot_handle_t handle, connect_type_t type)
 
 
 //以hex数据格式发送coap协议数据,必须是偶数个长度
-int nblot_coap_send_hex(nbiot_handle_t handle, int len, char *msg, connect_type_t type)
+int nbiot_coap_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type)
 { 
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
   
     //判断coap id是否正确
-    if (handle->connect_status->connect_id  < 0)
+    if (nbiot_handle->p_connect_status->connect_id  < 0)
     {
         return NBIOT_ERROR;
     }
@@ -404,7 +404,7 @@ int nblot_coap_send_hex(nbiot_handle_t handle, int len, char *msg, connect_type_
     uint16_t msg_len = snprintf(cmd_buf_temp,
                                 str_len,
                                 "%d,%d,",
-                                 handle->connect_status->connect_id, 
+                                 nbiot_handle->p_connect_status->connect_id, 
                                 len);
     
     cmd_buf_temp[msg_len] = '\"';
@@ -420,27 +420,27 @@ int nblot_coap_send_hex(nbiot_handle_t handle, int len, char *msg, connect_type_
     cmd_buf_temp[msg_len + 1 + (len << 1)] = '\"';    
  
     //构建coap数据发送命令，最大响应时间不详
-    at_cmd_param_init(handle->p_cmd, AT_CCOAPSEND, cmd_buf_temp, CMD_SET, 3000);
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CCOAPSEND, cmd_buf_temp, CMD_SET, 3000);
     
     //进入coap数据发送状态
-    handle->sm_status->main_status = NBIOT_CoAP_SEND;
-    handle->sm_status->sub_status  = NBIOT_SUB_CoAP_SEND;
+    nbiot_handle->p_sm_status->main_status = NBIOT_CoAP_SEND;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CoAP_SEND;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
 
     return NBIOT_OK;
 }
 
 //以字符串格式发送数据coap协议数据
-int nblot_coap_send_str(nbiot_handle_t handle, int len, char *msg, connect_type_t type)
+int nbiot_coap_send_str(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type)
 { 
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
   
     //判断coap id是否正确
-    if (handle->connect_status->connect_id  < 0)
+    if (nbiot_handle->p_connect_status->connect_id  < 0)
     {
         return NBIOT_ERROR;
     }
@@ -460,7 +460,7 @@ int nblot_coap_send_str(nbiot_handle_t handle, int len, char *msg, connect_type_
     int16_t msg_len = snprintf(cmd_buf_temp,
                                str_len,
                                "%d,%d,%s%s%s",
-                                handle->connect_status->connect_id ,
+                                nbiot_handle->p_connect_status->connect_id ,
                                 len,
                                 "\"",                                  
                                 msg,
@@ -473,21 +473,21 @@ int nblot_coap_send_str(nbiot_handle_t handle, int len, char *msg, connect_type_
     
                                                           
     //构建coap数据发送命令，最大响应时间不详
-    at_cmd_param_init(handle->p_cmd, AT_CCOAPSEND, cmd_buf_temp, CMD_SET, 3000);
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CCOAPSEND, cmd_buf_temp, CMD_SET, 3000);
     
     //进入coap数据发送状态
-    handle->sm_status->main_status = NBIOT_CoAP_SEND;
-    handle->sm_status->sub_status  = NBIOT_SUB_CoAP_SEND;
+    nbiot_handle->p_sm_status->main_status = NBIOT_CoAP_SEND;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CoAP_SEND;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
          
     return NBIOT_OK;
 }
 
 //创建cm2m客户端
-int nblot_cm2m_client_create(nbiot_handle_t handle, connect_type_t type)
+int nbiot_cm2m_client_create(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
 {     
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
@@ -497,7 +497,7 @@ int nblot_cm2m_client_create(nbiot_handle_t handle, connect_type_t type)
         return NBIOT_NOTSUPPORT;
     }
     
-    handle->connect_status->connect_type = NBIOT_CM2M;
+    nbiot_handle->p_connect_status->connect_type = NBIOT_CM2M;
 
     //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
     memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));       
@@ -510,30 +510,30 @@ int nblot_cm2m_client_create(nbiot_handle_t handle, connect_type_t type)
                                     REMOTE_COAP_PORT,
                                     "\"",
                                     "\"",
-                                    handle->firmware_info->IMEI,
+                                    nbiot_handle->p_firmware_info->IMEI,
                                     "\"",
                                     100);
                                                                        
     //最大响应时间不详                                              
-    at_cmd_param_init(handle->p_cmd, AT_CM2MCLINEW, cmd_buf_temp, CMD_SET, 15000);
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CM2MCLINEW, cmd_buf_temp, CMD_SET, 15000);
                                     
-    handle->p_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
+    nbiot_handle->p_nbiot_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
                                        
     //进入创建客户端状态
-    handle->sm_status->main_status = NBIOT_CM2M_CLIENT;
-    handle->sm_status->sub_status  = NBIOT_SUB_CM2M_CLIENT;
+    nbiot_handle->p_sm_status->main_status = NBIOT_CM2M_CLIENT;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CM2M_CLIENT;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
     
     return NBIOT_OK;
 }
 
 
 //关闭cm2m
-int nblot_cm2m_close(nbiot_handle_t handle, connect_type_t type)
+int nbiot_cm2m_close(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
 {
   
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
@@ -543,22 +543,22 @@ int nblot_cm2m_close(nbiot_handle_t handle, connect_type_t type)
         return NBIOT_NOTSUPPORT;
     }   
                                                                                    
-    at_cmd_param_init(handle->p_cmd, AT_CM2MCLIDEL, NULL, CMD_EXCUTE, 15000);
-    handle->p_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT;     
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CM2MCLIDEL, NULL, CMD_EXCUTE, 15000);
+    nbiot_handle->p_nbiot_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT;     
 
     //进入cm2m关闭状态,最大响应时间不详
-    handle->sm_status->main_status = NBIOT_CM2M_CL;
-    handle->sm_status->sub_status  = NBIOT_SUB_CM2M_CL;
+    nbiot_handle->p_sm_status->main_status = NBIOT_CM2M_CL;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CM2M_CL;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
         
     return NBIOT_OK;
 }
 
 //以hex数据格式发送cm2m协议数据,必须是偶数个长度
-int nblot_cm2m_send_hex(nbiot_handle_t handle, int len, char *msg, connect_type_t type)
+int nbiot_cm2m_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type)
 { 
-    if (handle->sm_status->main_status != NBIOT_NONE)
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
@@ -590,13 +590,13 @@ int nblot_cm2m_send_hex(nbiot_handle_t handle, int len, char *msg, connect_type_
     
                                                           
     //构建cm2m数据发送命令，最大响应时间不详
-    at_cmd_param_init(handle->p_cmd, AT_CM2MCLISEND, cmd_buf_temp, CMD_SET, 3000);
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CM2MCLISEND, cmd_buf_temp, CMD_SET, 3000);
     
     //进入cm2m数据发送状态
-    handle->sm_status->main_status = NBIOT_CM2M_SEND;
-    handle->sm_status->sub_status  = NBIOT_SUB_CM2M_SEND;
+    nbiot_handle->p_sm_status->main_status = NBIOT_CM2M_SEND;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CM2M_SEND;
 
-    at_cmd_send(handle, handle->p_cmd);
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
          
     return NBIOT_OK;
 }

@@ -3,10 +3,10 @@
 #include "stm32l4xx.h"
 #include "stm32l4xx_hal_rcc.h"
 
-//////////////////////////////////////////////////////////////////////////////////	 
+//////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F429开发板
-//系统时钟初始化	
+//系统时钟初始化    
 //包括时钟设置/中断管理/GPIO设置等
 //正点原子@ALIENTEK
 //技术论坛:www.openedv.com
@@ -22,7 +22,7 @@
 
 //0,不支持os
 //1,支持os
-#define SYSTEM_SUPPORT_OS		0		//定义系统文件夹是否支持OS
+#define SYSTEM_SUPPORT_OS        0        //定义系统文件夹是否支持OS
 ///////////////////////////////////////////////////////////////////////////////////
 //定义一些常用的数据类型短关键字 
 typedef int32_t  s32;
@@ -56,7 +56,7 @@ typedef __IO uint8_t  vu8;
 typedef __I uint32_t vuc32;  
 typedef __I uint16_t vuc16; 
 typedef __I uint8_t vuc8;  
-	 
+     
 //位带操作,实现51类似的GPIO控制功能
 //具体实现思想,参考<<CM3权威指南>>第五章(87页~92页).M4同M3类似,只是寄存器地址变了.
 //IO口操作宏定义
@@ -127,10 +127,10 @@ typedef __I uint8_t vuc8;
 void SystemClock_Config (void);//时钟系统配置
 
 //以下为汇编函数
-void WFI_SET(void);		//执行WFI指令
+void WFI_SET(void);        //执行WFI指令
 void INTX_DISABLE(void);//关闭所有中断
-void INTX_ENABLE(void);	//开启所有中断
-void MSR_MSP(u32 addr);	//设置堆栈地址 
+void INTX_ENABLE(void);    //开启所有中断
+void MSR_MSP(u32 addr);    //设置堆栈地址 
 
 #ifndef TRUE
 #define TRUE 1
