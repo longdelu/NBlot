@@ -12,9 +12,11 @@
 #include "atk_bc28_nbiot.h"
 #include "stm32l4xx_hal.h"
 
+int nbiot_main_status =  NBIOT_APP_NCONFIG;
+
 
 //nbiot消息事件处理函数
-static void __nbiot_event_cb_handler (void *p_arg, int msg_id, int len, char *msg)
+static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
 { 
     nbiot_handle_t nbiot_handle = (nbiot_handle_t)p_arg; 
     
@@ -39,6 +41,23 @@ static void __nbiot_event_cb_handler (void *p_arg, int msg_id, int len, char *ms
                      
         }
         break;
+        
+                
+        case NBIOT_MSG_RESET:        //NB复位完成消息
+        {
+            nbiot_main_status =  NBIOT_APP_INIT;
+            printf("reboot=%s\r\n",msg);   
+        }
+        break;
+            
+        
+        case NBIOT_MSG_NCONFIG:      //自动入网设置完成消息 
+        {
+            nbiot_main_status =  NBIOT_APP_RESET;
+            printf("nconfig=%s\r\n",msg);
+        }
+
+        break;        
 
         case NBIOT_MSG_IMSI:
         {
@@ -162,7 +181,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       }
       break;
            
-           
+          
     case NBIOT_APP_INIT:
       {
         printf("atk_nbiot init start\r\n");
@@ -177,7 +196,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       {
         printf("atk_nbiot reboot start\r\n");
                 
-        nbiot_init(nbiot_handle);        
+        nbiot_reboot(nbiot_handle);        
 
         *nbiot_main_status = NBIOT_END;
       }
@@ -187,7 +206,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       {
         printf("atk_nbiot auto reg start\r\n");
                 
-        nbiot_init(nbiot_handle);        
+        nbiot_nconfig(nbiot_handle, 0);        
 
         *nbiot_main_status = NBIOT_END;
       }
@@ -302,21 +321,20 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
   */
 void demo_nbiot_gprs_attach_entry(void)
 { 
-    int nbiot_main_status =  NBIOT_INIT;
-        
+           
     uart_handle_t uart_handle = NULL; 
 
-    nbiot_handle_t  nbiot_handle = NULL;   
+    nbiot_handle_t  nbiot_handle = NULL; 
 
-    uart_handle = atk_nbiot_uart_init(115200);  
+    //nbiot上电需要等待10s
+    delay_ms(1000);    
+
+    uart_handle = atk_nbiot_uart_init(9600);  
     
     nbiot_handle = nbiot_dev_init(uart_handle);
      
-    nbiot_event_registercb(nbiot_handle, __nbiot_event_cb_handler, nbiot_handle);
-    
-    //nbiot上电需要等待10s
-    delay_ms(1000);
-             
+    nbiot_event_registercb(nbiot_handle, __nbiot_msg_cb_handler, nbiot_handle);
+              
     while (1)
     {   
         nbiot_app_status_poll(nbiot_handle, &nbiot_main_status);      

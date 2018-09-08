@@ -15,7 +15,7 @@
 static int nbiot_main_status = NBIOT_TCPUDP_CR;
 
 //nbiot消息事件处理函数
-static void __nbiot_event_cb_handler (void *p_arg, int msg_id, int len, char *msg)
+static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
 { 
     nbiot_handle_t nbiot_handle = (nbiot_handle_t)p_arg; 
     
@@ -321,11 +321,11 @@ void demo_nbiot_tcp_entry(void)
 
     nbiot_handle_t  nbiot_handle = NULL;   
 
-    uart_handle = atk_nbiot_uart_init(115200);  
+    uart_handle = atk_nbiot_uart_init(9600);  
     
     nbiot_handle = nbiot_dev_init(uart_handle);
      
-    nbiot_event_registercb(nbiot_handle, __nbiot_event_cb_handler, nbiot_handle);
+    nbiot_event_registercb(nbiot_handle, __nbiot_msg_cb_handler, nbiot_handle);
     
     //nbiot上电需要等待10s
     delay_ms(1000);

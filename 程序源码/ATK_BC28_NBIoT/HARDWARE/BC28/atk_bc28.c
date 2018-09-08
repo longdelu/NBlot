@@ -63,10 +63,10 @@ static int  __nbiot_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, ui
 //串口事件回调处理函数
 static void __uart_event_cb_handle(void *p_arg);
 
-//判读发送的AT指令执行结果
+//通过AT指令的响应内容，判断at指令是否发送成功
 static int8_t at_cmd_result_parse(char* buf);
 
-//指令响应结果处理
+//根据指令响应结果决定当前状态下指令执行的流程
 static uint8_t nbiot_response_handle (nbiot_handle_t nbiot_handle, uint8_t cmd_response);
 
 //产生下一条AT指令
@@ -236,8 +236,12 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
     static int8_t recv_cnt = 0;
             
     if (nbiot_handle->nbiot_event & NBIOT_RECV_EVENT) 
-    { 
-      
+    {       
+        //接收在超时时间内正常完成，停止接收超时  
+        atk_soft_timer_stop(&nbiot_handle->p_uart_dev->uart_rx_timer); 
+        //解析到错误，在错误即可进行命令的外理，避免进入超时事件
+        nbiot_event_clr(nbiot_handle, NBIOT_TIMEOUT_EVENT); 
+        
         NBIOT_DEBUG_INFO("%s recv event\r\n", g_at_cmd.p_atcmd);
       
         cmd_is_pass = at_cmd_result_parse(g_nbiot_recv_desc.buf);
@@ -245,14 +249,10 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
         //命令响应结果     
         if (cmd_is_pass == AT_CMD_RESULT_OK) 
         {
-
-            //接收在超时时间内正常完成，停止接收超时  
-            atk_soft_timer_stop(&nbiot_handle->p_uart_dev->uart_rx_timer); 
+            NBIOT_DEBUG_INFO("RESULT OK\r\n");            
                              
             recv_cnt=0; 
-          
-            //解析成功避免进入超时事件
-            nbiot_event_clr(nbiot_handle, NBIOT_TIMEOUT_EVENT);             
+                     
           
             //提取AT指令返回的参数,在使用strok期间，不允许改变缓冲区的内容，中间出现再多的\r\n，也只会当做一个来处理
             while((at_response_par[index] = strtok(p_revc_buf_tmp,"\r\n")) != NULL)
@@ -266,38 +266,31 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
                 }  
             }
 
-            if (index == 0)
-            {             
-                //清缓存            
-                nbiot_recv_buf_reset();   
+            if (index != 0)
+            {               
+                NBIOT_DEBUG_INFO("%s cmd excute ok\r\n", g_at_cmd.p_atcmd);
               
+                //代表命令发送成功了并得到正确的响应
+                nbiot_msg_send(nbiot_handle, at_response_par, TRUE);
+                next_cmd = nbiot_response_handle(nbiot_handle, TRUE);                
                                                                     
-                //未收到正确的数据帧
-                return  NBIOT_ERROR;
-            }            
-                                                            
-            NBIOT_DEBUG_INFO("%s cmd excute ok\r\n", g_at_cmd.p_atcmd);
-          
-            //代表命令发送成功了并得到正确的响应
-            nbiot_msg_send(nbiot_handle, at_response_par, TRUE);
-              
-            next_cmd = nbiot_response_handle(nbiot_handle, TRUE);
-            
+            } else {
+                
+                //未收到符合\r\n...\r\n正确的数据帧，根据结果来重发命令或者数据
+                next_cmd = nbiot_response_handle(nbiot_handle, FALSE); 
+            }                
+                                                                                      
             //清缓存            
             nbiot_recv_buf_reset();                        
        
         }       
         else if(cmd_is_pass == AT_CMD_RESULT_ERROR)
         { 
-                       
-            //接收在超时时间内正常完成，停止接收超时  
-            atk_soft_timer_stop(&nbiot_handle->p_uart_dev->uart_rx_timer);   
+            NBIOT_DEBUG_INFO("RESULT ERROR\r\n");           
+
             recv_cnt=0;
           
-            //解析到错误，在错误即可进行命令的外理，避免进入超时事件
-            nbiot_event_clr(nbiot_handle, NBIOT_TIMEOUT_EVENT);
-
-            //错误后尝试重试            
+            //错误后根据命令属性尝试重发命令或者跳过该命令执行下一条命令            
             next_cmd = nbiot_response_handle(nbiot_handle, FALSE);     
         
             if (g_at_cmd.cmd_action & ACTION_ERROR_AND_TRY)
@@ -341,6 +334,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
         else if (cmd_is_pass == AT_CMD_RESULT_CONTINUE)
         {
           
+            NBIOT_DEBUG_INFO("RESULT CONTINUE\r\n");
             //命令未执行完成，正常情况下，收到的的是命令回显, 接下来的还是当前命令响应数据的接收, 重新启动接收超时               
             atk_soft_timer_timeout_change(&nbiot_handle->p_uart_dev->uart_rx_timer, 500);
             recv_cnt=0;
@@ -356,17 +350,19 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
         else 
         {
          
-            recv_cnt++;          
+            recv_cnt++;
+
+            NBIOT_DEBUG_INFO("recv_cn =%d\r\n", recv_cnt);            
           
             //理论上不会运行到这里, 运行到这里，有两种情况，
             //一种是表示传输出错，收到的数据都是乱码        
             //第二种是IDLE成帧判断不是那么准确，没有收完也以为一帧结束了
-            if (recv_cnt > AT_CMD_RESPONSE_PAR_NUM_MAX)                         
+            if (recv_cnt > (AT_CMD_RESPONSE_PAR_NUM_MAX + 10))                         
             {  
                //接收在超时时间内未正常完成，停止接收超时  
                atk_soft_timer_stop(&nbiot_handle->p_uart_dev->uart_rx_timer);   
               
-               //收到的是乱码,强制接收结束，同时根据命令的属性判断命令接下来的一部分
+               //收到的是乱码,强制接收结束，同时根据命令的属性判断命令是否重发或跳过该命令执行下一条命令
                next_cmd = nbiot_response_handle(nbiot_handle, FALSE);
                //清缓存            
                nbiot_recv_buf_reset();                
@@ -375,7 +371,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
             {
               
                //命令未完成,收到的的是命令回显当中其中的一部分                
-               atk_soft_timer_timeout_change(&nbiot_handle->p_uart_dev->uart_rx_timer, 3000);
+               atk_soft_timer_timeout_change(&nbiot_handle->p_uart_dev->uart_rx_timer, 8000);
              
             }              
                                
@@ -383,8 +379,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
             
         nbiot_event_clr(nbiot_handle, NBIOT_RECV_EVENT); 
     }
-    
-    
+       
     if (nbiot_handle->nbiot_event & NBIOT_REBOOT_EVENT) 
     {      
         NBIOT_DEBUG_INFO("reboot event ok\r\n");
@@ -809,7 +804,7 @@ static int cmd_generate(at_cmdhandle cmd_handle)
 }
 
 
-//判断at指令是否发送成功
+//通过AT指令的响应内容，判断at指令是否发送成功
 //返回值如果是-1，则接收到的数据可能为乱码
 //返回值如果是0， 指令通过，如果是1，指令出错
 static int8_t at_cmd_result_parse (char *buf)
@@ -821,7 +816,7 @@ static int8_t at_cmd_result_parse (char *buf)
 //    NBIOT_DEBUG_INFO("respones buf len %d \r\n", strlen(buf)); 
   
     //确认收到的数据是否为命令相应的参数(+) 
-    char *p_colon = strchr(g_at_cmd.p_atcmd,'+');
+    char *p_colon = strchr(buf,'+');
     
     //确认收到的数据是否为命令相应的参数(:)
     char *p_colon_temp = strchr(buf,':');
@@ -838,8 +833,9 @@ static int8_t at_cmd_result_parse (char *buf)
           
         } else if ((strstr(buf,g_at_cmd.p_atcmd)) || ((p_colon && p_colon_temp))) {
           
-           //前者成者是命令的回显 || 后者成立OK之前的命令参数
-           result = AT_CMD_RESULT_CONTINUE;
+            NBIOT_DEBUG_INFO("p_colon %s  p_colon_temp %s \r\n", p_colon, p_colon_temp);
+            //前者成者是命令的回显 || 后者成立OK之前的命令参数
+            result = AT_CMD_RESULT_CONTINUE;
           
         } else {
           
@@ -889,13 +885,7 @@ static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
 {
     char *target_pos_start = NULL;
        
-    if(((target_pos_start = strstr(buf, "Neul")) != NULL) &&
-       ((target_pos_start = strstr(buf, "REBOOT")) != NULL) )
-    {        
-        //产生重启事件
-        nbiot_event_set(nbiot_handle, NBIOT_REBOOT_EVENT);        
-    }       
-    else if((target_pos_start = strstr(buf, "+CGREG:")) != NULL)
+    if((target_pos_start = strstr(buf, "+CEREG:")) != NULL)
     {
         char *p_colon = strchr(target_pos_start,':');
       
@@ -1103,14 +1093,20 @@ static uint8_t at_cmd_next (void)
         
         case NBIOT_SUB_CMEE:
           
-            nbiot_at_cmd_param_init(&g_at_cmd, AT_CMEE, "1", CMD_SET, 3000);
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_CMEE, "1", CMD_SET, 500);
+          
+            break;        
+        
+        case NBIOT_SUB_BAND:
+          
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_NBAND, "5", CMD_SET, 500);
           
             break;
         
         case NBIOT_SUB_ATI:
           
             nbiot_at_cmd_param_init(&g_at_cmd, AT_ATI, NULL, CMD_EXCUTE, 3000);
-            g_at_cmd.p_expectres = "SIM";         //设置期望回复消息，如果指令执行完成
+            g_at_cmd.p_expectres = "Quectel";     //设置期望回复消息，如果指令执行完成
                                                   //没有与期望的消息匹配，则认为出错
                                                   //并进行出错尝试           
             break;
@@ -1118,10 +1114,10 @@ static uint8_t at_cmd_next (void)
         //查询NB卡状态是否准备好    
         case NBIOT_SUB_CPIN:
           {
-            nbiot_at_cmd_param_init(&g_at_cmd, AT_CPIN, NULL, CMD_READ, 3000);
-            g_at_cmd.p_expectres = "+CPIN: READY"; //设置期望回复消息，如果指令执行完成
-                                                   //没有与期望的消息匹配，则认为出错
-                                                   //并进行出错尝试              
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_NCCID, NULL, CMD_READ, 3000);
+            g_at_cmd.p_expectres = "+NCCID:"; //设置期望回复消息，如果指令执行完成
+                                              //没有与期望的消息匹配，则认为出错
+                                              //并进行出错尝试              
           }
           break;
                     
@@ -1133,10 +1129,10 @@ static uint8_t at_cmd_next (void)
           }
           break;
 
-        //使能模块射频信号,响应等待的最长时间为10S      
+        //使能模块射频信号,响应等待的最长时间为6S      
         case NBIOT_SUB_CFUN:                                   
           {
-            nbiot_at_cmd_param_init(&g_at_cmd, AT_CFUN,"1",CMD_SET, 11000);
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_CFUN,"1",CMD_SET, 6000);
           }
           
           break;
@@ -1144,29 +1140,15 @@ static uint8_t at_cmd_next (void)
         // 使能nbiot网络注册   
         case NBIOT_SUB_CEREG:
           {
-            nbiot_at_cmd_param_init(&g_at_cmd, AT_CGREG, "1", CMD_SET, 3000);
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_CEREG, "1", CMD_SET, 500);
           }
           break;  
           
-//        //先禁能PDN， 命令在150S之内会有回应     
-//        case NBIOT_SUB_CGACT_DISABLE:
-//          {
-//            nbiot_at_cmd_param_init(&g_at_cmd, AT_CGACT,"0,1",CMD_SET, 151000);
-//          }
-//          break;          
-//    
-//          
-        //再使能PDN， 命令在150S之内会有回应，不先禁能的话，再使能状态执行执命令会出错     
-//        case NBIOT_SUB_CGACT:
-//          {
-//            nbiot_at_cmd_param_init(&g_at_cmd, AT_CGACT,"1,1",CMD_SET, 151000);
-//          }
-//          break;
-        
+                 
         //查询PDN激活信息          
-        case NBIOT_SUB_CGACT_QUERY:
+        case NBIOT_SUB_CIPCA_QUERY:
           {
-            nbiot_at_cmd_param_init(&g_at_cmd, AT_CGACT, NULL, CMD_READ, 151000);
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_CIPCA, NULL, CMD_READ, 500);
             g_at_cmd.p_expectres = ",1"; //设置期望回复消息，如果指令执行完成
                                          //没有与期望的消息匹配，则认为出错
                                          //并进行出错尝试
@@ -1180,7 +1162,24 @@ static uint8_t at_cmd_next (void)
             nbiot_at_cmd_param_init(&g_at_cmd, AT_CGATT, "1", CMD_SET, 3000);
           }
           break;
-
+          
+          
+        //查询模块的网络状态信息     
+        case NBIOT_SUB_NUESTATS:
+          {
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_NUESTATS, NULL, CMD_EXCUTE, 500);
+          }
+          break;
+          
+        //查询分配的APN信息及IP地址     
+        case NBIOT_SUB_CGPADDR:
+          {
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_CGPADDR, NULL, CMD_EXCUTE, 500);
+               
+          }
+          break;          
+          
+          
         //查询网络附着信息,最大响应时间不详       
         case NBIOT_SUB_CGATT_QUERY:
           {
@@ -1193,32 +1192,11 @@ static uint8_t at_cmd_next (void)
           }
           break;
           
-        //查询是否是使用nbiot网络,最大响应时间不详       
-        case NBIOT_SUB_COPS_QUERY:
-          {
-            nbiot_at_cmd_param_init(&g_at_cmd, AT_COPS, NULL, CMD_READ, 3000);
-            
-            //设置期望回复消息为9，代表是NBloT网络
-            //如果指令执行完成,没有与期望的消息匹配                                            
-            //则认为出错，并进行出错尝试               
-            g_at_cmd.p_expectres = "9";     
-          }
-          break;
-          
- 
-        //查询分配的APN信息及IP地址     
-        case NBIOT_SUB_CGCONTRDP_QUERY:
-          {
-            nbiot_at_cmd_param_init(&g_at_cmd, AT_CGCONTRDP, NULL, CMD_EXCUTE, 3000);
-               
-          }
-          break;
-                    
-          
+                                      
         //查询nbiot网络是否注册,最大响应时间不详       
         case NBIOT_SUB_CEREG_QUERY:
           {
-            nbiot_at_cmd_param_init(&g_at_cmd, AT_CGREG, NULL, CMD_READ, 3000);             
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_CEREG, NULL, CMD_READ, 500);             
 
           }
           break;
@@ -1550,15 +1528,13 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
             break;
 
 
-        //    case NBIOT_SUB_CGACT_DISABLE:
-        //           
-        //    
-        //    case NBIOT_SUB_CGACT:
+   
+        //    case NBIOT_SUB_CIPCA:
         //        
         //        break;
         //    
         //    
-        case NBIOT_SUB_CGACT_QUERY:
+        case NBIOT_SUB_CIPCA_QUERY:
         {
             char *p_colon = strchr(buf[1],':');
                         
@@ -1582,17 +1558,13 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
             
             break;
 
-        case NBIOT_SUB_COPS_QUERY:
-            
-            break;  
-
-        case NBIOT_SUB_CGCONTRDP_QUERY:
+        case NBIOT_SUB_CGPADDR:
             
             break;       
            
         case NBIOT_SUB_END:
             
-            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_NCONFIG,1,"S");
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_INIT,1,"S");
 
             break;
 
@@ -1605,7 +1577,7 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
     {          
       if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
       {
-          nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_RESET,1,"S"); 
+          nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_NCONFIG,1,"S"); 
       }        
 
     }
@@ -2030,7 +2002,7 @@ uint8_t nbiot_response_handle (nbiot_handle_t nbiot_handle, uint8_t cmd_response
         else   
         {
             //代表命令执行成功后退出
-             g_at_cmd.cmd_action = ACTION_OK_EXIT;             
+            g_at_cmd.cmd_action = ACTION_OK_EXIT;             
         }
     }
     else
@@ -2041,19 +2013,20 @@ uint8_t nbiot_response_handle (nbiot_handle_t nbiot_handle, uint8_t cmd_response
 
             if (g_at_cmd.have_tried < g_at_cmd.cmd_try)
             {
-              nbiot_at_cmd_send(nbiot_handle, &g_at_cmd);
+                //出错重发该命令
+                nbiot_at_cmd_send(nbiot_handle, &g_at_cmd);
             }
             else
             {
                   
-               //代表命令执行错误后退出
+               //重试达到最大次数，该变命令属性，代表命令执行错误后退出
                 g_at_cmd.cmd_action = ACTION_ERROR_EXIT;
                 
             }
         }
         else if (!(g_at_cmd.cmd_action & ACTION_ERROR_EXIT))  
         {
-            
+            //命令执行错误跳过该命令执行一条命令
             next_cmd = TRUE;
         }
         else 

@@ -221,8 +221,7 @@ static void __lpuart_rx_timeout_cb (void *p_arg)
                                   
     //清除帧错误中断标记
     __HAL_UART_CLEAR_IT(lphuart, UART_CLEAR_FEF); 
-                               
-        
+                                       
     //清除校验中断标记
     __HAL_UART_CLEAR_IT(lphuart, UART_CLEAR_PEF); 
                                               
@@ -236,10 +235,7 @@ static void __lpuart_rx_timeout_cb (void *p_arg)
     __HAL_UART_ENABLE_IT(lphuart, UART_IT_RXNE);  
     
     printf("rx timer happen\r\n");    
-    
-    //发声超时事件时，不可能再产生接收事件了
-    uart_event_clr(p_lpuart_dev, UART_RX_EVENT);  
-       
+          
     //设置串口接收超时事件
     uart_event_set(p_lpuart_dev, UART_RX_TIMEOUT_EVENT);    
 }

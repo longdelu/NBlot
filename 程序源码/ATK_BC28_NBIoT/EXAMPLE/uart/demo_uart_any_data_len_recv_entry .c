@@ -79,7 +79,7 @@ void demo_uart_any_data_len_recv_entry(void)
    
     uart_handle_t nbiot_handle = NULL;  
 
-    nbiot_handle = atk_nbiot_uart_init(115200);  
+    nbiot_handle = atk_nbiot_uart_init(9600);  
      
     uart_event_registercb(nbiot_handle, uart_event_callback_handle, nbiot_handle);  
 

@@ -58,7 +58,7 @@ void demo_uart_int_entry(void)
 
     uart_handle_t uart_handle = NULL;  
 
-    uart_handle = atk_nbiot_uart_init(115200);  
+    uart_handle = atk_nbiot_uart_init(9600);  
      
     uart_event_registercb(uart_handle, uart_event_callback_handle, nbiot_handle);  
 

@@ -21,20 +21,25 @@
 //////////////////////////////////////////////////////////////////////////////////  
 
 //初始化及网络注册相关命令
+#define AT_NCONFIG     "AT+NCONFIG"    //使能/禁能自动入网命令
+#define AT_NRB         "AT+NRB"        //重启命令 
 #define AT_SYNC        "AT"
 #define AT_CMEE        "AT+CMEE"
+#define AT_NBAND       "AT+NBAND"
 #define AT_ATI         "ATI"
-#define AT_CPIN        "AT+CPIN"       //查询SIM卡的状态
+//#define AT_CPIN        "AT+CPIN"       //查询SIM卡的状态(SIM7020)
+#define AT_NCCID       "AT+NCCID"     //查询SIM卡的ID
 #define AT_CSQ         "AT+CSQ"
 #define AT_CFUN        "AT+CFUN"
-#define AT_CGREG       "AT+CGREG"
-#define AT_CGACT       "AT+CGACT"      //PDP上下文设置(SIM7020） 
-#define AT_CIPCA       "AT+CIPCA"      //PDP上下文设置 
+//#define AT_CGREG       "AT+CGREG"      //注册网络
+#define AT_CEREG       "AT+CEREG"      //注册网络
+//#define AT_CGACT       "AT+CGACT"      //PDP上下文设置(SIM7020） 
+#define AT_CIPCA       "AT+CIPCA"       //PDP上下文设置 
 #define AT_CGATT       "AT+CGATT"
-#define AT_COPS        "AT+COPS"
-#define AT_CGCONTRDP   "AT+CGCONTRDP"
-#define AT_NRB         "AT+NRB"        //重启命令  
-#define AT_NCONFIG     "AT+NCONFIG"    //使能/禁能自动入网命令
+#define AT_NUESTATS    "AT+NUESTATS"
+#define AT_CGPADDR     "AT+CGPADDR"
+ 
+
 
 //信息查询相关命令
 #define AT_CGMI        "AT+CGMI"        //获取产商ID命令
@@ -232,20 +237,20 @@ typedef enum nbiot_sub_status
 {
     NBIOT_SUB_NONE,
     NBIOT_SUB_SYNC,
+    NBIOT_SUB_BAND,     
     NBIOT_SUB_CMEE,    
     NBIOT_SUB_ATI,
     NBIOT_SUB_CPIN,
     NBIOT_SUB_CSQ,
     NBIOT_SUB_CFUN,
     NBIOT_SUB_CEREG,
-//    NBIOT_SUB_CGACT_DISABLE,
-//    NBIOT_SUB_CGACT,
-    NBIOT_SUB_CGACT_QUERY,    
-    NBIOT_SUB_CGATT,    
-    NBIOT_SUB_CGATT_QUERY,
-    NBIOT_SUB_COPS_QUERY,
-    NBIOT_SUB_CGCONTRDP_QUERY,
-  
+
+//    NBIOT_SUB_CIPCA,
+    NBIOT_SUB_CIPCA_QUERY,    
+    NBIOT_SUB_CGATT,
+    NBIOT_SUB_NUESTATS,    
+    NBIOT_SUB_CGPADDR,
+    NBIOT_SUB_CGATT_QUERY,  
     NBIOT_SUB_CEREG_QUERY,
   
     NBIOT_SUB_CGMI,

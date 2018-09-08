@@ -64,7 +64,7 @@ int nbiot_reboot(nbiot_handle_t nbiot_handle)
     return NBIOT_OK;
 }
 
-//
+//使能/禁能自动入网
 int nbiot_nconfig(nbiot_handle_t nbiot_handle, uint8_t auto_flag)
 {
     char *p_auto_nconfig = NULL;
@@ -73,19 +73,17 @@ int nbiot_nconfig(nbiot_handle_t nbiot_handle, uint8_t auto_flag)
     {
         return NBIOT_ERROR;
     }
-    
-    
+        
     if (auto_flag == 0) 
     {
         
-        p_auto_nconfig =  "AUTOCONNECT,FALSE";
+        p_auto_nconfig = "AUTOCONNECT,FALSE";
     }    
     else 
     {
-       p_auto_nconfig =  "AUTOCONNECT,TRUE"; 
+        p_auto_nconfig = "AUTOCONNECT,TRUE"; 
     }
-    
-    
+        
     //命令最大超时时间为300ms，为留余量，这里超时设置为500ms    
     nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_NCONFIG, p_auto_nconfig, CMD_SET, 500);
 
@@ -109,7 +107,7 @@ int nbiot_info_get(nbiot_handle_t nbiot_handle)
         return NBIOT_ERROR;
     }
     
-    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CGREG, NULL, CMD_READ, 3000);
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CEREG, NULL, CMD_READ, 3000);
 
     //进入NBIOT_INFO状态
     nbiot_handle->p_sm_status->main_status = NBIOT_INFO;

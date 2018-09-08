@@ -65,7 +65,7 @@ int main(void)
     
     delay_init(HAL_RCC_GetHCLKFreq()/1000000);
     
-    uart1_init(115200);
+    uart1_init(9600);
     
     led_init();    
     
@@ -81,7 +81,7 @@ int main(void)
     
 //    demo_uart_any_data_len_recv_entry();
     
-//    demo_nbiot_gprs_attach_entry();
+    demo_nbiot_gprs_attach_entry();
     
 //    demo_nbiot_info_get_entry();
 
@@ -93,7 +93,7 @@ int main(void)
 
 //    demo_nbiot_iot_entry();
 
-      demo_nbiot_huaweiiot_entry();
+//      demo_nbiot_huaweiiot_entry();
 
 //    demo_nbiot_easyiot_entry();    
     

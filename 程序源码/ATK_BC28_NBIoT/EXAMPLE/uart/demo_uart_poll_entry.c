@@ -22,7 +22,7 @@ void demo_uart_poll_entry(void)
 
   uart_handle_t uart_handle = NULL;      
     
-  uart_handle = atk_nbiot_uart_init(115200);  
+  uart_handle = atk_nbiot_uart_init(9600);  
     
   uart_data_tx_poll(uart_handle, (uint8_t *)"nblot_uart test\r\n", sizeof("nblot_uart test\r\n"), HAL_MAX_DELAY);   
         

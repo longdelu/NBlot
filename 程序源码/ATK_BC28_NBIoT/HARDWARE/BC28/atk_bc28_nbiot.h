@@ -105,6 +105,12 @@ typedef enum nbiot_msg_id
 //NB模块初始化及完成网络注册
 int nbiot_init (nbiot_handle_t nbiot_handle);
 
+//重启nbiot模块
+int nbiot_reboot(nbiot_handle_t nbiot_handle);
+
+//使能/禁能自动入网
+int nbiot_nconfig(nbiot_handle_t nbiot_handle, uint8_t auto_flag);
+
 //获取NB模块的信息
 int nbiot_info_get(nbiot_handle_t nbiot_handle);
 
