@@ -163,7 +163,8 @@ typedef enum
     ACTION_OK_AND_NEXT    = 0X02,              //命令执行成功后将执行下一条指令      
     ACTION_ERROR_BUT_NEXT = 0X04,              //命令执行错误后跳过该命令执行下一条指令
     ACTION_ERROR_AND_TRY  = 0X08,              //命令执行错误后进行尝试
-    ACTION_ERROR_EXIT     = 0X10               //命令执行错误后将退出    
+    ACTION_ERROR_EXIT     = 0X10,              //命令执行错误后将退出 
+    ACTION_OK_WAIT        = 0X20               //命令执行成功后将等待        
 }cmd_action_t;
 
 //AT指令结构类型
@@ -188,6 +189,11 @@ typedef at_cmd_info_t *at_cmdhandle;
 #define   NBIOT_OK                  0
 #define   NBIOT_ERROR              -1
 #define   NBIOT_NOTSUPPORT         -2
+
+//指令执行流程
+#define   AT_CMD_OK                NBIOT_OK
+#define   AT_CMD_NEXT              1
+#define   AT_CMD_WAIT              2
 
 //指令执行结果
 #define   AT_CMD_RESULT_OK            NBIOT_OK
@@ -237,17 +243,15 @@ typedef enum nbiot_sub_status
 {
     NBIOT_SUB_NONE,
     NBIOT_SUB_SYNC,
-    NBIOT_SUB_BAND,     
-    NBIOT_SUB_CMEE,    
+    NBIOT_SUB_CMEE,     
+    NBIOT_SUB_BAND, 
+    NBIOT_SUB_CFUN,
+    NBIOT_SUB_CGATT,  
+    NBIOT_SUB_CEREG,           
     NBIOT_SUB_ATI,
     NBIOT_SUB_CPIN,
     NBIOT_SUB_CSQ,
-    NBIOT_SUB_CFUN,
-    NBIOT_SUB_CEREG,
-
-//    NBIOT_SUB_CIPCA,
     NBIOT_SUB_CIPCA_QUERY,    
-    NBIOT_SUB_CGATT,
     NBIOT_SUB_NUESTATS,    
     NBIOT_SUB_CGPADDR,
     NBIOT_SUB_CGATT_QUERY,  

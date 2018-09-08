@@ -268,7 +268,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
 
             if (index != 0)
             {               
-                NBIOT_DEBUG_INFO("%s cmd excute ok\r\n", g_at_cmd.p_atcmd);
+                NBIOT_DEBUG_INFO("%s cmd excute ok\r\n\r\n\r\n", g_at_cmd.p_atcmd);
               
                 //代表命令发送成功了并得到正确的响应
                 nbiot_msg_send(nbiot_handle, at_response_par, TRUE);
@@ -380,36 +380,21 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
         nbiot_event_clr(nbiot_handle, NBIOT_RECV_EVENT); 
     }
        
-    if (nbiot_handle->nbiot_event & NBIOT_REBOOT_EVENT) 
-    {      
-        NBIOT_DEBUG_INFO("reboot event ok\r\n");
-                             
-        at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = "reboot ok";        
-          
-        //通知上层应用网络注册结果
-        nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], TRUE);        
-
-        //处理决定是否执行下一条命令        
-        next_cmd = nbiot_response_handle(nbiot_handle, TRUE);
-        
-        nbiot_event_clr(nbiot_handle, NBIOT_REBOOT_EVENT); 
-      
-        //清除缓存数据    
-        nbiot_recv_buf_reset();   
-    }
-
-
     if (nbiot_handle->nbiot_event & NBIOT_REG_STA_EVENT) 
     {      
-        NBIOT_DEBUG_INFO("creg event ok\r\n");
+        NBIOT_DEBUG_INFO("reg event\r\n");
                              
-        at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = "creg ok";        
+        at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = "reg event";        
           
         //通知上层应用网络注册结果
-        nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], TRUE);        
+        nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], TRUE); 
 
-        //处理决定是否执行下一条命令        
-        next_cmd = nbiot_response_handle(nbiot_handle, TRUE);
+
+        if (g_nbiot_connect_status.register_status == 1) 
+        {            
+            //处理决定执行下一条命令        
+            next_cmd = AT_CMD_NEXT;
+        }
         
         nbiot_event_clr(nbiot_handle,   NBIOT_REG_STA_EVENT); 
       
@@ -542,7 +527,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
     } 
     
     //根据事件及状态判断是否需要执行下一条命令
-    if(next_cmd)
+    if(next_cmd == AT_CMD_NEXT)
     {
         //执行下一条命令
         if (at_cmd_next())
@@ -887,25 +872,25 @@ static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
        
     if((target_pos_start = strstr(buf, "+CEREG:")) != NULL)
     {
-        char *p_colon = strchr(target_pos_start,':');
+        char *p_colon = strchr(target_pos_start,',');
       
         if (p_colon)
         {
-            p_colon = p_colon + 4;
+            p_colon = p_colon + 1;
             
             //该命令后面直接跟的网络注册状态的信息，用字符来表示的，要转换成数字        
             g_nbiot_connect_status.register_status = (*p_colon - '0');
+        }        
+        else 
+        {
+           p_colon = strchr(target_pos_start,':');
+           p_colon = p_colon + 1; 
+            
+           //该命令后面直接跟的网络注册状态的信息，用字符来表示的，要转换成数字        
+           g_nbiot_connect_status.register_status = (*p_colon - '0');
         }
         
-        //产生注册事件
-        if (g_nbiot_connect_status.register_status == 1) {
-
-            nbiot_event_set(nbiot_handle, NBIOT_REG_STA_EVENT);
-        }        
-           
-        //同时产生接收类事件
-        nbiot_event_set(nbiot_handle, NBIOT_RECV_EVENT);  
-        
+        nbiot_event_set(nbiot_handle, NBIOT_REG_STA_EVENT);                                   
     }    
     else if((target_pos_start = strstr(buf,"+CSONMI")) != NULL)
     {
@@ -1141,25 +1126,25 @@ static uint8_t at_cmd_next (void)
         case NBIOT_SUB_CEREG:
           {
             nbiot_at_cmd_param_init(&g_at_cmd, AT_CEREG, "1", CMD_SET, 500);
+            g_at_cmd.cmd_action  = ACTION_OK_WAIT | ACTION_ERROR_AND_TRY;  
+              
           }
           break;  
           
                  
-        //查询PDN激活信息          
+        //查询PDP激活信息          
         case NBIOT_SUB_CIPCA_QUERY:
           {
             nbiot_at_cmd_param_init(&g_at_cmd, AT_CIPCA, NULL, CMD_READ, 500);
-            g_at_cmd.p_expectres = ",1"; //设置期望回复消息，如果指令执行完成
-                                         //没有与期望的消息匹配，则认为出错
-                                         //并进行出错尝试
+
           }
           break;          
                
           
-        //使能网络附着,最大响应时间不详      
+        //使能网络附着,最大响应时间为1s,留余量这里设为3s     
         case NBIOT_SUB_CGATT:
           {
-            nbiot_at_cmd_param_init(&g_at_cmd, AT_CGATT, "1", CMD_SET, 3000);
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_CGATT, "1", CMD_SET, 3000);            
           }
           break;
           
@@ -1188,7 +1173,7 @@ static uint8_t at_cmd_next (void)
             //设置期望回复消息，如果指令执行完成
             //没有与期望的消息匹配，则认为出错                                             
             //并进行出错尝试               
-            g_at_cmd.p_expectres = "CGATT: 1";     
+            g_at_cmd.p_expectres = "CGATT:1";     
           }
           break;
           
@@ -1497,15 +1482,19 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
           //得到模块的名字
           memcpy(g_firmware_info.name, buf[1], strlen(buf[1])); 
             
-          break;    
-
-        case NBIOT_SUB_CPIN:
-            
           break;
+
+        //查询NB卡状态是否准备好    
+        case NBIOT_SUB_CPIN:
+          {
+       
+          }
+          break;        
+
           
         case NBIOT_SUB_CSQ:
         {
-            char *p_colon = strchr(buf[1],':');
+            char *p_colon = strchr(buf[0],':');
             p_colon++;
           
             //转换成10进制数字
@@ -1524,7 +1513,8 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
 
 
         case NBIOT_SUB_CEREG:
-                
+           
+            NBIOT_DEBUG_INFO("reg status=%d\r\n", g_nbiot_connect_status.register_status);           
             break;
 
 
@@ -1536,7 +1526,7 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
         //    
         case NBIOT_SUB_CIPCA_QUERY:
         {
-            char *p_colon = strchr(buf[1],':');
+            char *p_colon = strchr(buf[0],':');
                         
             if (p_colon != NULL) 
             {                
@@ -1991,17 +1981,22 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
 //指令响应结果处理，这个函数利用命令的状态属性，来结束状态的执行。
 uint8_t nbiot_response_handle (nbiot_handle_t nbiot_handle, uint8_t cmd_response)
 {
-    uint8_t next_cmd = 0;
+    uint8_t next_cmd = AT_CMD_OK;
       
     if (cmd_response)
     {
         if (g_at_cmd.cmd_action & ACTION_OK_AND_NEXT)
         {
-            next_cmd = TRUE;
+            next_cmd = AT_CMD_NEXT;
         }        
-        else   
+        else if (g_at_cmd.cmd_action & ACTION_OK_WAIT)   
         {
-            //代表命令执行成功后退出
+            //代表命令执行成功将等待
+            next_cmd = AT_CMD_WAIT;             
+        }
+        else  
+        {
+            //代表命令执行成功后退出该次状态机所包括所有命令的流程
             g_at_cmd.cmd_action = ACTION_OK_EXIT;             
         }
     }
@@ -2019,14 +2014,20 @@ uint8_t nbiot_response_handle (nbiot_handle_t nbiot_handle, uint8_t cmd_response
             else
             {
                   
-               //重试达到最大次数，该变命令属性，代表命令执行错误后退出
+               //重试达到最大次数，该变命令属性，代表命令执行错误后退出该次状态机所包括所有命令的流程
                 g_at_cmd.cmd_action = ACTION_ERROR_EXIT;
                 
             }
+        }        
+        else if (g_at_cmd.cmd_action & ACTION_OK_WAIT)   
+        {
+            //代表命令执行成功将等待
+            next_cmd = AT_CMD_WAIT;             
         }
+                
         else if (!(g_at_cmd.cmd_action & ACTION_ERROR_EXIT))  
         {
-            //命令执行错误跳过该命令执行一条命令
+            //命令执行错误跳过该命令执行下一条命令
             next_cmd = TRUE;
         }
         else 

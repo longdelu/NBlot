@@ -30,7 +30,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         
         case NBIOT_MSG_CMD_FAIL:
         {
-          printf("%s cmd failed\r\n",msg);
+          printf("%s cmd failed and exit\r\n",msg);
           
           break;                     
         }         
