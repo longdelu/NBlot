@@ -320,8 +320,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
   * @retval None
   */
 void demo_nbiot_gprs_attach_entry(void)
-{ 
-           
+{           
     uart_handle_t uart_handle = NULL; 
 
     nbiot_handle_t  nbiot_handle = NULL; 

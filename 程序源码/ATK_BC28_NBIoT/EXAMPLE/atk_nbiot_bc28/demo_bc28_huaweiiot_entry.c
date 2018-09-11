@@ -13,7 +13,7 @@
 #include "atk_key.h"
 #include "stm32l4xx_hal.h"
 
-static int nbiot_main_status = NBIOT_INIT;
+static int nbiot_main_status = NBIOT_APP_NCONFIG;
 
 //nbiot消息事件处理函数
 static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
@@ -43,21 +43,39 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         {
           printf("init=%s\r\n",msg);
           
-          //连接iot平台时必须先得到imie码
+          //连接iot平台时必须先得到imei码
           nbiot_main_status = NBIOT_INFO;
                      
         }
         break;
+        
+        case NBIOT_MSG_RESET:        //NB复位完成消息
+        {
+            nbiot_main_status =  NBIOT_APP_INIT;
+            printf("reboot=%s\r\n",msg);   
+        }
+        break;
+            
+        
+        case NBIOT_MSG_NCONFIG:      //自动入网设置完成消息 
+        {
+            nbiot_main_status =  NBIOT_APP_RESET;
+            printf("nconfig=%s\r\n",msg);
+        }
+
+        break;           
 
         case NBIOT_MSG_IMSI:
         {
-           printf("\r\nIMSI=%s\r\n",msg);
+            printf("\r\nIMSI=%s\r\n",msg);
         }
         break;
         
+        
+               
         case NBIOT_MSG_REG:
         {
-             printf("\r\nmsg reg status=%s\r\n", msg);
+            printf("\r\nmsg reg status=%s\r\n", msg);
                                                      
         }
         break;
@@ -73,8 +91,8 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
           
         {
            printf("info get=%s\r\n",msg);
-           //跳到创建CM2M客户端
-           nbiot_main_status = NBIOT_CM2M_CLIENT;                     
+           //跳到创建NCDP客户端
+           nbiot_main_status = NBIOT_NCDP_SERVER;                     
         }
 
         break;
@@ -173,23 +191,22 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         }
         break;
 
-        case  NBIOT_MSG_CM2M_CLIENT:
-          printf("\r\nmsg cm2m client =%s\r\n",msg);
-          nbiot_main_status = NBIOT_CM2M_SEND; 
+        case  NBIOT_MSG_NCDP_SERVER:
+          printf("\r\nmsg ncdp =%s\r\n",msg);
           
         break;
      
         
-        case NBIOT_MSG_CM2M_SEND:
+        case NBIOT_MSG_NCDP_SEND:
         {
-          printf("\r\nmsg cm2m sent=%s\r\n",msg);
+          printf("\r\nmsg ncdp sent=%s\r\n",msg);
           
         }
         break;
 
-        case NBIOT_MSG_CM2M_RECV:
+        case NBIOT_MSG_NCDP_RECV:
         {
-            printf("\r\n msg cm2m recv=%s\r\n",msg);
+            printf("\r\n msg ncdp recv=%s\r\n",msg);
           
             
             char recv_buf[12] = {'0','4', '0', '0'};
@@ -217,7 +234,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
               cmd_rsp[9] = '0';  
                                 
               //代表该命令执行成功
-              nbiot_cm2m_send_hex(nbiot_handle, strlen(cmd_rsp), cmd_rsp, NBIOT_CM2M);                       
+              nbiot_ncdp_send_hex(nbiot_handle, strlen(cmd_rsp), cmd_rsp, NBIOT_NCDP, NON_MESSAGE);                       
             }
             
             //是蜂鸣器的消息
@@ -244,40 +261,63 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
       
             
             //关闭连接
-//            nbiot_main_status = NBIOT_CM2M_CL; 
+//            nbiot_main_status = NBIOT_NCDP_CL; 
         }
         break;
         
-        case NBIOT_MSG_CM2M_STATUS:
+        case NBIOT_MSG_NCDP_STATUS:
         {
-            printf("\r\nmsg cm2m status=%d\r\n",*msg);
+            printf("\r\nmsg ncdp status=%d\r\n",*msg);
                  
             switch(*msg) 
             {
+              case 0:
+                
+                printf("Register completed\r\n");
+               
+                break;                
+                
               case 1:
                 
-                printf("connect iot success , Take the initiative to report\r\n");
+                printf("Deregister completed\r\n");
                
                 break;
 
               case 2:
                 
-                printf("connect iot update , Take the initiative to report\r\n");
+                printf("Registration status updated\r\n");
               
                 break;
               
               case 3:
-                printf("connect iot break , Take the initiative to report\r\n");
+                printf("Object 19/0/0 observe completed\r\n");
+              
+              
+                //此时才算注册成功，发送数据
+                nbiot_main_status = NBIOT_NCDP_SEND; 
               
                 break; 
               
               case 4:
-                printf("recv connect iot observe msg , Take the initiative to report\r\n");
+                printf("Bootstrap completed\r\n");
                 break; 
 
               case 5:
-                printf("send data to iot , Take the initiative to report\r\n");
+                printf("5/0/3 resource observe completed\r\n");
                 break;
+              
+              case 6:
+                printf("Notify the device to receive update package URL\r\n");
+              
+                break; 
+              
+              case 7:
+                printf("Notify the device download has been completed\r\n");
+                break; 
+
+              case 8:
+                printf("Cancel object 19/0/0 observe\r\n");
+                break;              
               
               default:
                 
@@ -286,9 +326,9 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         }        
         break;        
         
-        case NBIOT_MSG_CM2M_CLOSE:
+        case NBIOT_MSG_NCDP_CLOSE:
         {
-            printf("\r\nmsg cm2m close=%s\r\n",msg);
+            printf("\r\nmsg ncdp close=%s\r\n",msg);
         }
         break; 
         
@@ -327,7 +367,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       {
         printf("atk_nbiot reboot start\r\n");
                 
-        nbiot_init(nbiot_handle);        
+        nbiot_reboot(nbiot_handle);        
 
         *nbiot_main_status = NBIOT_END;
       }
@@ -337,11 +377,11 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       {
         printf("atk_nbiot auto reg start\r\n");
                 
-        nbiot_init(nbiot_handle);        
+        nbiot_nconfig(nbiot_handle, 0);        
 
         *nbiot_main_status = NBIOT_END;
       }
-      break;      
+      break;  
       
     case NBIOT_APP_INFO:
       {
@@ -453,47 +493,49 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
     case NBIOT_CoAP_CL:
       {
         printf("CoAP close start\r\n");
-        nbiot_coap_close(nbiot_handle, NBIOT_CM2M);
+        nbiot_coap_close(nbiot_handle, NBIOT_NCDP);
         *nbiot_main_status = NBIOT_END;        
       }      
       
       break; 
 
-    case NBIOT_APP_CM2M_CLIENT:
+    case NBIOT_APP_NCDP_SERVER:
       {
-        printf("CM2M client set start\r\n");
+        printf("NCDP server set start\r\n");
         
-        nbiot_cm2m_client_create(nbiot_handle, NBIOT_CM2M); 
+        nbiot_ncdp_update(nbiot_handle, NBIOT_NCDP); 
 
         *nbiot_main_status = NBIOT_END;
       }
       break;    
       
-    case NBIOT_APP_CM2M_SEND:
+    case NBIOT_APP_NCDP_SEND:
       {
-        printf("CM2M send start\r\n");
+        printf("NCDP send start\r\n");
         
-        //创建完成CM2M客户端之后，需要根据当前网络的状态延时一段时间保证数据连接稳定
+        //创建完成NCDP客户端之后，需要根据当前网络的状态延时一段时间保证数据连接稳定
         delay_ms(5000);        
                
-        nbiot_cm2m_send_hex(nbiot_handle, strlen("00023132"), "00023132", NBIOT_CM2M); 
+        nbiot_ncdp_send_hex(nbiot_handle, strlen("00143031323334353637383930313233343536373839"), "00143031323334353637383930313233343536373839", NBIOT_NCDP, NULL); 
                   
         *nbiot_main_status = NBIOT_END;               
       }
       break;
       
-    case NBIOT_APP_CM2M_RECV:
+    case NBIOT_APP_NCDP_RECV:
       {
-        printf("CM2M recv start\r\n");
+        printf("NCDP recv start\r\n");
         *nbiot_main_status = NBIOT_END;        
       }
       
-    case NBIOT_APP_CM2M_CL:
+    case NBIOT_APP_NCDP_CL:
       {
-        printf("CM2M close start\r\n");
-        //创建完成CM2M客户端之后，需要根据当前网络的状态延时一段时间保证数据连接稳定
+        printf("NCDP close start\r\n");
+        //创建完成NCDP客户端之后，需要根据当前网络的状态延时一段时间保证数据连接稳定
         delay_ms(2000);
-        nbiot_cm2m_close(nbiot_handle, NBIOT_CM2M);
+          
+        nbiot_ncdp_close(nbiot_handle, NBIOT_NCDP);
+          
         *nbiot_main_status = NBIOT_END;        
       }      
       
@@ -516,12 +558,12 @@ static void key_event_handle(u32 key_event,void *p_arg)
     {
         case KEY0_PRES://KEY0按下,再一次发送数据
             printf("key0 press\r\n");
-            nbiot_main_status = NBIOT_CM2M_SEND;
+            nbiot_main_status = NBIOT_NCDP_SEND;
             break;
         
         case KEY1_PRES://KEY1按下,写入sector
             printf("key1 press\r\n");
-            nbiot_main_status = NBIOT_CM2M_CL;
+            nbiot_main_status = NBIOT_NCDP_CL;
             break;
         case KEY2_PRES://KEY2按下,恢复sector的数据
             printf("key2 press\r\n");

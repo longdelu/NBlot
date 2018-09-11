@@ -383,12 +383,16 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
     if (nbiot_handle->nbiot_event & NBIOT_REG_STA_EVENT) 
     {      
         NBIOT_DEBUG_INFO("reg event\r\n");
+        
+                    //这个函数的返回值为想要格式化写入的长度，并会在字符串结束后面自动加入结束字符
+        uint16_t tcpudp_cn_len = snprintf(cmd_buf_temp,
+                                          sizeof(cmd_buf_temp) -1,"%d",                                          
+                                          g_nbiot_connect_status.register_status);
                              
-        at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = "reg event";        
+        at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1] = cmd_buf_temp;        
           
         //通知上层应用网络注册结果
         nbiot_msg_send(nbiot_handle, &at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX - 1], TRUE); 
-
 
         if (g_nbiot_connect_status.register_status == 1) 
         {            
@@ -442,29 +446,29 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
         nbiot_recv_buf_reset();  
     }
     
-    if (nbiot_handle->nbiot_event & NBIOT_CM2M_RECV_EVENT) 
+    if (nbiot_handle->nbiot_event & NBIOT_NCDP_RECV_EVENT) 
     {
         
-        NBIOT_DEBUG_INFO("cm2m recv event ok\r\n");
+        NBIOT_DEBUG_INFO("ncdp recv event ok\r\n");
       
-        //通知上层应用接收到CM2M数据
+        //通知上层应用接收到NCDP数据
         nbiot_msg_send(nbiot_handle, NULL, TRUE);          
              
-        nbiot_event_clr(nbiot_handle, NBIOT_CM2M_RECV_EVENT); 
+        nbiot_event_clr(nbiot_handle, NBIOT_NCDP_RECV_EVENT); 
       
         //清除缓存数据    
         nbiot_recv_buf_reset();  
     }
 
-    if (nbiot_handle->nbiot_event & NBIOT_CM2M_STATUS_EVENT) 
+    if (nbiot_handle->nbiot_event & NBIOT_NCDP_STATUS_EVENT) 
     {
         
-        NBIOT_DEBUG_INFO("cm2m status event ok\r\n");
+        NBIOT_DEBUG_INFO("ncdp status event ok\r\n");
       
-        //通知上层应用CM2M状态连接发生变化
+        //通知上层应用NCDP状态连接发生变化
         nbiot_msg_send(nbiot_handle, NULL, TRUE);          
              
-        nbiot_event_clr(nbiot_handle, NBIOT_CM2M_STATUS_EVENT); 
+        nbiot_event_clr(nbiot_handle, NBIOT_NCDP_STATUS_EVENT); 
       
         //清除缓存数据    
         nbiot_recv_buf_reset();  
@@ -599,8 +603,7 @@ static u8 nbiot_chr2hex (u8 chr)
     else
     {     
       return 0;
-    }
-                
+    }                
 }
 
 
@@ -812,7 +815,7 @@ static int8_t at_cmd_result_parse (char *buf)
         {
             result = AT_CMD_RESULT_OK;
         }
-        else if (strstr(buf,"\r\nERROR\r\n"))
+        else if (strstr(buf,"ERROR"))
         {
             result = AT_CMD_RESULT_ERROR;
           
@@ -843,7 +846,7 @@ static int8_t at_cmd_result_parse (char *buf)
             }
             
         }
-        else if(strstr(buf,"\r\nERROR\r\n"))
+        else if(strstr(buf,"ERROR"))
         {
             //ERROR
             result = AT_CMD_RESULT_ERROR;
@@ -851,6 +854,7 @@ static int8_t at_cmd_result_parse (char *buf)
          
         else if (strstr(buf, g_at_cmd.p_atcmd) || ((p_colon && p_colon_temp))) {
           
+             //前者成者是命令的回显 || 后者成立OK之前的命令参数
              result = AT_CMD_RESULT_CONTINUE;
           
         } else {
@@ -1006,37 +1010,37 @@ static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
         nbiot_event_set(nbiot_handle, NBIOT_COAP_RECV_EVENT);  
         nbiot_status_set(NBIOT_CoAP_RECV, NBIOT_SUB_CoAP_RECV);  
     } 
-    else if ((target_pos_start = strstr(buf,"+CM2MCLI:")) != NULL)
+    else if ((target_pos_start = strstr(buf,"+QLWEVTIND:")) != NULL)
     {
-        //收到服务器端发来CM2M状态数据
+        //收到服务器端发来NCDP状态数据
         char *p_colon = strchr(target_pos_start, ':');
               
-        //得到CM2M当前的状态
+        //得到NCDP当前的状态
         if (p_colon)
         {
             p_colon++;
             g_nbiot_connect_status.m2m_status = strtoul(p_colon,0,10);
         } 
                               
-        nbiot_event_set(nbiot_handle, NBIOT_CM2M_STATUS_EVENT);  
-        nbiot_status_set(NBIOT_CM2M_STATUS, NBIOT_SUB_CM2M_STATUS);          
+        nbiot_event_set(nbiot_handle, NBIOT_NCDP_STATUS_EVENT);  
+        nbiot_status_set(NBIOT_NCDP_STATUS, NBIOT_SUB_NCDP_STATUS);          
     }
 
-    else if ((target_pos_start = strstr(buf,"+CM2MCLIRECV")) != NULL)
+    else if ((target_pos_start = strstr(buf,"+NNMI:")) != NULL)
     {
-        //收到服务器端发来CM2M数据
+        //收到服务器端发来NCDP数据
         char *p_colon = strchr(target_pos_start, ':');
              
         //得到有效数据的起始地址
         if (p_colon)
         {
-            p_colon =  p_colon + 2;
+            p_colon =  p_colon + 3;
             g_nbiot_connect_status.data_offest = p_colon;
                      
         } 
                               
-        nbiot_event_set(nbiot_handle, NBIOT_CM2M_RECV_EVENT);  
-        nbiot_status_set(NBIOT_CM2M_RECV, NBIOT_SUB_CM2M_RECV);           
+        nbiot_event_set(nbiot_handle, NBIOT_NCDP_RECV_EVENT);  
+        nbiot_status_set(NBIOT_NCDP_RECV, NBIOT_SUB_NCDP_RECV);           
     }    
     else if((target_pos_start = strstr(buf,"+CLMOBSERVE")) != NULL)
     {
@@ -1087,6 +1091,12 @@ static uint8_t at_cmd_next (void)
             nbiot_at_cmd_param_init(&g_at_cmd, AT_NBAND, "5", CMD_SET, 500);
           
             break;
+        
+        case NBIOT_SUB_QREGSWT:
+          
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_QREGSWT, "0", CMD_SET, 500);
+          
+            break;        
         
         case NBIOT_SUB_ATI:
           
@@ -1162,7 +1172,22 @@ static uint8_t at_cmd_next (void)
             nbiot_at_cmd_param_init(&g_at_cmd, AT_CGPADDR, NULL, CMD_EXCUTE, 500);
                
           }
-          break;          
+          break; 
+
+        case NBIOT_SUB_NNMI:
+          {
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_NNMI, "1", CMD_SET, 500);
+               
+          }            
+          break;  
+
+
+//        case NBIOT_SUB_NSMI:
+//          {
+//            nbiot_at_cmd_param_init(&g_at_cmd, AT_NSMI, "1", CMD_SET, 500);
+//               
+//          }            
+//          break;          
           
           
         //查询网络附着信息,最大响应时间不详       
@@ -1236,7 +1261,7 @@ static uint8_t at_cmd_next (void)
 
         case NBIOT_SUB_CGSN:
           {
-            nbiot_at_cmd_param_init(&g_at_cmd, AT_CGSN, NULL, CMD_EXCUTE, 3000);
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_CGSN, "1", CMD_SET, 3000);
             
             //设置期望回复消息为络
             //如果指令执行完成,没有与期望的消息匹配                                            
@@ -1246,13 +1271,13 @@ static uint8_t at_cmd_next (void)
           break;             
           
           
-        case NBIOT_SUB_CBAND:
+        case NBIOT_SUB_NBAND:
           {
-            nbiot_at_cmd_param_init(&g_at_cmd,AT_CBAND,NULL,CMD_READ,3000);
+            nbiot_at_cmd_param_init(&g_at_cmd,AT_NBAND,NULL,CMD_READ,3000);
             //设置期望回复消息为络
             //如果指令执行完成,没有与期望的消息匹配                                            
             //则认为出错，并进行出错尝试               
-            g_at_cmd.p_expectres = "CBAND";
+            g_at_cmd.p_expectres = "NBAND";
           }
           break;
           
@@ -1394,15 +1419,35 @@ static uint8_t at_cmd_next (void)
         return FALSE;     
     }
 
-    else if (g_nbiot_sm_status.main_status == NBIOT_CM2M_CLIENT) 
+    else if (g_nbiot_sm_status.main_status == NBIOT_NCDP_SERVER) 
     {
-      
-        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
-      
-        return FALSE;     
+        g_nbiot_sm_status.sub_status++;
+        
+        switch (g_nbiot_sm_status.sub_status)
+        {
+                        
+        case NBIOT_SUB_NCDP_CONNECT:          
+          {
+                                              
+            //最大响应时间为300ms,这里留余量设为500ms                                    
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_QLWSREGIND, "0", CMD_SET, 500);
+                                        
+          }
+          break;
+
+                                     
+        default: 
+          
+          //强制表示子进程结束
+          g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
+        
+          return FALSE;          
+        
+        }      
+         
     }
    
-     else if (g_nbiot_sm_status.main_status == NBIOT_CM2M_SEND) 
+     else if (g_nbiot_sm_status.main_status == NBIOT_NCDP_SEND) 
     {
       
         g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
@@ -1411,7 +1456,7 @@ static uint8_t at_cmd_next (void)
       
     } 
     
-    else if (g_nbiot_sm_status.main_status == NBIOT_CM2M_CL) 
+    else if (g_nbiot_sm_status.main_status == NBIOT_NCDP_CL) 
     {
       
         g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
@@ -1506,9 +1551,14 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
             g_nbiot_connect_status.rssi = rssi; 
           
             break;
-        }  
+        }
+
+        case NBIOT_SUB_QREGSWT:
+            
+            break;        
                   
         case NBIOT_SUB_CFUN:
+            
             break;
 
 
@@ -1516,14 +1566,7 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
            
             NBIOT_DEBUG_INFO("reg status=%d\r\n", g_nbiot_connect_status.register_status);           
             break;
-
-
-   
-        //    case NBIOT_SUB_CIPCA:
-        //        
-        //        break;
-        //    
-        //    
+                
         case NBIOT_SUB_CIPCA_QUERY:
         {
             char *p_colon = strchr(buf[0],':');
@@ -1550,7 +1593,18 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
 
         case NBIOT_SUB_CGPADDR:
             
-            break;       
+            break;  
+
+
+//        case NBIOT_SUB_NNMI:
+//            
+//            break;
+//        
+//            
+//        case NBIOT_SUB_NSMI:
+
+//            break;
+        
            
         case NBIOT_SUB_END:
             
@@ -1591,27 +1645,27 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
         //查询网络注册状态    
         case NBIOT_SUB_CEREG_QUERY:
 
-          nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_REG, strlen(buf[1]), buf[1]);
+          nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_REG, strlen(buf[0]), buf[0]);
 
           break;        
             
                      
         case NBIOT_SUB_CGMI:
           {
-            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_MID, strlen(buf[1]), buf[1]);
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_MID, strlen(buf[0]), buf[0]);
           }
           break;
           
         case NBIOT_SUB_CGMM:
           {
-            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_MMODEL,strlen(buf[1]),buf[1]);
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_MMODEL,strlen(buf[0]),buf[0]);
           }
           break;
           
         case NBIOT_SUB_CGMR:
           {
 
-             nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_MREV,strlen(buf[1]),buf[1]);
+             nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_MREV,strlen(buf[0]),buf[0]);
             
           }
           break;
@@ -1619,20 +1673,20 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
           
         case NBIOT_SUB_CIMI:
           {
-            memcpy(g_firmware_info.IMSI,buf[1],15);
+            memcpy(g_firmware_info.IMSI,buf[0],15);
             g_firmware_info.IMSI[15] = 0;
-            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_IMSI,strlen(buf[1]),buf[1]);
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_IMSI,strlen(buf[0]),buf[0]);
           }
           break;
           
 
         case NBIOT_SUB_CGSN:
           {
-            char *p_colon = strchr(buf[1],':');
+            char *p_colon = strchr(buf[0],':');
             
             if(p_colon)
             {
-              p_colon = p_colon + 2;
+              p_colon = p_colon + 1;
               memcpy(g_firmware_info.IMEI ,p_colon,15);
               g_firmware_info.IMEI[15] = 0;
               nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_IMEI,15,(char*)g_firmware_info.IMEI);
@@ -1640,9 +1694,9 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
           }
           break;            
           
-        case NBIOT_SUB_CBAND:
+        case NBIOT_SUB_NBAND:
           {
-            char *p_colon = strchr(buf[1],':');
+            char *p_colon = strchr(buf[0],':');
             char *pFreq = NULL;
             if(p_colon)
             {
@@ -1686,7 +1740,7 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
         { 
         case NBIOT_SUB_CSQ:
         {
-            char *p_colon = strchr(buf[1],':');
+            char *p_colon = strchr(buf[0],':');
             if (p_colon != NULL) 
             {            
               p_colon++;
@@ -1701,7 +1755,7 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
               
               nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_CSQ,len,buf[1]);
               
-            }
+            }  
           
             break;
         } 
@@ -1906,9 +1960,9 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
          }
     }
 
-    else if(g_nbiot_sm_status.main_status == NBIOT_CM2M_CLIENT)
+    else if(g_nbiot_sm_status.main_status == NBIOT_NCDP_SERVER)
     {
-        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_CM2M_CLIENT)
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_NCDP_SERVER)
         { 
             
         }    
@@ -1916,46 +1970,46 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
         if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
         { 
             g_nbiot_connect_status.connect_status = 1;         
-            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_CM2M_CLIENT, 1, "S");
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_NCDP_SERVER, 1, "S");
         }
     }  
 
-    else if(g_nbiot_sm_status.main_status == NBIOT_CM2M_SEND)
+    else if(g_nbiot_sm_status.main_status == NBIOT_NCDP_SEND)
     {
         if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
         {
             char *p_buf_tmep = g_nbiot_send_desc.buf;
           
-            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_CM2M_SEND, strlen(p_buf_tmep), p_buf_tmep);
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_NCDP_SEND, strlen(p_buf_tmep), p_buf_tmep);
         }
     }
-    else if(g_nbiot_sm_status.main_status == NBIOT_CM2M_RECV)
+    else if(g_nbiot_sm_status.main_status == NBIOT_NCDP_RECV)
     {
-        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_CM2M_RECV)
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_NCDP_RECV)
         {
             char *data_buf = g_nbiot_connect_status.data_offest; 
           
             //复位状态标志
             nbiot_status_reset();      
                         
-            nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_CM2M_RECV,strlen(data_buf),data_buf);
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_NCDP_RECV,strlen(data_buf),data_buf);
           
              
         }
     }
 
-    else if(g_nbiot_sm_status.main_status == NBIOT_CM2M_STATUS)
+    else if(g_nbiot_sm_status.main_status == NBIOT_NCDP_STATUS)
     {
-        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_CM2M_STATUS)
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_NCDP_STATUS)
         {
             //复位状态标志
             nbiot_status_reset();                         
-            nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_CM2M_STATUS,1, (char *)&g_nbiot_connect_status.m2m_status);
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_NCDP_STATUS,1, (char *)&g_nbiot_connect_status.m2m_status);
                    
         }
     }  
 
-    else if(g_nbiot_sm_status.main_status == NBIOT_CM2M_CL)
+    else if(g_nbiot_sm_status.main_status == NBIOT_NCDP_CL)
     {
         if (g_nbiot_sm_status.sub_status == NBIOT_SUB_END)
         {
@@ -1963,15 +2017,14 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
           
              char *p_buf_tmep = NULL;
                                         
-             if (g_nbiot_connect_status.connect_type == NBIOT_CM2M)
+             if (g_nbiot_connect_status.connect_type == NBIOT_NCDP)
              {
-                 p_buf_tmep = "cm2m close";
+                 p_buf_tmep = "ncdp close";
              }         
             
-             nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_CM2M_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
+             nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_NCDP_CLOSE, strlen(p_buf_tmep), p_buf_tmep);
         }
     }
-
     else
     {
 

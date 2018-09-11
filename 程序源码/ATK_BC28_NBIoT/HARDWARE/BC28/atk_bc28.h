@@ -22,6 +22,8 @@
 
 //初始化及网络注册相关命令
 #define AT_NCONFIG     "AT+NCONFIG"    //使能/禁能自动入网命令
+#define AT_QLEDMODE    "AT+QLEDMODE"   //使能/禁能LED
+#define AT_QREGSWT     "AT+QREGSWT"    //IOT平台注册模式选择
 #define AT_NRB         "AT+NRB"        //重启命令 
 #define AT_SYNC        "AT"
 #define AT_CMEE        "AT+CMEE"
@@ -38,8 +40,10 @@
 #define AT_CGATT       "AT+CGATT"
 #define AT_NUESTATS    "AT+NUESTATS"
 #define AT_CGPADDR     "AT+CGPADDR"
- 
-
+#define AT_NUESTATS    "AT+NUESTATS"
+#define AT_CGPADDR     "AT+CGPADDR"
+#define AT_NSMI        "AT+NSMI"    
+#define AT_NNMI        "AT+NNMI" 
 
 //信息查询相关命令
 #define AT_CGMI        "AT+CGMI"        //获取产商ID命令
@@ -47,7 +51,7 @@
 #define AT_CGMR        "AT+CGMR"        //获取软件版本命令 
 #define AT_CIMI        "AT+CIMI"        //获取国际移动用户身份ID命令 
 #define AT_CGSN        "AT+CGSN"        //获取产品序列号ID命令
-#define AT_CBAND       "AT+CBAND"       //获取频率信息
+#define AT_NBAND       "AT+NBAND"       //获取频率信息
 
 //TCP/UDP相关命令
 #define AT_CSOC        "AT+CSOC"
@@ -64,9 +68,10 @@
 
 
 //电信(华为)iot平台连接相关命令                        
-#define AT_CM2MCLINEW    "AT+CM2MCLINEW"   //连接远端 CoAP 服务
-#define AT_CM2MCLISEND   "AT+CM2MCLISEND"  //发送16进制数据
-#define AT_CM2MCLIDEL    "AT+CM2MCLIDEL"   //释放并删除客户端实例
+#define AT_NCDP          "AT+NCDP"         //更新远端服务器
+#define AT_QLWULDATA     "AT+QLWULDATA"    //发送16进制数据
+#define AT_QLWULDATAEX   "AT+QLWULDATAEX"  //发送16进制数据,待模式
+#define AT_QLWSREGIND    "AT+QLWSREGIND"   //连接/删除iot平台
 
 
 //低功耗相关命令
@@ -96,30 +101,30 @@
 //#define EASY_IOT                    1
 
 #if CTNB_IOT
-#define REMOTE_SERVER_IP        "\"180.101.147.115\""
+#define REMOTE_SERVER_IP        "180.101.147.115"
 #define REMOTE_COAP_PORT        "5683"
 #define REMOTE_UDP_PORT         "6000"
 #define REMOTE_TCP_PORT         "5683"
 
-#define REMOTE_COAP_INFO        "\"180.101.147.115,5683\""
+#define REMOTE_COAP_INFO        "180.101.147.115,5683"
 
 #elif HUAWEI_IOT
 
-#define REMOTE_SERVER_IP        "\"139.159.140.34\""
+#define REMOTE_SERVER_IP        "139.159.140.34"
 #define REMOTE_COAP_PORT        "5683"
 #define REMOTE_UDP_PORT         "6000"
 #define REMOTE_TCP_PORT         "5683"
 
-#define REMOTE_COAP_INFO        "\"139.159.140.34,5683\""
+#define REMOTE_COAP_INFO        "139.159.140.34,5683"
 
 #elif EASY_IOT
 
-#define REMOTE_SERVER_IP        "\"117.60.157.137\""
+#define REMOTE_SERVER_IP        "117.60.157.137"
 #define REMOTE_COAP_PORT        "5683"
 #define REMOTE_UDP_PORT         "6000"
 #define REMOTE_TCP_PORT         "5683"
 
-#define REMOTE_COAP_INFO        "\"117.60.157.137,5683\""
+#define REMOTE_COAP_INFO        "117.60.157.137,5683"
 
 #else
 
@@ -224,11 +229,11 @@ typedef enum nbiot_main_status
     NBIOT_CoAP_SEND,    // CoAP发送消息
     NBIOT_CoAP_RECV,    // CoAP返回信息
     NBIOT_CoAP_CL,      // 关闭CoAP
-    NBIOT_CM2M_CLIENT,  // CM2M客户端连接地址设置
-    NBIOT_CM2M_SEND,    // CM2M发送消息
-    NBIOT_CM2M_RECV,    // CM2M返回信息
-    NBIOT_CM2M_STATUS,  // CM2M返回状态消息
-    NBIOT_CM2M_CL,      // 关闭CM2M 
+    NBIOT_NCDP_SERVER,  // NCDP客户端连接地址设置
+    NBIOT_NCDP_SEND,    // NCDP发送消息
+    NBIOT_NCDP_RECV,    // NCDP返回信息
+    NBIOT_NCDP_STATUS,  // NCDP返回状态消息
+    NBIOT_NCDP_CL,      // 关闭NCDP 
     NBIOT_PSM,          // PSM
     NBIOT_EDRX,         // eDRX 
     NBIOT_SLEEP,        // SLEEP      
@@ -245,6 +250,7 @@ typedef enum nbiot_sub_status
     NBIOT_SUB_SYNC,
     NBIOT_SUB_CMEE,     
     NBIOT_SUB_BAND, 
+    NBIOT_SUB_QREGSWT,     
     NBIOT_SUB_CFUN,
     NBIOT_SUB_CGATT,  
     NBIOT_SUB_CEREG,           
@@ -254,6 +260,8 @@ typedef enum nbiot_sub_status
     NBIOT_SUB_CIPCA_QUERY,    
     NBIOT_SUB_NUESTATS,    
     NBIOT_SUB_CGPADDR,
+    NBIOT_SUB_NNMI,
+//    NBIOT_SUB_NSMI,    
     NBIOT_SUB_CGATT_QUERY,  
     NBIOT_SUB_CEREG_QUERY,
   
@@ -262,9 +270,7 @@ typedef enum nbiot_sub_status
     NBIOT_SUB_CGMR,
     NBIOT_SUB_CIMI,
     NBIOT_SUB_CGSN,  
-    NBIOT_SUB_CBAND,
-    NBIOT_SUB_NSMI,
-    NBIOT_SUB_NNMI,
+    NBIOT_SUB_NBAND,
 
     NBIOT_SUB_TCPUDP_CR,
     NBIOT_SUB_TCPUDP_CONNECT, 
@@ -279,11 +285,12 @@ typedef enum nbiot_sub_status
     NBIOT_SUB_CoAP_RECV,    // CoAP返回信息
     NBIOT_SUB_CoAP_CL,      // 关闭CoAP  
 
-    NBIOT_SUB_CM2M_CLIENT,  // CM2M客户端连接地址设置
-    NBIOT_SUB_CM2M_SEND,    // CM2M发送消息
-    NBIOT_SUB_CM2M_RECV,    // CM2M返回信息
-    NBIOT_SUB_CM2M_STATUS,  // CM2M返回状态消息
-    NBIOT_SUB_CM2M_CL,      // 关闭CM2M 
+    NBIOT_SUB_NCDP_SERVER,  // NCDP服务器地址设置
+    NBIOT_SUB_NCDP_CONNECT, // 连接IoT平台设置
+    NBIOT_SUB_NCDP_SEND,    // NCDP发送消息
+    NBIOT_SUB_NCDP_RECV,    // NCDP返回信息
+    NBIOT_SUB_NCDP_STATUS,  // NCDP返回状态消息
+    NBIOT_SUB_NCDP_CL,      // 关闭NCDP 
     NBIOT_SUB_PSM,          // PSM
     NBIOT_SUB_EDRX,         // eDRX 
     NBIOT_SUB_SLEEP,        // SLEEP 
@@ -329,8 +336,11 @@ typedef enum nbiot_connect_type {
    NBIOT_HTTP,        
    NBIOT_COAP,        
    NBIOT_MQTT,
-   NBIOT_CM2M, 
+   NBIOT_NCDP, 
 }nbiot_connect_type_t;
+
+
+
 
 //NBIOT固件信息
 typedef struct nbiot_firmware_info
@@ -392,8 +402,8 @@ struct nbiot_drv_funcs {
 #define    NBIOT_MQTT_RECV_EVENT     0X0040           //MQTT接收事件
 #define    NBIOT_LWM2M_RECV_EVENT    0X0080           //LWM2M接收事件
 #define    NBIOT_SOCKET_ERR_EVENT    0x0100           //SOCKET发生错误事件
-#define    NBIOT_CM2M_RECV_EVENT     0X0200           //CM2M接收事件
-#define    NBIOT_CM2M_STATUS_EVENT   0X0400           //CM2M状态事件
+#define    NBIOT_NCDP_RECV_EVENT     0X0200           //NCDP接收事件
+#define    NBIOT_NCDP_STATUS_EVENT   0X0400           //NCDP状态事件
 #define    NBIOT_ENTER_LPOWER_EVENT  0X0800           //进入低功耗事件
 #define    NBIOT_EXIT_LPOWER_EVENT   0X1000           //退出低功耗事件
 #define    NBIOT_REBOOT_EVENT        0X2000           //重启事件

@@ -36,11 +36,11 @@ typedef enum nbiot_app_status
     NBIOT_APP_CoAP_SEND   = NBIOT_CoAP_SEND,    // CoAP发送消息
     NBIOT_APP_CoAP_RECV   = NBIOT_CoAP_RECV,    // CoAP返回信息
     NBIOT_APP_CoAP_CL     = NBIOT_CoAP_CL,      // 关闭CoAP
-    NBIOT_APP_CM2M_CLIENT = NBIOT_CM2M_CLIENT,  // CM2M客户端连接地址设置
-    NBIOT_APP_CM2M_SEND   = NBIOT_CM2M_SEND,    // CM2M发送消息
-    NBIOT_APP_CM2M_RECV   = NBIOT_CM2M_RECV,    // CM2M返回信息
-    NBIOT_APP_CM2M_STATUS = NBIOT_CM2M_STATUS,  // CM2M返回状态消息
-    NBIOT_APP_CM2M_CL     = NBIOT_CM2M_CL,      // 关闭CM2M 
+    NBIOT_APP_NCDP_SERVER = NBIOT_NCDP_SERVER,  // NCDP客户端连接地址设置
+    NBIOT_APP_NCDP_SEND   = NBIOT_NCDP_SEND,    // NCDP发送消息
+    NBIOT_APP_NCDP_RECV   = NBIOT_NCDP_RECV,    // NCDP返回信息
+    NBIOT_APP_NCDP_STATUS = NBIOT_NCDP_STATUS,  // NCDP返回状态消息
+    NBIOT_APP_NCDP_CL     = NBIOT_NCDP_CL,      // 关闭NCDP 
     NBIOT_APP_RESET       = NBIOT_RESET,        // 复位NB
     NBIOT_APP_NCONFIG     = NBIOT_NCONFIG,      // 使能/禁能自动入网设置
     NBIOT_APP_END          
@@ -83,11 +83,11 @@ typedef enum nbiot_msg_id
     NBIOT_MSG_COAP_RECV,
     NBIOT_MSG_COAP_CLOSE,
     
-    NBIOT_MSG_CM2M_CLIENT,
-    NBIOT_MSG_CM2M_SEND,
-    NBIOT_MSG_CM2M_RECV,
-    NBIOT_MSG_CM2M_STATUS,
-    NBIOT_MSG_CM2M_CLOSE,
+    NBIOT_MSG_NCDP_SERVER,
+    NBIOT_MSG_NCDP_SEND,
+    NBIOT_MSG_NCDP_RECV,
+    NBIOT_MSG_NCDP_STATUS,
+    NBIOT_MSG_NCDP_CLOSE,
 
     NBIOT_MSG_RESET,        //NB复位完成消息
     NBIOT_MSG_NCONFIG,      //自动入网设置完成消息
@@ -101,6 +101,11 @@ typedef enum nbiot_msg_id
     NBIOT_MSG_END           
   
 }nbiot_msg_id_t;
+
+#define  NON_MESSAGE          "0X0000"
+#define  NON_MESSAGE_RELEASE  "0X0001"
+#define  CON_MESSAGE          "0X0100"
+#define  CON_MESSAGE_RELEASE  "0X0101"
 
 //NB模块初始化及完成网络注册
 int nbiot_init (nbiot_handle_t nbiot_handle);
@@ -155,16 +160,16 @@ int nbiot_coap_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_c
 //以字符串格式发送数据coap协议数据
 int nbiot_coap_send_str(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type);                                                                  
 
-//创建cm2m客户端
-int nbiot_cm2m_client_create(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type);
+//创建ncdp客户端
+int nbiot_ncdp_update(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type);
 
 
-//关闭cm2m
-int nbiot_cm2m_close(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type);
+//关闭ncdp
+int nbiot_ncdp_close(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type);
 
-//以hex数据格式发送cm2m协议数据,必须是偶数个长度
-int nbiot_cm2m_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type); 
 
+//以hex数据格式发送ncdp协议数据,必须是偶数个长度
+int nbiot_ncdp_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type, char *mode);
 
 
 #endif
