@@ -1,9 +1,10 @@
 /**
-  *
-  * @file           : demo_nbiot_gprs_attach_entry.c
-  * @brief          : nbiot 网络附着实验
-  */
-/* Includes ------------------------------------------------------------------*/
+ * Copyright (c) 广州市星翼电子科技有限公司 2014-2024
+ * All rights reserved 
+ * @file   demo_nbiot_gprs_attach_entry.c
+ * @brief  nbiot 网络附着实验
+ */
+
 #include "atk_sys.h"
 #include "atk_led.h"
 #include "atk_delay.h"
@@ -13,7 +14,7 @@
 #include "stm32f4xx_hal.h"
 
 
-static int nbiot_main_status =  NBIOT_INFO;
+static int nbiot_app_status =  NBIOT_INFO;
 static nbiot_handle_t  nbiot_handle = NULL;  
 
 
@@ -70,7 +71,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         {
           printf("info get=%s\r\n",msg);
           
-          nbiot_main_status =  NBIOT_SIGNAL;                     
+          nbiot_app_status =  NBIOT_SIGNAL;                     
         }
 
         break;
@@ -157,10 +158,10 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
 
 
 //nbiot 状态处理函数
-//nbiot_main_status；nbiot所处的主状态阶段
-static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_status)
+//nbiot_app_status；nbiot所处的主状态阶段
+static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_status)
 {    
-    switch(*nbiot_main_status)
+    switch(*nbiot_app_status)
     {
     case NBIOT_APP_NONE:
       {
@@ -174,7 +175,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
                 
         nbiot_init(nbiot_handle);        
 
-        *nbiot_main_status = NBIOT_END;
+        *nbiot_app_status = NBIOT_END;
       }
       break;
       
@@ -184,7 +185,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
                 
         nbiot_init(nbiot_handle);        
 
-        *nbiot_main_status = NBIOT_END;
+        *nbiot_app_status = NBIOT_END;
       }
       break;
 
@@ -194,7 +195,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
                 
         nbiot_init(nbiot_handle);        
 
-        *nbiot_main_status = NBIOT_END;
+        *nbiot_app_status = NBIOT_END;
       }
       break;       
       
@@ -204,7 +205,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
                 
          nbiot_info_get(nbiot_handle);
 
-         *nbiot_main_status = NBIOT_END;
+         *nbiot_app_status = NBIOT_END;
       }
             
       break;
@@ -215,7 +216,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
         
         nbiot_signal_get(nbiot_handle);
         
-        *nbiot_main_status = NBIOT_END;
+        *nbiot_app_status = NBIOT_END;
       }
       break;
       
@@ -228,7 +229,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
         nbiot_tcpudp_create(nbiot_handle, NBIOT_TCP);
         
         //do nothing
-        *nbiot_main_status = NBIOT_END;
+        *nbiot_app_status = NBIOT_END;
       }
       break;
       
@@ -241,7 +242,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
 
 //        nbiot_tcpudp_close(nbiot_handle, NBIOT_TCP);        
           
-        *nbiot_main_status = NBIOT_END;
+        *nbiot_app_status = NBIOT_END;
       }
       break;
       
@@ -255,7 +256,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
         nbiot_tcpudp_send_str(nbiot_handle, sizeof("hello world"), "hello world", NBIOT_TCP);        
         
         //do nothing
-        *nbiot_main_status = NBIOT_END;
+        *nbiot_app_status = NBIOT_END;
       }
       break;
       
@@ -263,7 +264,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       {         
         printf("tcp/udp recv start\r\n");    
         //do nothing
-        *nbiot_main_status = NBIOT_END; 
+        *nbiot_app_status = NBIOT_END; 
       }
       break;
       
@@ -271,14 +272,14 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
       {
         printf("CoAP Server set start\r\n");
 
-        *nbiot_main_status = NBIOT_END;
+        *nbiot_app_status = NBIOT_END;
       }
       break;
       
     case NBIOT_APP_CoAP_SEND:
       {
         printf("CoAP send start\r\n");
-        *nbiot_main_status = NBIOT_END;
+        *nbiot_app_status = NBIOT_END;
         
         
       }
@@ -287,7 +288,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_main_s
     case NBIOT_APP_CoAP_RECV:
       {
         printf("CoAP recv start\r\n");
-        *nbiot_main_status = NBIOT_END;        
+        *nbiot_app_status = NBIOT_END;        
       }
       break;  
       
@@ -316,12 +317,10 @@ void demo_nbiot_info_get_entry(void)
      
     nbiot_event_registercb(nbiot_handle, __nbiot_msg_cb_handler, nbiot_handle);
     
-    //nbiot上电需要等待10s
-    delay_ms(1000);
              
     while (1)
     {   
-        nbiot_app_status_poll(nbiot_handle, &nbiot_main_status);      
+        nbiot_app_status_poll(nbiot_handle, &nbiot_app_status);      
         nbiot_event_poll(nbiot_handle);      
         uart_event_poll(uart_handle);       
     }

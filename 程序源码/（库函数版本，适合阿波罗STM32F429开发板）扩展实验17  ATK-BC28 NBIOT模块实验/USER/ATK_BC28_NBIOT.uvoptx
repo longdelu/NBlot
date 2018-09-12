@@ -835,7 +835,7 @@
 
   <Group>
     <GroupName>EXAMPLE</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -942,8 +942,20 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\EXAMPLE\soft_timer\atk_soft_timer_demo_entry.c</PathWithFileName>
-      <FilenameWithoutPath>atk_soft_timer_demo_entry.c</FilenameWithoutPath>
+      <PathWithFileName>..\EXAMPLE\dht11\demo_dht11_entry.c</PathWithFileName>
+      <FilenameWithoutPath>demo_dht11_entry.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>8</GroupNumber>
+      <FileNumber>54</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\EXAMPLE\soft_timer\demo_soft_timer_entry.c</PathWithFileName>
+      <FilenameWithoutPath>demo_soft_timer_entry.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -957,7 +969,7 @@
     <RteFlg>0</RteFlg>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>54</FileNumber>
+      <FileNumber>55</FileNumber>
       <FileType>5</FileType>
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>

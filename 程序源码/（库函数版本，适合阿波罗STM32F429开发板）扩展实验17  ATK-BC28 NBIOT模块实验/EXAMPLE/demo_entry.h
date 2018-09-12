@@ -1,12 +1,12 @@
 
 /**
-  * Copyright (c) 广州市星翼电子科技有限公司 2014-2024
-  * All rights reserved 
-  *
-  * @file           : demo_entry.h
-  * @brief          : demo入口头文件
-  *
-  */
+ * Copyright (c) 广州市星翼电子科技有限公司 2014-2024
+ * All rights reserved 
+ *
+ * @file   demo_entry.h
+ * @brief  demo入口头文件
+ *
+ */
 
 #ifndef __DEMO_ENTRY_H
 #define __DEMO_ENTRY_H   
@@ -47,19 +47,6 @@ void demo_timer_timing_entry(void);
   */
 void demo_soft_timer_entry(void);
 
-/**
-  * @brief  The demo nbiot gprs attach application entry point.
-  *
-  * @retval None
-  */
-void demo_nbiot_tcp_entry(void);
-
-/**
-  * @brief  The demo nbiot gprs attach application entry point.
-  *
-  * @retval None
-  */
-void demo_nbiot_udp_entry(void);
 
 /**
   * @brief  The demo nbiot gprs attach application entry point.
@@ -75,12 +62,6 @@ void demo_nbiot_gprs_attach_entry(void);
   */
 void demo_nbiot_info_get_entry(void);
 
-/**
-  * @brief  The demo nbiot coap application entry point.
-  *
-  * @retval None
-  */
-void demo_nbiot_coap_entry(void);
 
 /**
   * @brief  The demo nbiot iot entry entry point.
@@ -103,12 +84,14 @@ void demo_nbiot_huaweiiot_entry(void);
   */
 void demo_nbiot_easyiot_entry(void);
 
+
 /**
-  * @brief  The demo nbiot low power entry entry point.
+  * @brief  The demo dht11 iot entry entry point.
   *
   * @retval None
   */
-void demo_nbiot_low_power_entry(void);
+void demo_dht11_entry(void);
+
 
 /**
   * @}

@@ -1,20 +1,21 @@
 /**
  * Copyright (c) 广州市星翼电子科技有限公司 2014-2024
  * All rights reserved 
- *
- * @file   demo_nbiot_udp_entry.c
- * @brief  nbiot 电信iot平台对接数据实验
- *
+ * @file   demo_dht11_entry.c
+ * @brief  温湿度传感器数据上传实验
  */
-
+  
 #include "atk_sys.h"
 #include "atk_led.h"
 #include "atk_delay.h"
-#include "atk_nbiot_usart.h"
 #include "atk_bc28_nbiot.h"
 #include "atk_bc28.h"
+#include "atk_bc28_nbiot.h"
 #include "atk_key.h"
-#include "stm32f4xx_hal.h"
+#include "dht11.h"
+#include "lcd.h"
+#include "pcf8574.h"
+#include "atk_soft_timer.h"
 
 
 static int nbiot_app_status = NBIOT_APP_NCONFIG;
@@ -404,13 +405,32 @@ static void key_event_handle(u32 key_event,void *p_arg)
     
 }
 
+
+u8 temperature = 0; 
+u8 humidity    = 0; 
+u8 dht11_flag  = 0;
+
 /**
-  * @brief  The demo nbiot huaweiiot entry entry point.
+  * @brief  定时回调更新dht11采集到的温湿度的值.
+  */
+static void __dht11_timer_callback (void *p_arg)
+{   
+    dht11_flag = 1;
+}
+
+
+
+
+/**
+  * @brief  The demo dht11 iot entry entry point.
   *
   * @retval None
   */
-void demo_nbiot_huaweiiot_entry(void)
+void demo_dht11_entry(void)
 {         
+  
+    struct atk_soft_timer dht11_timer;
+
     uart_handle_t uart_handle = NULL; 
 
     nbiot_handle_t  nbiot_handle = NULL; 
@@ -425,15 +445,51 @@ void demo_nbiot_huaweiiot_entry(void)
     
     nbiot_handle = nbiot_dev_init(uart_handle);
      
-    nbiot_event_registercb(nbiot_handle, __nbiot_msg_cb_handler, nbiot_handle);
+    nbiot_event_registercb(nbiot_handle, __nbiot_msg_cb_handler, nbiot_handle);    
     
-             
-    while (1)
+    POINT_COLOR=RED;
+    LCD_ShowString(30,50,200,16,16,"Apollo STM32F4/F7"); 
+    LCD_ShowString(30,70,200,16,16,"DHT11 TEST");    
+    LCD_ShowString(30,90,200,16,16,"ATOM@ALIENTEK");
+    LCD_ShowString(30,110,200,16,16,"2016/1/16");    
+    PCF8574_ReadBit(BEEP_IO);       //由于DHT11和PCF8574的中断引脚共用一个IO，
+                                    //所以在初始化DHT11之前要先读取一次PCF8574的任意一个IO，
+                                    //使其释放掉中断引脚所占用的IO(PB12引脚),否则初始化DS18B20会出问题    
+    while(DHT11_Init())    //DHT11初始化    
     {
+        LCD_ShowString(30,130,200,16,16,"DHT11 Error");
+        delay_ms(200);
+        LCD_Fill(30,130,239,130+16,WHITE);
+        delay_ms(200);
+    }
+    
+    LCD_ShowString(30,130,200,16,16,"DHT11 OK");
+    POINT_COLOR=BLUE;//设置字体为蓝色 
+    LCD_ShowString(30,150,200,16,16,"Temp:  C");
+    LCD_ShowString(30,170,200,16,16,"Humi:  %");   
+    
+    //软件定时器200ms周期定时
+    atk_soft_timer_init(&dht11_timer, __dht11_timer_callback, NULL, 200, 200); 
+    atk_soft_timer_start(&dht11_timer);                                         
+    
+    while(1)
+    {                       
         nbiot_app_status_poll(nbiot_handle, &nbiot_app_status);      
         nbiot_event_poll(nbiot_handle);      
         uart_event_poll(uart_handle);         
-        atk_key_event_poll(key_handle);
+        atk_key_event_poll(key_handle); 
+
+        if (dht11_flag == 1)
+        {            
+            PCF8574_ReadBit(BEEP_IO);                   //读取一次PCF8574的任意一个IO，使其释放掉PB12引脚，
+                                                        //否则读取DHT11可能会出问题            
+            DHT11_Read_Data(&temperature,&humidity);    //读取温湿度值                        
+            LCD_ShowNum(30+40,150,temperature,2,16);    //显示温度                  
+            LCD_ShowNum(30+40,170,humidity,2,16);       //显示湿度
+            dht11_flag = 0;
+            LED1=!LED1;            
+        }
+        
     }
 }
 

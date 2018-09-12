@@ -212,7 +212,7 @@ typedef at_cmd_info_t *at_cmdhandle;
 #define   NBIOT_ERROR_NEXT              -8
 #define   NBIOT_ERROR_CONTINUE          -9
 
-//nbiot主状态定义，app可以使用该信息
+//nbiot主状态定义
 typedef enum nbiot_main_status
 {
     NBIOT_NONE,
@@ -422,6 +422,7 @@ typedef struct nbiot_dev
     //nbiot设备事件回调函数
     nbiot_cb                  nbiot_cb;  
     
+    //nbiot设备事件回调函数参数
     void                     *p_arg;
 
     //事件标记

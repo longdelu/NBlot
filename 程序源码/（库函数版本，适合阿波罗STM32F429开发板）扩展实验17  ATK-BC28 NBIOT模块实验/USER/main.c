@@ -35,7 +35,9 @@ int main(void)
 
 //    demo_nbiot_info_get_entry(); 
 
-//    demo_nbiot_huaweiiot_entry();    
+//    demo_nbiot_huaweiiot_entry();  
+
+   demo_dht11_entry();
         
     while(1)
     {              

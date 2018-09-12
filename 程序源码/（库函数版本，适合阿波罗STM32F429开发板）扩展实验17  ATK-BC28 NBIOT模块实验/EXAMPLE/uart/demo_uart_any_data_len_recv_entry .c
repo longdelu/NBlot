@@ -2,8 +2,8 @@
 /**
  * Copyright (c) 广州市星翼电子科技有限公司 2014-2024
  * All rights reserved 
- * @file           : demo_uart_any_data_len_recv_entry.c
- * @brief          : 串口任意长度数据实是收发
+ * @file   demo_uart_any_data_len_recv_entry.c
+ * @brief  串口任意长度数据收发
  */
 
 #include "atk_sys.h"

@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F429xx</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\OBJ;..\USER;..\HALLIB\STM32F4xx_HAL_Driver\Inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\LED;..\HARDWARE\KEY;..\HARDWARE\LCD;..\EXAMPLE\atk_nbiot_bc28;..\HARDWARE\NBIOT_UART;..\ATK_RING_BUF;..\EXAMPLE;..\ATK_SOFT_TIMER;..\HARDWARE\BC28;..\HARDWARE\TIMER;..\HARDWARE\PCF8574;..\HARDWARE\IIC</IncludePath>
+              <IncludePath>..\CORE;..\OBJ;..\USER;..\HALLIB\STM32F4xx_HAL_Driver\Inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\LED;..\HARDWARE\KEY;..\HARDWARE\LCD;..\EXAMPLE\atk_nbiot_bc28;..\HARDWARE\NBIOT_UART;..\ATK_RING_BUF;..\EXAMPLE;..\ATK_SOFT_TIMER;..\HARDWARE\BC28;..\HARDWARE\TIMER;..\HARDWARE\PCF8574;..\HARDWARE\IIC;..\HARDWARE\DHT11</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -675,9 +675,14 @@
               <FilePath>..\EXAMPLE\demo_entry.h</FilePath>
             </File>
             <File>
-              <FileName>atk_soft_timer_demo_entry.c</FileName>
+              <FileName>demo_dht11_entry.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\soft_timer\atk_soft_timer_demo_entry.c</FilePath>
+              <FilePath>..\EXAMPLE\dht11\demo_dht11_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_soft_timer_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\soft_timer\demo_soft_timer_entry.c</FilePath>
             </File>
           </Files>
         </Group>
