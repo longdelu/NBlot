@@ -1,10 +1,15 @@
 
-/**
- * Copyright (c) 广州市星翼电子科技有限公司 2014-2024
- * All rights reserved 
- * @file   demo_uart_any_data_len_recv_entry.c
- * @brief  串口任意长度数据收发
- */
+/************************************************
+ Copyright (c) 广州市星翼电子科技有限公司 2014-2024
+ All rights reserved 
+ ALIENTEK 阿波罗STM32F429开发板 
+ NBIOT串口任意数据收发实现
+ 技术支持：www.openedv.com
+ 淘宝店铺：http://eboard.taobao.com 
+ 关注微信公众平台微信号："正点原子"，免费获取STM32资料。
+ 广州市星翼电子科技有限公司  
+ 作者：正点原子 @ALIENTEK
+************************************************/ 
 
 #include "atk_sys.h"
 #include "atk_led.h"
@@ -12,26 +17,35 @@
 #include "atk_bc28_nbiot.h"
 #include "stm32f4xx_hal.h"
 
-uint8_t buf[512];
-int len = 0;
+/**
+ * @brief  接收缓冲缓冲区.
+ */
+static uint8_t buf[512];
 
+
+/**
+  * @brief  uart回调函数.
+  */
 static void uart_event_callback_handle(void *p_arg)
-{    
-    uart_dev_t *p_uart_dev = (uart_dev_t *)p_arg; 
+{   
+    
+    uart_dev_t *p_uart_dev = (uart_dev_t *)p_arg;
+
+    int len = 0;    
     
     if (p_uart_dev->uart_event & UART_NONE_EVENT) {
         
     } 
 
     if (p_uart_dev->uart_event & UART_TX_EVENT) {
-        printf("tx data c\r\n"); 
+        printf("tx data ok\r\n"); 
         
        uart_event_clr(p_uart_dev, UART_TX_EVENT);  
 
     }
 
     if (p_uart_dev->uart_event & UART_RX_EVENT) {
-        printf("rx data c\r\n");
+        printf("rx data ok\r\n");
                 
         len = uart_ring_buf_avail_len(p_uart_dev);
               

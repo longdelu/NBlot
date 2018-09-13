@@ -1,9 +1,14 @@
-/**
- * Copyright (c) 广州市星翼电子科技有限公司 2014-2024
- * All rights reserved 
- * @file   demo_nbiot_gprs_attach_entry.c
- * @brief  nbiot 网络附着实验
- */
+/************************************************
+ Copyright (c) 广州市星翼电子科技有限公司 2014-2024
+ All rights reserved 
+ ALIENTEK 阿波罗STM32F429开发板 
+ NBIOT获取模块信息
+ 技术支持：www.openedv.com
+ 淘宝店铺：http://eboard.taobao.com 
+ 关注微信公众平台微信号："正点原子"，免费获取STM32资料。
+ 广州市星翼电子科技有限公司  
+ 作者：正点原子 @ALIENTEK
+************************************************/
 
 #include "atk_sys.h"
 #include "atk_led.h"
@@ -220,54 +225,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
       }
       break;
       
-    case NBIOT_APP_TCPUDP_CR:
-      {
-        printf("tcp/udp socket creat start\r\n");  
         
-//        nbiot_tcpudp_create(nbiot_handle, NBIOT_UDP);
-        
-        nbiot_tcpudp_create(nbiot_handle, NBIOT_TCP);
-        
-        //do nothing
-        *nbiot_app_status = NBIOT_END;
-      }
-      break;
-      
-    case NBIOT_APP_TCPUDP_CL:
-      {          
-        //do nothing
-        printf("tcp/udp socket close start\r\n");  
-
-//        nbiot_tcpudp_close(nbiot_handle, NBIOT_UDP); 
-
-//        nbiot_tcpudp_close(nbiot_handle, NBIOT_TCP);        
-          
-        *nbiot_app_status = NBIOT_END;
-      }
-      break;
-      
-    case NBIOT_APP_TCPUDP_SEND:
-      {
-          
-        printf("tcp/udp send start\r\n"); 
-
-//        nbiot_tcpudp_send_str(nbiot_handle, sizeof("hello world"), "hello world", NBIOT_UDP);
-        
-        nbiot_tcpudp_send_str(nbiot_handle, sizeof("hello world"), "hello world", NBIOT_TCP);        
-        
-        //do nothing
-        *nbiot_app_status = NBIOT_END;
-      }
-      break;
-      
-    case NBIOT_APP_TCPUDP_RECV:
-      {         
-        printf("tcp/udp recv start\r\n");    
-        //do nothing
-        *nbiot_app_status = NBIOT_END; 
-      }
-      break;
-      
     case NBIOT_APP_CoAP_SEVER:
       {
         printf("CoAP Server set start\r\n");

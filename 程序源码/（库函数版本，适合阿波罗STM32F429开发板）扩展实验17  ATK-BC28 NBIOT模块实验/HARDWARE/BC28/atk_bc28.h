@@ -451,29 +451,7 @@ typedef struct nbiot_dev
 //nbiot模块设备句柄
 typedef nbiot_dev_t *nbiot_handle_t;
 
-//将缓冲区的数据转换成字符
-//hex:16进制数字,0~15;
-//返回值:字符
-//注意该函数会改变原缓冲区
-void nbiot_buf2chr (char *p_buf, int len);
 
-//缓冲区当中每两个字节组成一个十六进制数，2个字节换算一个字节的十六进制数
-//hex:16进制数字,0~15;
-//返回值:字符
-//注意该函数会改变原缓冲区
-void nbiot_buf2hex (char *p_buf , int len);
-
-//将缓冲区的数据转换成字符
-//hex:16进制数字,0~15;
-//返回值:字符
-//该函数会保留原缓冲区
-void nbiot_srcbuf2chr (char *src_buf ,char *dest_buf, int len);
-
-//缓冲区当中每两个字节组成一个十六进制数，2个字节换算一个字节的十六进制数
-//hex:16进制数字,0~15;
-//返回值:字符
-//该函数会保留原缓冲区
-void nbiot_srcbuf2hex (char *src_buf ,char *dest_buf, int len);
 
 //nbiot at指令初始化
 void nbiot_at_cmd_param_init (at_cmdhandle cmd_handle,
@@ -484,7 +462,7 @@ void nbiot_at_cmd_param_init (at_cmdhandle cmd_handle,
                               
 //给nbiot模块发送AT指令
 //nbiot_handle  nbiot_handle模块设备句柄
-//cmd_handle    将要发送指令信息句柄
+//cmd_handle    将要发送指令信息句柄          
 //note 调用该函数前先构造好命令的参数
 int nbiot_at_cmd_send(nbiot_handle_t nbiot_handle, at_cmdhandle cmd_handle);                              
 

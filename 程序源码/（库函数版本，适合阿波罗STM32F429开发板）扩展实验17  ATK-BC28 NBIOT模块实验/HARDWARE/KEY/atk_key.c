@@ -1,5 +1,6 @@
 #include "atk_key.h"
 #include "atk_delay.h"
+
 //////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F7开发板
@@ -16,6 +17,12 @@
 static key_dev_t key_dev = {0,0, NULL, NULL};
 
 //按键初始化函数
+
+/**
+  * @brief  按键初始化函数
+  * @param  None
+  * @retval 按键设备句柄的指针
+  */
 key_handle_t atk_key_exit_init(void)
 {    
     GPIO_InitTypeDef GPIO_Initure;
@@ -56,30 +63,44 @@ key_handle_t atk_key_exit_init(void)
     return &key_dev;
 }
 
-//中断服务函数
+
+/**
+  * @brief  中断服务函数.
+  */
 void EXTI0_IRQHandler(void)
 {
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);//调用中断处理公用函数
 }
 
+/**
+  * @brief  中断服务函数.
+  */
 void EXTI2_IRQHandler(void)
 {
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);//调用中断处理公用函数
 }
 
+/**
+  * @brief  中断服务函数.
+  */
 void EXTI3_IRQHandler(void)
 {
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);//调用中断处理公用函数
 }
 
+/**
+  * @brief  中断服务函数.
+  */
 void EXTI15_10_IRQHandler(void)
 {
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);//调用中断处理公用函数
 }
 
-//中断服务程序中需要做的事情
-//在HAL库中所有的外部中断服务函数都会调用此函数
-//GPIO_Pin:中断引脚号
+/**
+  * @brief  HAL库外部中断服务函数都会调用此函数.
+  * @param  GPIO_Pin : 中断引脚号.
+  * @retval None
+  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     switch(GPIO_Pin)
@@ -119,11 +140,22 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
                 key_dev.start_tick = HAL_GetTick();
             }
             break;
+            
+        default:
+                
+            break;
     }
 }
 
 
-//注册按键事件回调
+
+/**
+  * @brief  注册按键事件回调.
+  * @param  key_handle : 指向按键设备句柄的指针.
+  * @param  cb         : 回调函数.
+  * @param  p_arg      : 回调函数参数
+  * @retval None
+  */
 void atk_key_registercb (key_handle_t key_handle, key_cb cb, void *p_arg)
 {
     if ((cb != NULL) && (key_handle != NULL))
@@ -135,7 +167,11 @@ void atk_key_registercb (key_handle_t key_handle, key_cb cb, void *p_arg)
 
 
 
-//轮询按钮事件
+/**
+  * @brief  轮询按钮事件
+  * @param  key_handle : 指向按键设备句柄的指针.
+  * @retval None
+  */
 void atk_key_event_poll(key_handle_t key_handle)
 {
     uint8_t key_event = 0;

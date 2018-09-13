@@ -1,10 +1,15 @@
 
-/**
- * Copyright (c) 广州市星翼电子科技有限公司 2014-2024
- * All rights reserved 
- * @file           : demo_key_entry.c
- * @brief          : 按下板载对应的按键会有相关的调试信息输出
- */
+/************************************************
+ Copyright (c) 广州市星翼电子科技有限公司 2014-2024
+ All rights reserved 
+ ALIENTEK 阿波罗STM32F429开发板 
+ NBIOT按键事件驱动实验
+ 技术支持：www.openedv.com
+ 淘宝店铺：http://eboard.taobao.com 
+ 关注微信公众平台微信号："正点原子"，免费获取STM32资料。
+ 广州市星翼电子科技有限公司  
+ 作者：正点原子 @ALIENTEK
+************************************************/ 
 
 #include "atk_led.h"
 #include "atk_delay.h"

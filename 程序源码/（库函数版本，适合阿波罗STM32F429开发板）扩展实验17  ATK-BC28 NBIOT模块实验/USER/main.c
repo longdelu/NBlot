@@ -3,6 +3,7 @@
 #include "atk_usart.h"
 #include "atk_led.h"
 #include "lcd.h"
+#include "sdram.h"
 #include "demo_entry.h"
 
 /************************************************
@@ -21,7 +22,8 @@ int main(void)
     delay_init(180);                //初始化延时函数
     uart1_init(9600);               //初始化调试USART
     led_init();                     //初始化LED 
-    LCD_Init();                     //初始化LCD  
+    LCD_Init();                     //初始化LCD 
+    SDRAM_Init();                   //初始化SDRAM    
     
 //    demo_led_entry(); 
     
@@ -37,7 +39,7 @@ int main(void)
 
 //    demo_nbiot_huaweiiot_entry();  
 
-   demo_dht11_entry();
+    demo_dht11_entry();
         
     while(1)
     {              

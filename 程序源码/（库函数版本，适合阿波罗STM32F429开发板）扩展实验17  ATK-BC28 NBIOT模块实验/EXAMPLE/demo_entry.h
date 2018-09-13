@@ -1,12 +1,17 @@
-
-/**
- * Copyright (c) 广州市星翼电子科技有限公司 2014-2024
- * All rights reserved 
- *
- * @file   demo_entry.h
- * @brief  demo入口头文件
- *
- */
+//////////////////////////////////////////////////////////////////////////////////    
+//本程序只供学习使用，未经作者许可，不得用于其它任何用途
+//ALIENTEK STM32F429开发板
+//串口1初始化         
+//正点原子@ALIENTEK
+//技术论坛:www.openedv.csom
+//修改日期:2015/6/23
+//版本：V1.0
+//版权所有，盗版必究。
+//Copyright(C) 正点原子 2009-2019
+//All rights reserved
+//********************************************************************************
+//V1.0 第一次应用 
+////////////////////////////////////////////////////////////////////////////////// 
 
 #ifndef __DEMO_ENTRY_H
 #define __DEMO_ENTRY_H   
@@ -19,11 +24,18 @@
 void demo_key_entry(void);
 
 /**
-  * @brief  The demo led application entry point.
+  * @brief  The demo led beep application entry point.
   *
   * @retval None
   */
-void demo_led_entry(void);
+void demo_led_beep_entry(void);
+
+/**
+  * @brief  The demo rgb led application entry point.
+  *
+  * @retval None
+  */
+void demo_rgb_led_entry(void);
 
 
 /**
@@ -47,6 +59,13 @@ void demo_timer_timing_entry(void);
   */
 void demo_soft_timer_entry(void);
 
+/**
+  * @brief  The demo ring buf entry entry point.
+  *
+  * @retval None
+  */
+void demo_atk_ring_buf_entry(void);
+
 
 /**
   * @brief  The demo nbiot gprs attach application entry point.
@@ -63,12 +82,6 @@ void demo_nbiot_gprs_attach_entry(void);
 void demo_nbiot_info_get_entry(void);
 
 
-/**
-  * @brief  The demo nbiot iot entry entry point.
-  *
-  * @retval None
-  */
-void demo_nbiot_iot_entry(void);
 
 /**
   * @brief  The demo nbiot iot entry entry point.
@@ -76,14 +89,6 @@ void demo_nbiot_iot_entry(void);
   * @retval None
   */
 void demo_nbiot_huaweiiot_entry(void);
-
-/**
-  * @brief  The demo nbiot easyiot entry entry point.
-  *
-  * @retval None
-  */
-void demo_nbiot_easyiot_entry(void);
-
 
 /**
   * @brief  The demo dht11 iot entry entry point.

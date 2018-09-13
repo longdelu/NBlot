@@ -156,7 +156,7 @@ static void __uart_event_cb_handle (void *p_arg)
             //产生异步事件等待处理
             nbiot_event_notify(nbiot_handle, g_nbiot_recv_desc.buf);
                         
-            NBIOT_DEBUG_INFO("atk_nbiot uart rx ok %s\r\n", &g_nbiot_recv_desc.buf[g_nbiot_recv_desc.len]);
+            NBIOT_DEBUG_INFO("atk_nbiot uart rx ok %s\r\n", g_nbiot_recv_desc.buf);
           
             //改变接收数据的缓冲区位置，确保一个命令回响的数据能完全收到
             g_nbiot_recv_desc.len = g_nbiot_recv_desc.len + size;
@@ -252,8 +252,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
             NBIOT_DEBUG_INFO("RESULT OK\r\n");            
                              
             recv_cnt=0; 
-                     
-          
+                              
             //提取AT指令返回的参数,在使用strok期间，不允许改变缓冲区的内容，中间出现再多的\r\n，也只会当做一个来处理
             while((at_response_par[index] = strtok(p_revc_buf_tmp,"\r\n")) != NULL)
             {
@@ -335,10 +334,11 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
         {
           
             NBIOT_DEBUG_INFO("RESULT CONTINUE\r\n");
-            //命令未执行完成，正常情况下，收到的的是命令回显, 接下来的还是当前命令响应数据的接收, 重新启动接收超时               
-            atk_soft_timer_timeout_change(&nbiot_handle->p_uart_dev->uart_rx_timer, 500);
             recv_cnt=0;
-          
+            
+            //命令未执行完成，正常情况下，收到的的是命令回显, 接下来的还是当前命令响应数据的接收, 重新启动接收超时               
+            atk_soft_timer_timeout_change(&nbiot_handle->p_uart_dev->uart_rx_timer, 8000);
+                      
             //处于TCP/UDP创建状态时
             if (g_nbiot_sm_status.main_status == NBIOT_TCPUDP_CR) {
                 //通知上层应用，获取相关的信息
@@ -357,7 +357,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
             //理论上不会运行到这里, 运行到这里，有两种情况，
             //一种是表示传输出错，收到的数据都是乱码        
             //第二种是IDLE成帧判断不是那么准确，没有收完也以为一帧结束了
-            if (recv_cnt > (AT_CMD_RESPONSE_PAR_NUM_MAX + 10))                         
+            if (recv_cnt > (AT_CMD_RESPONSE_PAR_NUM_MAX + 20))                         
             {  
                //接收在超时时间内未正常完成，停止接收超时  
                atk_soft_timer_stop(&nbiot_handle->p_uart_dev->uart_rx_timer);   
@@ -371,7 +371,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
             {
               
                //命令未完成,收到的的是命令回显当中其中的一部分                
-               atk_soft_timer_timeout_change(&nbiot_handle->p_uart_dev->uart_rx_timer, 8000);
+               atk_soft_timer_timeout_change(&nbiot_handle->p_uart_dev->uart_rx_timer, 10000);
              
             }              
                                
@@ -583,148 +583,7 @@ static int  __nbiot_uart_data_rx (void *p_arg, uint8_t *pData, uint16_t size, ui
 }
 
 
-//将1个字符转换为10进制数字
-//chr:字符,0~9/A~F/a~F
-//返回值:chr对应的10进制数值
-static u8 nbiot_chr2hex (u8 chr)
-{
-    if(chr>='0'&&chr<='9')
-    {
-      return chr - '0';
-    }
-    else if(chr>='A'&&chr<='F')
-    {
-      return (chr-'A'+10);
-    }
-    else if(chr>='a'&&chr<='f')
-    {
-      return (chr-'a'+10); 
-    }
-    else
-    {     
-      return 0;
-    }                
-}
 
-
-//将1个16进制数字转换为字符
-//hex:16进制数字,0~15;
-//返回值:字符
-static u8 nbiot_hex2chr (u8 hex)
-{
-    if(hex<=9)
-    {
-      return hex+'0';
-    }
-    else if(hex>=10&&hex<=15)
-    {
-      return (hex-10+'A'); 
-    }   
-    else 
-    { 
-      return '0';
-    }              
-}
-
-//将hex转换成一整串的字符,如0x12345678转换成字符串"12345678"
-void nbiot_hex2chrbuf (char *src_p_buf, char *dest_buf, int len)
-{
-    int i = 0; 
-   
-    char tmp  = 0;
-    char tmp1 = 0;
-     
-    for (i = 0; i < len; i=i+2)
-    {
-        tmp = nbiot_chr2hex( src_p_buf[i]);       
-        tmp1 = nbiot_chr2hex(src_p_buf[i + 1]);      
-        dest_buf[i / 2] = (tmp << 4)  |  tmp1;                    
-    } 
-    
-    dest_buf[i / 2] = 0;      
-}
-
-//缓冲区当中每两个字节组成一个十六进制数，2个字节换算成1个字符
-//hex:16进制数字,0~15;
-//返回值:字符
-void nbiot_buf2chr (char *p_buf, int len)
-{
-    int i = 0; 
-   
-    char tmp  = 0;
-    char tmp1 = 0;
-     
-    for (i = 0; i < len; i=i+2)
-    {
-        tmp  = nbiot_chr2hex(p_buf[i]);       
-        tmp1 = nbiot_chr2hex(p_buf[i + 1]);      
-        p_buf[i / 2] = (tmp << 4)  |  tmp1;                    
-    } 
-    
-    p_buf[i / 2] = 0;      
-}
-
-
-//缓冲区当中每两个字节组成一个十六进制数，2个字节换算一个字节的十六进制数
-//hex:16进制数字,0~15;
-//返回值:字符
-void nbiot_buf2hex (char *p_buf , int len)
-{
-    int i = 0; 
-   
-    char tmp  = 0;
-    char tmp1 = 0;
-     
-    for (i = 0; i < len; i=i+2)
-    {
-        tmp = nbiot_chr2hex(p_buf[i]);       
-        tmp1 = nbiot_chr2hex(p_buf[i + 1]);      
-        p_buf[i / 2] = (tmp << 4)  |  tmp1;                    
-    } 
-    
-    p_buf[i / 2] = 0;      
-}
-
-
-//缓冲区当中每两个字节组成一个十六进制数，2个字节换算成1个字符
-//hex:16进制数字,0~15;
-//返回值:字符
-void nbiot_srcbuf2chr (char *src_buf, char *dest_buf, int len)
-{
-    int i = 0; 
-   
-    char tmp  = 0;
-    char tmp1 = 0;
-     
-    for (i = 0; i < len; i=i+2)
-    {
-        tmp  = nbiot_chr2hex(src_buf[i]);       
-        tmp1 = nbiot_chr2hex(src_buf[i + 1]);      
-        dest_buf[i / 2] = (tmp << 4)  |  tmp1;                    
-    } 
-    
-    dest_buf[i / 2] = 0;      
-}
-
-//缓冲区当中每两个字节组成一个十六进制数，2个字节换算一个字节的十六进制数
-//hex:16进制数字,0~15;
-//返回值:字符
-void nbiot_srcbuf2hex (char *src_buf ,char *dest_buf, int len)
-{
-    int i = 0; 
-   
-    char tmp  = 0;
-    char tmp1 = 0;
-     
-    for (i = 0; i < len; i=i+2)
-    {
-        tmp = nbiot_chr2hex(src_buf[i]);       
-        tmp1 = nbiot_chr2hex(src_buf[i + 1]);      
-        dest_buf[i / 2] = (tmp << 4)  |  tmp1;                    
-    } 
-    
-    dest_buf[i / 2] = 0;      
-}
 
 
 //nbiot at指令初始化
@@ -800,9 +659,6 @@ static int8_t at_cmd_result_parse (char *buf)
 {
     int8_t result = -1;
   
-//    NBIOT_DEBUG_INFO("respones buf%s\r\n",buf); 
-//  
-//    NBIOT_DEBUG_INFO("respones buf len %d \r\n", strlen(buf)); 
   
     //确认收到的数据是否为命令相应的参数(+) 
     char *p_colon = strchr(buf,'+');
@@ -812,7 +668,7 @@ static int8_t at_cmd_result_parse (char *buf)
        
     if(g_at_cmd.p_expectres == NULL)
     {
-        if (strstr(buf,"\r\nOK\r\n"))
+        if (strstr(buf,"OK"))
         {
             result = AT_CMD_RESULT_OK;
         }
@@ -834,7 +690,7 @@ static int8_t at_cmd_result_parse (char *buf)
     }
     else
     {
-        if (strstr(buf,"\r\nOK\r\n"))
+        if (strstr(buf,"OK"))
         {
             //与得到的期望值一致
             if(strstr(buf,g_at_cmd.p_expectres))
@@ -1349,10 +1205,7 @@ static uint8_t at_cmd_next (void)
                                         g_socket_info[0].socket_id,
                                         p_remote_port,                                         
                                         REMOTE_SERVER_IP);
-                                        
-//            NBIOT_DEBUG_INFO("tcpudp_cn_len = %d\r\n", tcpudp_cn_len);
-//                                        
-//            NBIOT_DEBUG_INFO("tcpudp_cn_buf = %s\r\n", buf);                            
+                                                                  
             
             //最大响应时间不详                                        
             nbiot_at_cmd_param_init(&g_at_cmd,AT_CSOCON, cmd_buf_temp, CMD_SET, 3000);
@@ -1863,9 +1716,7 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
           char *data_buf = g_socket_info[0].data_offest; 
           //复位状态标志
           nbiot_status_reset();      
-
-        //      NBIOT_DEBUG_INFO("data_buf = %s", data_buf);      
-               
+                  
           nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_TCPUDP_RECV,strlen(data_buf),data_buf);
           
         }

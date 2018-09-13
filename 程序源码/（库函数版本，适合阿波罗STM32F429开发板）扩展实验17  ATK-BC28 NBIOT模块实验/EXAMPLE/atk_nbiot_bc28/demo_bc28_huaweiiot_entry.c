@@ -1,11 +1,14 @@
-/**
- * Copyright (c) 广州市星翼电子科技有限公司 2014-2024
- * All rights reserved 
- *
- * @file   demo_nbiot_udp_entry.c
- * @brief  nbiot 电信iot平台对接数据实验
- *
- */
+/************************************************
+ Copyright (c) 广州市星翼电子科技有限公司 2014-2024
+ All rights reserved 
+ ALIENTEK 阿波罗STM32F429开发板 
+ NBIOT华为OC物联网IOT平台数据透传实现
+ 技术支持：www.openedv.com
+ 淘宝店铺：http://eboard.taobao.com 
+ 关注微信公众平台微信号："正点原子"，免费获取STM32资料。
+ 广州市星翼电子科技有限公司  
+ 作者：正点原子 @ALIENTEK
+************************************************/ 
 
 #include "atk_sys.h"
 #include "atk_led.h"
@@ -339,10 +342,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
         case NBIOT_APP_NCDP_SEND:
         {
             printf("NCDP send start\r\n");
-            
-            //创建完成NCDP客户端之后，需要根据当前网络的状态延时一段时间保证数据连接稳定
-            delay_ms(5000);        
-                   
+                                  
             nbiot_ncdp_send_hex(nbiot_handle, strlen("00143031323334353637383930313233343536373839"), "00143031323334353637383930313233343536373839", NBIOT_NCDP, NULL); 
                       
             *nbiot_app_status = NBIOT_END; 

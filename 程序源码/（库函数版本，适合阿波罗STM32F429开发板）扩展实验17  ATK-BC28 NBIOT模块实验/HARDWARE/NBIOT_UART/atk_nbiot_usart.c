@@ -15,19 +15,35 @@
 //All rights reserved
 //********************************************************************************
 
-//UART设备结构体
+/**
+  * @brief  UART设备结构体变量
+  */
 static uart_dev_t uart_dev;
 
-//创建一个uart ringbuff 的缓冲区      
+
+/**
+  * @brief  创建一个uart ringbuff 的缓冲区
+  */
 static atk_ring_buf_t g_uart_ring_buf;  
 
-//HAL库串口设备结构体
+/**
+  * @brief  HAL库串口设备结构体
+  */
 static UART_HandleTypeDef nbiot_uart;
 
-//函数提前声明
+/**
+  * @brief  函数提前声明
+  */
 static void __lpuart_rx_timeout_cb (void *p_arg);
 
-//注册串口事件回调函数
+
+/**
+  * @brief  注册串口事件回调函数
+  * @param  uart_handle : 指向串口设备句柄的指针.
+  * @param  cb          : 回调函数.
+  * @param  p_arg       : 回调函数参数
+  * @retval None
+  */
 void uart_event_registercb(uart_handle_t uart_handle, uart_cb cb, void *p_arg)
 {  
     if(cb != 0)
@@ -37,27 +53,49 @@ void uart_event_registercb(uart_handle_t uart_handle, uart_cb cb, void *p_arg)
     }
 }
 
-//设置串口事件
+
+/**
+  * @brief  设置串口事件
+  * @param  uart_handle : 指向串口设备句柄的指针.
+  * @param  uart_event  : 串口事件.
+  * @retval None
+  */
 void uart_event_set (uart_handle_t uart_handle, int uart_event)
 { 
     uart_handle->uart_event |= uart_event;   
 }
 
-//获取串口事件
+
+/**
+  * @brief  判断当前的串口事件是否发生
+  * @param  uart_handle : 指向串口设备句柄的指针.
+  * @param  uart_event  : 串口事件.
+  * @retval 0 没有串口事件发生  非0 当前串口事件已经发生
+  */
 int uart_event_get (uart_handle_t uart_handle, int uart_event)
 { 
     return (uart_handle->uart_event & uart_event); 
 }
 
-//清除串口事件
+
+/**
+  * @brief  清除串口事件
+  * @param  uart_handle : 指向串口设备句柄的指针.
+  * @param  uart_event  : 串口事件.
+  * @retval None
+  */
 void uart_event_clr (uart_handle_t uart_handle, int uart_event)
 { 
     uart_handle->uart_event &= ~uart_event;
 }
 
  /**
- * @brief  从UART接收缓存里读取指定长度的数据，并释放占用的空间
- */
+  * @brief  从UART接收缓存里读取指定长度的数据，并释放占用的空间
+  * @param  uart_handle : 指向串口设备句柄的指针.
+  * @param  data        : 数据缓冲区首地址.
+  * @param  len         : 读取数据的长度
+  * @retval 0 读取串口数据成功 -1 读取串口数据
+  */
 int uart_ring_buf_read(uart_handle_t uart_handle, uint8_t *data, int len)
 {
     int ret = 0;
@@ -67,17 +105,24 @@ int uart_ring_buf_read(uart_handle_t uart_handle, uint8_t *data, int len)
     return ret;
 }
 
+
  /**
- * @brief  获取串口环形缓冲区中有效数据的个数
- */
+  * @brief  获取串口环形缓冲区中有效数据的个数
+  * @param  uart_handle : 指向串口设备句柄的指针.
+  * @retval 缓冲区实际有效个数
+  */
 int uart_ring_buf_avail_len(uart_handle_t uart_handle)
 {
     return atk_ring_buf_avail_len(uart_handle->p_uart_ring_buff);
 }
 
  /**
- * @brief  写入uart接收缓存里读指定长度的数据，并占用的空间
- */
+  * @brief  写入uart接收缓存里指定长度的数据，并占用的空间
+  * @param  uart_handle : 指向串口设备句柄的指针.
+  * @param  data        : 数据缓冲区首地址.
+  * @param  len         : 写入数据的长度
+  * @retval 0 写入串口数据成功 -1 写入串口数据
+  */
 int uart_ring_buf_write(uart_handle_t uart_handle, uint8_t *data, int len)
 {
     int ret = 0;
@@ -87,9 +132,14 @@ int uart_ring_buf_write(uart_handle_t uart_handle, uint8_t *data, int len)
     return ret;
 }
 
-//UART底层初始化，时钟使能，引脚配置，中断配置
-//此函数会被HAL_UART_Init()调用
-//huart:串口句柄
+
+ /**
+  * @brief  UART底层初始化，时钟使能，引脚配置，中断配置
+  * @param  huart       :  HAL库串口设备结构体
+  * @param  data        :  数据缓冲区首地址.
+  * @param  len         :  写入数据的长度
+  * @retval None
+  */
 void HAL_USART3_MspInit(UART_HandleTypeDef *huart)
 {
     //GPIO端口设置
@@ -102,9 +152,9 @@ void HAL_USART3_MspInit(UART_HandleTypeDef *huart)
         /* GPIO Ports Clock Enable */
         __HAL_RCC_GPIOB_CLK_ENABLE();
        
-        GPIO_Initure.Pin=GPIO_PIN_10|GPIO_PIN_11;              //PB10、PB11
-        GPIO_Initure.Mode=GPIO_MODE_AF_PP;                      //复用推挽输出
-        GPIO_Initure.Pull=GPIO_PULLUP;                          //上拉
+        GPIO_Initure.Pin=GPIO_PIN_10|GPIO_PIN_11;                //PB10、PB11
+        GPIO_Initure.Mode=GPIO_MODE_AF_PP;                       //复用推挽输出
+        GPIO_Initure.Pull=GPIO_PULLUP;                           //上拉
         GPIO_Initure.Speed=GPIO_SPEED_FAST;                      //高速
         GPIO_Initure.Alternate=GPIO_AF7_USART3;                  //复用为USART3
         HAL_GPIO_Init(GPIOB,&GPIO_Initure);                      //初始化PB10,和PB11              
@@ -131,8 +181,12 @@ void _Error_Handler(char *file, int line)
 }
 
 
-//初始化IO USART3
-//bound:波特率
+
+/**
+ * @brief  串口初始化
+ * @param  bound : 波特率.
+ * @retval 串口设备句柄的指针
+ */
 uart_dev_t *atk_nbiot_uart_init (u32 bound)
 {      
     int err = 0;
@@ -156,7 +210,7 @@ uart_dev_t *atk_nbiot_uart_init (u32 bound)
     //初始接收超时，如果两个字符之间的接收时间超过10ms没有到来，可以认为接收完成
     atk_soft_timer_init(&uart_dev.uart_rx_timer, __lpuart_rx_timeout_cb, &uart_dev, 10, 0);     
     
-    //接收化接收环形缓冲区
+    //初始化接收环形缓冲区
     err = atk_ring_buf_init(&g_uart_ring_buf);
    
     //填充这个串口设备结构体    
@@ -199,6 +253,9 @@ uart_dev_t *atk_nbiot_uart_init (u32 bound)
     return  &uart_dev;   
 }
 
+ /**
+  * @brief  串口接收超时回调函数
+  */
 static void __lpuart_rx_timeout_cb (void *p_arg)
 {
     
@@ -251,6 +308,9 @@ static void __lpuart_rx_timeout_cb (void *p_arg)
 }
 
 
+ /**
+  * @brief  串口发送超时回调函数
+  */
 static void __lpuart_tx_timeout_cb (void *p_arg)
 {
     
@@ -277,8 +337,9 @@ static void __lpuart_tx_timeout_cb (void *p_arg)
 
 #ifdef UART_ANY_DATA_LEN_RECV  
 
-//串口1中断服务程序
-//注意,读取USARTx->SR能避免莫名其妙的错误  
+ /**
+  * @brief  串口中断处理函数
+  */
 void USART3_IRQHandler(void)                    
 { 
     
@@ -301,8 +362,8 @@ void USART3_IRQHandler(void)
     if ((__HAL_UART_GET_FLAG(&nbiot_uart, UART_FLAG_IDLE)!=RESET))  
     {        
         //如果是空闲中断一开始是使能的
-       if (__HAL_UART_GET_IT_SOURCE(&nbiot_uart, UART_IT_IDLE)!=RESET) 
-       {
+        if (__HAL_UART_GET_IT_SOURCE(&nbiot_uart, UART_IT_IDLE)!=RESET) 
+        {
            
            //接收在超时时间内正常完成，停止接收超时  
            atk_soft_timer_stop(&uart_dev.uart_rx_timer);
@@ -347,10 +408,10 @@ void USART3_IRQHandler(void)
                                                                                 
          
          
-       } 
+        } 
 
-            //清除ilde中断标记
-            __HAL_UART_CLEAR_IDLEFLAG(&nbiot_uart);     
+        //清除ilde中断标记
+        __HAL_UART_CLEAR_IDLEFLAG(&nbiot_uart);     
                             
     }
     
@@ -360,7 +421,7 @@ void USART3_IRQHandler(void)
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-    if(huart->Instance == USART3)//如果是串口1
+    if(huart->Instance == USART3)//如果是串口3
     {
        /* 发送在超时时间内正常完成，停止超时 */  
        atk_soft_timer_stop(&uart_dev.uart_tx_timer);
@@ -372,7 +433,9 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 #else 
 
-//该函数在数据接收完成时被调用
+ /**
+  * @brief 该函数在数据接收完成时被调用
+  */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if(huart->Instance==USART3)//如果是串口1
@@ -386,7 +449,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     }
 }
 
-//串口1中断服务程序
+ /**
+  * @brief 串口3中断服务程序
+  */
 void USART3_IRQHandler(void)                    
 {         
     HAL_UART_IRQHandler(&nbiot_uart);    //调用HAL库中断处理公用函数 
@@ -401,9 +466,15 @@ void USART3_IRQHandler(void)
     }    
 }
 #endif   //end if UART_ANY_DATA_LEN_RECV 
- 
 
-//轮询发送串口数据
+
+ /**
+  * @brief  轮询发送串口数据
+  * @param  uart_handle : 指向串口设备句柄的指针.
+  * @param  pData       : 数据缓冲区首地址.
+  * @param  size        : 发送数据的长度
+  * @retval 0 中断发送数据成功
+  */
 int uart_data_tx_poll(uart_handle_t uart_handle, uint8_t *pData,uint16_t size, uint32_t Timeout)
 {   
     int ret = 0;
@@ -453,7 +524,14 @@ int uart_data_tx_poll(uart_handle_t uart_handle, uint8_t *pData,uint16_t size, u
     return  ret;
 }
 
-//轮询接收串口数据
+
+ /**
+  * @brief  轮询接收串口数据（保留使用）
+  * @param  uart_handle : 指向串口设备句柄的指针.
+  * @param  pData       : 数据缓冲区首地址.
+  * @param  size        : 接收数据的长度
+  * @retval 0 接收数据成功
+  */
 int uart_data_rx_poll(uart_handle_t uart_handle, uint8_t *pData, uint16_t size, uint32_t Timeout)
 {
     int ret = 0;
@@ -492,9 +570,15 @@ int uart_data_rx_poll(uart_handle_t uart_handle, uint8_t *pData, uint16_t size, 
     
     return ret;
 }
+ 
 
-
-//中断接收串口数据
+ /**
+  * @brief  中断接收串口数据（保留使用）
+  * @param  uart_handle : 指向串口设备句柄的指针.
+  * @param  pData       : 数据缓冲区首地址.
+  * @param  size        : 接收数据的长度
+  * @retval 0 接收数据成功
+  */
 int uart_data_rx_int(uart_handle_t uart_handle, uint8_t *pData, uint16_t size, uint32_t Timeout)
 {
     int ret = 0;
@@ -518,7 +602,14 @@ int uart_data_rx_int(uart_handle_t uart_handle, uint8_t *pData, uint16_t size, u
 }
 
 
-//中断发送串口数据， 保留使用
+
+ /**
+  * @brief  中断发送串口数据， 保留使用
+  * @param  uart_handle : 指向串口设备句柄的指针.
+  * @param  pData       : 数据缓冲区首地址.
+  * @param  size        : 发送数据的长度
+  * @retval 0 中断发送数据成功
+  */
 int uart_data_tx_int(uart_handle_t uart_handle, uint8_t *pData, uint16_t size, uint32_t Timeout)
 {
     int ret = 0;
@@ -539,7 +630,11 @@ int uart_data_tx_int(uart_handle_t uart_handle, uint8_t *pData, uint16_t size, u
     return ret;
 }
 
-//轮询串口事件
+ /**
+  * @brief  串口事件轮询
+  * @param  uart_handle : 指向串口设备句柄的指针.
+  * @retval None
+  */
 void uart_event_poll(uart_handle_t uart_handle)
 { 
     //回调注册进来的串口事件处理函数 

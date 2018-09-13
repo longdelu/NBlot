@@ -1,10 +1,15 @@
-/**
- * Copyright (c) 广州市星翼电子科技有限公司 2014-2024
- * All rights reserved 
- * @file   demo_dht11_entry.c
- * @brief  温湿度传感器数据上传实验
- */
-  
+ /************************************************
+ Copyright (c) 广州市星翼电子科技有限公司 2014-2024
+ All rights reserved 
+ ALIENTEK 阿波罗STM32F429开发板 
+ NBIOT 温湿度传感器数据上传华为物联网IOT平台实验
+ 技术支持：www.openedv.com
+ 淘宝店铺：http://eboard.taobao.com 
+ 关注微信公众平台微信号："正点原子"，免费获取STM32资料。
+ 广州市星翼电子科技有限公司  
+ 作者：正点原子 @ALIENTEK
+************************************************/ 
+
 #include "atk_sys.h"
 #include "atk_led.h"
 #include "atk_delay.h"
@@ -18,7 +23,19 @@
 #include "atk_soft_timer.h"
 
 
+#define NBIOT_APP_DEBUG  
+#ifdef NBIOT_APP_DEBUG
+#define NBIOT_APP_DEBUG_INFO(...)    (int)printf(__VA_ARGS__)    
+#else
+#define NBIOT_APP_DEBUG_INFO(...)
+#endif
+
+
 static int nbiot_app_status = NBIOT_APP_NCONFIG;
+u8 temperature = 0; 
+u8 humidity    = 0; 
+u8 dht11_flag  = 0;
+
 
 //nbiot消息事件处理函数
 static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
@@ -30,23 +47,23 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
     switch(msg_id)
     {
         case NBIOT_MSG_CMD_NEXT:
-            printf("msg %s cmd error but next\r\n",msg);         ;        
+            NBIOT_APP_DEBUG_INFO("msg %s cmd error but next\r\n",msg);         ;        
             break;
         
         case NBIOT_MSG_CMD_RETRY:
-             printf("msg %s cmd error but try\r\n",msg);      
+             NBIOT_APP_DEBUG_INFO("msg %s cmd error but try\r\n",msg);      
              break;        
         
         case NBIOT_MSG_CMD_FAIL:
         
-            printf("msg %s cmd failed\r\n",msg);
+            NBIOT_APP_DEBUG_INFO("msg %s cmd failed\r\n",msg);
           
             break;                     
         
         
         case NBIOT_MSG_INIT:
         {
-            printf("init=%s\r\n",msg);
+            NBIOT_APP_DEBUG_INFO("init=%s\r\n",msg);
           
             //连接iot平台时必须先得到imei码
             nbiot_app_status = NBIOT_INFO; 
@@ -58,7 +75,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         case NBIOT_MSG_RESET:        //NB复位完成消息
         {
             nbiot_app_status =  NBIOT_APP_INIT;
-            printf("reboot=%s\r\n",msg); 
+            NBIOT_APP_DEBUG_INFO("reboot=%s\r\n",msg); 
             break;  
         }
           
@@ -67,35 +84,33 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         case NBIOT_MSG_NCONFIG:      //自动入网设置完成消息 
         {
             nbiot_app_status =  NBIOT_APP_RESET;
-            printf("nconfig=%s\r\n",msg); 
+            NBIOT_APP_DEBUG_INFO("nconfig=%s\r\n",msg); 
             break;  
         }
-
-                 
-
+               
         case NBIOT_MSG_IMSI:
         {
-            printf("\r\nIMSI=%s\r\n",msg); 
+            NBIOT_APP_DEBUG_INFO("\r\nIMSI=%s\r\n",msg); 
             break;
         }
                                     
         case NBIOT_MSG_REG:
         {
-            printf("\r\nmsg reg status=%s\r\n", msg);
+            NBIOT_APP_DEBUG_INFO("\r\nmsg reg status=%s\r\n", msg);
             break;
                                                      
         }
                
         case NBIOT_MSG_SIGNAL:
         {         
-            printf("rssi=%sdbm\r\n",msg);  
+            NBIOT_APP_DEBUG_INFO("rssi=%sdbm\r\n",msg);  
             break;
         }
                              
         case NBIOT_MSG_INFO:
           
         {
-            printf("info get=%s\r\n",msg);
+            NBIOT_APP_DEBUG_INFO("info get=%s\r\n",msg);
             //跳到创建NCDP客户端
             nbiot_app_status = NBIOT_NCDP_SERVER;  
             break;                   
@@ -103,13 +118,13 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
 
        
         case NBIOT_MSG_BAND:
-            printf("\r\nFreq=%s\r\n",msg);
+            NBIOT_APP_DEBUG_INFO("\r\nFreq=%s\r\n",msg);
             break;
         
         //产商ID
         case NBIOT_MSG_MID:
         {
-            printf("\r\nmid=%s\r\n",msg);
+            NBIOT_APP_DEBUG_INFO("\r\nmid=%s\r\n",msg);
             break;
         }
         
@@ -117,7 +132,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         //模块型号
         case NBIOT_MSG_MMODEL:
         {
-            printf("\r\nmmodel=%s\r\n",msg); 
+            NBIOT_APP_DEBUG_INFO("\r\nmmodel=%s\r\n",msg); 
             break; 
         }
                
@@ -125,21 +140,21 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         //软件版本号
         case NBIOT_MSG_MREV:
         {
-            printf("\r\nmrev=%s\r\n",msg);
+            NBIOT_APP_DEBUG_INFO("\r\nmrev=%s\r\n",msg);
             break;
         }
                 
         
         case NBIOT_MSG_IMEI:
         {
-            printf("\r\nimei=%s\r\n",msg); 
+            NBIOT_APP_DEBUG_INFO("\r\nimei=%s\r\n",msg); 
             break;
         }
         
         
         case NBIOT_MSG_TCPUDP_CREATE:
         {
-            printf("\r\n%s msg create and connect\r\n",msg);
+            NBIOT_APP_DEBUG_INFO("\r\n%s msg create and connect\r\n",msg);
             nbiot_app_status = NBIOT_TCPUDP_SEND;
             break;
         }
@@ -147,20 +162,20 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         
         case NBIOT_MSG_TCPUDP_CLOSE:
         {
-            printf("\r\nmsg tcpudp close=%s\r\n",msg);
+            NBIOT_APP_DEBUG_INFO("\r\nmsg tcpudp close=%s\r\n",msg);
             break;
         }
                 
         case NBIOT_MSG_TCPUDP_SEND:
         {
-            printf("\r\nmsg tcp udp_send=%s\r\n",msg);
+            NBIOT_APP_DEBUG_INFO("\r\nmsg tcp udp_send=%s\r\n",msg);
             break;
           
         }
               
         case NBIOT_MSG_TCPUDP_RECV:
         {
-            printf("\r\nmsg udp recv=%s\r\n",msg);
+            NBIOT_APP_DEBUG_INFO("\r\nmsg udp recv=%s\r\n",msg);
           
             nbiot_app_status = NBIOT_TCPUDP_CL;
             break;
@@ -168,21 +183,23 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         
                           
         case NBIOT_MSG_NCDP_SERVER:
-             printf("\r\nmsg ncdp =%s\r\n",msg);
+        {
+            NBIOT_APP_DEBUG_INFO("\r\nmsg ncdp =%s\r\n",msg);
           
             break;
+        }
      
         
         case NBIOT_MSG_NCDP_SEND:
         {
-            printf("\r\nmsg ncdp sent=%s\r\n",msg);  
+            NBIOT_APP_DEBUG_INFO("\r\nmsg ncdp sent=%s\r\n",msg);  
             break;
           
         }
         
         case NBIOT_MSG_NCDP_RECV:
         {
-            printf("\r\n msg ncdp recv=%s\r\n",msg);
+            NBIOT_APP_DEBUG_INFO("\r\n msg ncdp recv=%s\r\n",msg);
           
                         
             break;
@@ -190,30 +207,30 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
               
         case NBIOT_MSG_NCDP_STATUS:
         {
-            printf("\r\nmsg ncdp status=%d\r\n",*msg);
+            NBIOT_APP_DEBUG_INFO("\r\nmsg ncdp status=%d\r\n",*msg);
                  
             switch(*msg) 
             {
                 case 0:
 
-                    printf("Register completed\r\n");
+                    NBIOT_APP_DEBUG_INFO("Register completed\r\n");
 
                     break;                
 
                 case 1:
 
-                    printf("Deregister completed\r\n");
+                    NBIOT_APP_DEBUG_INFO("Deregister completed\r\n");
 
                     break;
 
                 case 2:
 
-                    printf("Registration status updated\r\n");
+                    NBIOT_APP_DEBUG_INFO("Registration status updated\r\n");
 
                     break;
                   
                 case 3:
-                    printf("Object 19/0/0 observe completed\r\n");
+                    NBIOT_APP_DEBUG_INFO("Object 19/0/0 observe completed\r\n");
 
 
                     //此时才算注册成功，发送数据
@@ -222,24 +239,24 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
                     break; 
 
                 case 4:
-                    printf("Bootstrap completed\r\n");
+                    NBIOT_APP_DEBUG_INFO("Bootstrap completed\r\n");
                     break; 
 
                 case 5:
-                    printf("5/0/3 resource observe completed\r\n");
+                    NBIOT_APP_DEBUG_INFO("5/0/3 resource observe completed\r\n");
                     break;
 
                 case 6:
-                    printf("Notify the device to receive update package URL\r\n");
+                    NBIOT_APP_DEBUG_INFO("Notify the device to receive update package URL\r\n");
 
                     break; 
 
                 case 7:
-                    printf("Notify the device download has been completed\r\n");
+                    NBIOT_APP_DEBUG_INFO("Notify the device download has been completed\r\n");
                     break; 
 
                 case 8:
-                    printf("Cancel object 19/0/0 observe\r\n");
+                    NBIOT_APP_DEBUG_INFO("Cancel object 19/0/0 observe\r\n");
                     break;              
 
                 default:
@@ -252,7 +269,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
                       
         case NBIOT_MSG_NCDP_CLOSE:
         {
-            printf("\r\nmsg ncdp close=%s\r\n",msg);
+            NBIOT_APP_DEBUG_INFO("\r\nmsg ncdp close=%s\r\n",msg);
         }
         break; 
         
@@ -277,7 +294,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                                       
         case NBIOT_APP_INIT:
         {
-            printf("atk_nbiot init start\r\n");
+            NBIOT_APP_DEBUG_INFO("atk_nbiot init start\r\n");
                     
             nbiot_init(nbiot_handle);        
 
@@ -287,7 +304,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                     
         case NBIOT_APP_RESET:
         {
-            printf("atk_nbiot reboot start\r\n");
+            NBIOT_APP_DEBUG_INFO("atk_nbiot reboot start\r\n");
                     
             nbiot_reboot(nbiot_handle);        
 
@@ -297,7 +314,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
           
         case NBIOT_APP_NCONFIG:
         {
-            printf("atk_nbiot auto reg start\r\n");
+            NBIOT_APP_DEBUG_INFO("atk_nbiot auto reg start\r\n");
                     
             nbiot_nconfig(nbiot_handle, 0);        
 
@@ -307,7 +324,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                      
         case NBIOT_APP_INFO:
         {
-             printf("atk_nbiot get signal start\r\n");
+             NBIOT_APP_DEBUG_INFO("atk_nbiot get signal start\r\n");
                     
              nbiot_info_get(nbiot_handle);
 
@@ -318,7 +335,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                                    
         case NBIOT_APP_SIGNAL:
         {
-            printf("atk_nbiot rssi(db) start\r\n");
+            NBIOT_APP_DEBUG_INFO("atk_nbiot rssi(db) start\r\n");
             
             nbiot_signal_get(nbiot_handle);
             
@@ -328,7 +345,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                          
         case NBIOT_APP_NCDP_SERVER:
         {
-            printf("NCDP server set start\r\n");
+            NBIOT_APP_DEBUG_INFO("NCDP server set start\r\n");
             
             nbiot_ncdp_update(nbiot_handle, NBIOT_NCDP); 
 
@@ -339,12 +356,29 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                        
         case NBIOT_APP_NCDP_SEND:
         {
-            printf("NCDP send start\r\n");
+            char dht11_src_buf[10] = {0};
+            char dht11_dest_buf[20] = {0};  
+
             
-            //创建完成NCDP客户端之后，需要根据当前网络的状态延时一段时间保证数据连接稳定
-            delay_ms(5000);        
-                   
-            nbiot_ncdp_send_hex(nbiot_handle, strlen("00143031323334353637383930313233343536373839"), "00143031323334353637383930313233343536373839", NBIOT_NCDP, NULL); 
+                                            
+            NBIOT_APP_DEBUG_INFO("NCDP send start\r\n");
+                                                             
+            PCF8574_ReadBit(BEEP_IO);                   //读取一次PCF8574的任意一个IO，使其释放掉PB12引脚，
+                                                        //否则读取DHT11可能会出问题            
+            DHT11_Read_Data(&temperature, &humidity);    //读取温湿度值 
+                               
+            snprintf(dht11_src_buf,
+                     sizeof(dht11_src_buf) - 1,
+                     "%d%d",
+                     temperature, humidity); 
+                                
+            
+            //转换数据格式                     
+            nbiot_srcbuf2hexchrbuf(dht11_src_buf, dht11_dest_buf, strlen(dht11_src_buf)); 
+                                        
+                     
+            //发送当前温湿度到iot平台            
+            nbiot_ncdp_send_hex(nbiot_handle, strlen(dht11_dest_buf), dht11_dest_buf, NBIOT_NCDP, NULL);                      
                       
             *nbiot_app_status = NBIOT_END; 
             
@@ -353,14 +387,14 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                     
         case NBIOT_APP_NCDP_RECV:
         {
-            printf("NCDP recv start\r\n");
+            NBIOT_APP_DEBUG_INFO("NCDP recv start\r\n");
             *nbiot_app_status = NBIOT_END;
             break;          
         }
           
         case NBIOT_APP_NCDP_CL:
         {
-            printf("NCDP close start\r\n");
+            NBIOT_APP_DEBUG_INFO("NCDP close start\r\n");
             //创建完成NCDP客户端之后，需要根据当前网络的状态延时一段时间保证数据连接稳定
             delay_ms(2000);
               
@@ -385,20 +419,20 @@ static void key_event_handle(u32 key_event,void *p_arg)
     switch(key_event)
     {
         case KEY0_PRES://KEY0按下,再一次发送数据
-            printf("key0 press\r\n");
+            NBIOT_APP_DEBUG_INFO("key0 press\r\n");
             nbiot_app_status = NBIOT_NCDP_SEND;
             break;
         
         case KEY1_PRES://KEY1按下,写入sector
-            printf("key1 press\r\n");
+            NBIOT_APP_DEBUG_INFO("key1 press\r\n");
             nbiot_app_status = NBIOT_NCDP_CL;
             break;
         case KEY2_PRES://KEY2按下,恢复sector的数据
-            printf("key2 press\r\n");
+            NBIOT_APP_DEBUG_INFO("key2 press\r\n");
             break;
         
         case WKUP_PRES://KEY2按下,恢复sector的数据
-            printf("WKUP_PRES press\r\n");
+            NBIOT_APP_DEBUG_INFO("WKUP_PRES press\r\n");
             break;        
         
     }   
@@ -406,9 +440,6 @@ static void key_event_handle(u32 key_event,void *p_arg)
 }
 
 
-u8 temperature = 0; 
-u8 humidity    = 0; 
-u8 dht11_flag  = 0;
 
 /**
   * @brief  定时回调更新dht11采集到的温湿度的值.
@@ -445,13 +476,14 @@ void demo_dht11_entry(void)
     
     nbiot_handle = nbiot_dev_init(uart_handle);
      
-    nbiot_event_registercb(nbiot_handle, __nbiot_msg_cb_handler, nbiot_handle);    
+    nbiot_event_registercb(nbiot_handle, __nbiot_msg_cb_handler, nbiot_handle); 
     
+    PCF8574_Init();                 //初始化PCF8574
     POINT_COLOR=RED;
     LCD_ShowString(30,50,200,16,16,"Apollo STM32F4/F7"); 
-    LCD_ShowString(30,70,200,16,16,"DHT11 TEST");    
+    LCD_ShowString(30,70,200,16,16,"NBIOT DHT11 ");    
     LCD_ShowString(30,90,200,16,16,"ATOM@ALIENTEK");
-    LCD_ShowString(30,110,200,16,16,"2016/1/16");    
+    LCD_ShowString(30,110,200,16,16,"2018/9/13");    
     PCF8574_ReadBit(BEEP_IO);       //由于DHT11和PCF8574的中断引脚共用一个IO，
                                     //所以在初始化DHT11之前要先读取一次PCF8574的任意一个IO，
                                     //使其释放掉中断引脚所占用的IO(PB12引脚),否则初始化DS18B20会出问题    

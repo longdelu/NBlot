@@ -11,9 +11,13 @@
 //Copyright(C) 广州市星翼电子科技有限公司 2014-2024
 //All rights reserved                                      
 //////////////////////////////////////////////////////////////////////////////////     
+          
 
-//初始化PB0,PB1为输出.并使能这两个口的时钟            
-//LED IO初始化
+/**
+  * @brief  led初始化
+  * @param  None
+  * @retval None
+  */
 void led_init(void)
 {
     GPIO_InitTypeDef GPIO_Initure;

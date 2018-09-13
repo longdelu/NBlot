@@ -22,6 +22,11 @@
 #define LED0_Toggle (HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_1))
 #define LED1_Toggle (HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0))
 
+/**
+  * @brief  led≥ı ºªØ
+  * @param  None
+  * @retval None
+  */
 void led_init(void);
 
 #endif

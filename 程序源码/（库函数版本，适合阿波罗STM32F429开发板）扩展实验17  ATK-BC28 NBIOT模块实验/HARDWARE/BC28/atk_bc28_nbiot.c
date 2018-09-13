@@ -23,7 +23,11 @@
 
 static char cmd_buf_temp[NBIOT_RECV_BUF_MAX_LEN] = {0};
 
-//NB模块初始化及完成网络注册
+/**
+  * @brief  设置nbiot模块初始化及完成网络注册
+  * @param  nbiot_handle   : 指向nbiot设备句柄的指针.
+  * @retval NBIOT_OK 设置初始化成功  NBIOT_ERROR 设置初始化失败
+  */
 int nbiot_init (nbiot_handle_t nbiot_handle)
 {    
     if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
@@ -43,7 +47,11 @@ int nbiot_init (nbiot_handle_t nbiot_handle)
 }
 
 
-//重启nbiot模块
+/**
+  * @brief 设置重启nbiot模块
+  * @param  nbiot_handle   : 指向nbiot设备句柄的指针.
+  * @retval NBIOT_OK 设置重启成功  NBIOT_ERROR 设置重启失败
+  */
 int nbiot_reboot(nbiot_handle_t nbiot_handle)
 {
 
@@ -64,7 +72,12 @@ int nbiot_reboot(nbiot_handle_t nbiot_handle)
     return NBIOT_OK;
 }
 
-//使能/禁能自动入网
+/**
+  * @brief 使能/禁能nbiot模块自动入网
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @param  auto_flag     : 0 禁能自动入网 1 使能自动入网  
+  * @retval NBIOT_OK 设置成功  NBIOT_ERROR 设置失败
+  */
 int nbiot_nconfig(nbiot_handle_t nbiot_handle, uint8_t auto_flag)
 {
     char *p_auto_nconfig = NULL;
@@ -98,7 +111,11 @@ int nbiot_nconfig(nbiot_handle_t nbiot_handle, uint8_t auto_flag)
 
 
 
-//获取NB模块的信息
+/**
+  * @brief 获取nbiot模块的信息
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @retval NBIOT_OK 设置成功  NBIOT_ERROR 设置失败
+  */
 int nbiot_info_get(nbiot_handle_t nbiot_handle)
 {
 
@@ -119,7 +136,11 @@ int nbiot_info_get(nbiot_handle_t nbiot_handle)
 }
 
 
-//获取NB模块的信号质量
+/**
+  * @brief 获取nbiot模块的信号质量
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @retval NBIOT_OK 设置成功  NBIOT_ERROR 设置失败
+  */
 int nbiot_signal_get(nbiot_handle_t nbiot_handle)
 {
 
@@ -139,407 +160,12 @@ int nbiot_signal_get(nbiot_handle_t nbiot_handle)
     return NBIOT_OK;
 }
 
-//创建tcpudp 
-int nbiot_tcpudp_create(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
-{
-    char *p_tcpudp = NULL;
-  
-    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
-    {
-        return NBIOT_ERROR;
-    }
-    
-    if (type == NBIOT_TCP)
-    {
-        nbiot_handle->p_socket_info[0].socket_type = NBIOT_TCP;
-        p_tcpudp = "1,1,1";
-    }
-    
-    else if(type == NBIOT_UDP)
-    {   
-        nbiot_handle->p_socket_info[0].socket_type = NBIOT_UDP;
-        p_tcpudp = "1,2,1";
-    } 
-    else 
-    {
-       return NBIOT_NOTSUPPORT;
-      
-    }
-            
-    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CSOC, p_tcpudp, CMD_SET, 3000);
-    
-    //进入创建TCP/UDP状态
-    nbiot_handle->p_sm_status->main_status = NBIOT_TCPUDP_CR;
-    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_TCPUDP_CR;
-
-    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
-    
-    return NBIOT_OK;
-}
-
-
-//关闭tcpudp
-int nbiot_tcpudp_close(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
-{
-
-    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
-    {
-        return NBIOT_ERROR;
-    }
-    
-       
-    (void)type;
-    
-    //不能使用栈上的内存分配数据，要不然重发命令数据时会出错   
-    memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));
-       
-    int16_t msg_len = snprintf(cmd_buf_temp,
-                                sizeof(cmd_buf_temp),
-                                "%d",
-                                nbiot_handle->p_socket_info[0].socket_id);
-                                
-    if (msg_len < 0) {
-      
-        return NBIOT_ERROR;
-    }
-                                                   
-    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CSOCL, cmd_buf_temp, CMD_SET, 3000);
-
-    //进入tcp/udp关闭状态
-    nbiot_handle->p_sm_status->main_status = NBIOT_TCPUDP_CL;
-    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_TCPUDP_CL;
-
-    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
-        
-    return NBIOT_OK;
-}
-
-
-//以hex数据格式发送数据,必须是偶数个长度
-int nbiot_tcpudp_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type)
-{
-  
-    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
-    {
-        return NBIOT_ERROR;
-    }
-  
-    //判断SOCKET ID是否正确
-    if (nbiot_handle->p_socket_info[0].socket_id  < 0 || nbiot_handle->p_socket_info[0].socket_id > 5 )
-    {
-        return NBIOT_ERROR;
-    }
-  
-    //最大数据长度为有效数据加上头部
-    int16_t str_len = (NBIOT_SEND_BUF_MAX_LEN - 20) ;
-
-    //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
-    memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));
-
-
-    uint16_t msg_len = snprintf(cmd_buf_temp,
-                                str_len,
-                                "%d,%d,",
-                                 nbiot_handle->p_socket_info[0].socket_id, 
-                                len);
-                                
-    for(uint16_t i = 0 ; i < len ; i++)
-    {
-        sprintf(&cmd_buf_temp[msg_len + (i << 1)],"%02X",(uint8_t)msg[i]);
-    }                             
- 
-    //构建TCP/UDP数据发送命令，最大响应时间不详
-    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CSOSEND, cmd_buf_temp, CMD_SET, 3000);
-    
-    //进入tcp/udp数据发送状态
-    nbiot_handle->p_sm_status->main_status = NBIOT_TCPUDP_SEND;
-    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_TCPUDP_SEND;
-
-    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
-
-    return NBIOT_OK;
-}
-
-//以字符串格式发送数据
-int nbiot_tcpudp_send_str(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type)
-{
-  
-    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
-    {
-        return NBIOT_ERROR;
-    }
-  
-    //判断SOCKET ID是否正确
-    if (nbiot_handle->p_socket_info[0].socket_id  < 0 || nbiot_handle->p_socket_info[0].socket_id > 5 )
-    {
-        return NBIOT_ERROR;
-    }
-      
-
-    //最大数据长度为有效数据加上头部
-    int16_t str_len = (NBIOT_SEND_BUF_MAX_LEN - 20) ;
-
-    //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
-    memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));
-    
-
-    int16_t msg_len = snprintf(cmd_buf_temp,
-                               str_len,
-                               "%d,%d,%s%s%s",
-                                nbiot_handle->p_socket_info[0].socket_id,
-                                0,
-                                "\"",                                  
-                                msg,
-                                "\"");
-    
-    if (msg_len < 0) {
-      
-        return NBIOT_ERROR;
-    }
-    
-                                                          
-    //构建TCP/UDP数据发送命令，最大响应时间不详
-    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CSOSEND, cmd_buf_temp, CMD_SET, 3000);
-    
-    //进入tcp/udp数据发送状态
-    nbiot_handle->p_sm_status->main_status = NBIOT_TCPUDP_SEND;
-    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_TCPUDP_SEND;
-
-    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
-    
-    return NBIOT_OK;
-}   
-
-//创建coap服务器 
-int nbiot_coap_server_create(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
-{  
-    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
-    {
-        return NBIOT_ERROR;
-    }
-    
-    if (type != NBIOT_COAP)
-    {
-        return NBIOT_NOTSUPPORT;
-    }
-    
-    nbiot_handle->p_connect_status->connect_type = NBIOT_COAP;  
-    nbiot_handle->p_connect_status->cid          = 1;
-    nbiot_handle->p_connect_status->connect_id   = 1;
-    
-    
-    //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
-    memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));    
-               
-                       
-    //这个函数的返回值为想要   格式化写入的长度，并会在字符串结束后面自动加入结束字符
-    uint16_t coap_cn_len = snprintf(cmd_buf_temp,
-                                    sizeof(cmd_buf_temp) -1,"%s,%s,%d",                                                                                             
-                                    REMOTE_SERVER_IP,
-                                    REMOTE_COAP_PORT,
-                                    nbiot_handle->p_connect_status->cid);
-                                        
-                     
-            
-    //最大响应时间不详                                              
-    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CCOAPSTA, cmd_buf_temp, CMD_SET, 3000);
-    nbiot_handle->p_nbiot_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT;                                
-    
-    //进入设置COAP服务器状态
-    nbiot_handle->p_sm_status->main_status = NBIOT_CoAP_SEVER;
-    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CoAP_SEVER;
-
-    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
-    
-    return NBIOT_OK;
-}
-
-
-//创建coap客户端
-int nbiot_coap_client_create(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
-{
-     
-    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
-    {
-        return NBIOT_ERROR;
-    }
-    
-    if (type != NBIOT_COAP)
-    {
-        return NBIOT_NOTSUPPORT;
-    }
-    
-    nbiot_handle->p_connect_status->connect_type = NBIOT_COAP;
-    nbiot_handle->p_connect_status->cid          = 1;  
-
-    //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
-    memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));       
-                
-    //这个函数的返回值为想要格式化写入的长度，并会在字符串结束后面自动加入结束字符
-    uint16_t coap_cn_len = snprintf(cmd_buf_temp,
-                                    sizeof(cmd_buf_temp) -1,"%s,%s,%d",                                                                                             
-                                    REMOTE_SERVER_IP,
-                                    REMOTE_COAP_PORT,
-                                    nbiot_handle->p_connect_status->cid);
-                                                                       
-    //最大响应时间不详                                              
-    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CCOAPNEW, cmd_buf_temp, CMD_SET, 3000);
-    nbiot_handle->p_nbiot_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
-                                       
-    //进入创建客户端状态
-    nbiot_handle->p_sm_status->main_status = NBIOT_CoAP_CLIENT;
-    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CoAP_CLIENT;
-
-    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
-    
-    return NBIOT_OK;
-}
-
-
-//关闭coap
-int nbiot_coap_close(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
-{
-  
-    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
-    {
-        return NBIOT_ERROR;
-    }
-           
-    if (type != NBIOT_COAP)
-    {
-        return NBIOT_NOTSUPPORT;
-    }
-    
-    nbiot_handle->p_connect_status->connect_type = NBIOT_COAP;  
-
-    //通过客户端id来销毁COAP链接
-    cmd_buf_temp[0] = nbiot_handle->p_connect_status->connect_id + '0'; 
-    cmd_buf_temp[1] = 0;
-    cmd_buf_temp[2] = 0;     
-                                                                                   
-    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CCOAPDEL, cmd_buf_temp, CMD_SET, 3000);
-
-    //进入coap关闭状态,最大响应时间不详
-    nbiot_handle->p_sm_status->main_status = NBIOT_CoAP_CL;
-    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CoAP_CL;
-
-    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
-    
-    
-    return NBIOT_OK;
-}
-
-
-//以hex数据格式发送coap协议数据,必须是偶数个长度
-int nbiot_coap_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type)
-{ 
-    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
-    {
-        return NBIOT_ERROR;
-    }
-  
-    //判断coap id是否正确
-    if (nbiot_handle->p_connect_status->connect_id  < 0)
-    {
-        return NBIOT_ERROR;
-    }
-    
-    if (type != NBIOT_COAP)
-    {
-        return NBIOT_NOTSUPPORT;
-    }    
-  
-    //最大数据长度为有效数据加上头部
-    int16_t str_len = (NBIOT_SEND_BUF_MAX_LEN - 24) ;
-
-    //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
-    memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));    
-
-
-    uint16_t msg_len = snprintf(cmd_buf_temp,
-                                str_len,
-                                "%d,%d,",
-                                 nbiot_handle->p_connect_status->connect_id, 
-                                len);
-    
-    cmd_buf_temp[msg_len] = '\"';
-    
-    
-    
-    for(uint16_t i = 0 ; i < len ; i++)
-    {
-        //表示一个字符用十六进制表示 
-        sprintf(&cmd_buf_temp[msg_len + 1 + (i << 1)],"%02X",(uint8_t)msg[i]);
-    }
-
-    cmd_buf_temp[msg_len + 1 + (len << 1)] = '\"';    
- 
-    //构建coap数据发送命令，最大响应时间不详
-    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CCOAPSEND, cmd_buf_temp, CMD_SET, 3000);
-    
-    //进入coap数据发送状态
-    nbiot_handle->p_sm_status->main_status = NBIOT_CoAP_SEND;
-    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CoAP_SEND;
-
-    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
-
-    return NBIOT_OK;
-}
-
-//以字符串格式发送数据coap协议数据
-int nbiot_coap_send_str(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type)
-{ 
-    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
-    {
-        return NBIOT_ERROR;
-    }
-  
-    //判断coap id是否正确
-    if (nbiot_handle->p_connect_status->connect_id  < 0)
-    {
-        return NBIOT_ERROR;
-    }
-    
-    if (type != NBIOT_COAP)
-    {
-        return NBIOT_NOTSUPPORT;
-    } 
-      
-    //最大数据长度为有效数据加上头部
-    int16_t str_len = (NBIOT_SEND_BUF_MAX_LEN - 24) ;
-
-
-    //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
-    memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));   
-
-    int16_t msg_len = snprintf(cmd_buf_temp,
-                               str_len,
-                               "%d,%d,%s%s%s",
-                                nbiot_handle->p_connect_status->connect_id ,
-                                len,
-                                "\"",                                  
-                                msg,
-                                "\"");
-    
-    if (msg_len < 0) {
-      
-        return NBIOT_ERROR;
-    }
-    
-                                                          
-    //构建coap数据发送命令，最大响应时间不详
-    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CCOAPSEND, cmd_buf_temp, CMD_SET, 3000);
-    
-    //进入coap数据发送状态
-    nbiot_handle->p_sm_status->main_status = NBIOT_CoAP_SEND;
-    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CoAP_SEND;
-
-    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
-         
-    return NBIOT_OK;
-}
-
-//更新cdp服务器
+/**
+  * @brief 更新ncdp服务器
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @param  type          : 连接类型，值仅为枚举当中的值
+  * @retval NBIOT_OK 设置成功  NBIOT_ERROR 设置失败  
+  */
 int nbiot_ncdp_update(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
 {     
     if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
@@ -578,7 +204,12 @@ int nbiot_ncdp_update(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
 }
 
 
-//关闭ncdp
+/**
+  * @brief 关闭ncdp
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @param  type          : 连接类型，值仅为枚举当中的值
+  * @retval NBIOT_OK 设置成功  NBIOT_ERROR 设置失败  
+  */
 int nbiot_ncdp_close(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
 {
   
@@ -603,11 +234,20 @@ int nbiot_ncdp_close(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
     return NBIOT_OK;
 }
 
-//以hex数据格式发送ncdp协议数据,必须是偶数个长度
+/**
+  * @brief 以hex格式字符串发送ncdp协议数据,数据有效长度必须是偶数个大小
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @param  type          : 连接类型，值仅为枚举当中的值
+  * @param  mode          : 一般设为为NULL即可
+  * @retval NBIOT_OK 设置成功  NBIOT_ERROR 设置失败  
+  */
 int nbiot_ncdp_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type, char *mode)
 { 
     
     int16_t msg_len = 0;
+    char buf_head[3] = {0};  
+    
+    char buf_head_tmp[5] = {0};    
     
     char *p_at_cmd = NULL;
     
@@ -628,14 +268,21 @@ int nbiot_ncdp_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_c
     //不能使用栈上的内存分配数据，要不然重发命令因栈上的内存数据释放掉时会出错   
     memset(cmd_buf_temp, 0, sizeof(cmd_buf_temp));
     
+    buf_head[1] =  (strlen(msg) / 2) % 256;
+    buf_head[0] =  (strlen(msg) / 2) / 256;
     
+    //转换数据格式                     
+    nbiot_srcbuf2hexchrbuf(buf_head, buf_head_tmp, 2); 
+    
+           
     if (mode == NULL) 
     {
 
         msg_len = snprintf(cmd_buf_temp,
                                str_len,
-                               "%d,%s",
-                               (strlen(msg) / 2),                                                  
+                               "%d,%s%s",
+                               (strlen(msg) / 2 + 2),
+                                buf_head_tmp,        
                                 msg);
         
         p_at_cmd = AT_QLWULDATA;
@@ -645,8 +292,9 @@ int nbiot_ncdp_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_c
     {
         msg_len = snprintf(cmd_buf_temp,
                                str_len,
-                               "%d,%s,%s",
-                               (strlen(msg) / 2),                                                  
+                               "%d,%s%s,%s",
+                               (strlen(msg) / 2), 
+                                buf_head_tmp,
                                 msg,
                                 mode); 
 
@@ -670,6 +318,135 @@ int nbiot_ncdp_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_c
     nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
          
     return NBIOT_OK;
+}
+
+/**
+  * @brief 将1个字符转换为10进制数字
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @param  chr           : 字符,0~9/A~F/a~F
+  * @retval chr对应的10进制数值  
+  */
+u8 nbiot_chr2hex (u8 chr)
+{
+    if(chr>='0'&&chr<='9')
+    {
+      return chr - '0';
+    }
+    else if(chr>='A'&&chr<='F')
+    {
+      return (chr-'A'+10);
+    }
+    else if(chr>='a'&&chr<='f')
+    {
+      return (chr-'a'+10); 
+    }
+    else
+    {     
+      return 0;
+    }                
+}
+
+/**
+  * @brief 将1个16进制数字转换为字符
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @param  hex           : 十六进制数
+  * @retval 返回十六进制数对应的字符  
+  */
+u8 nbiot_hex2chr (u8 hex)
+{
+    if(hex<=9)
+    {
+      return hex+'0';
+    }
+    else if(hex>=10&&hex<=15)
+    {
+      return (hex-10+'A'); 
+    }   
+    else 
+    { 
+      return '0';
+    }              
+}
+
+
+
+/**
+  * @brief  缓冲区当中每两个字节重新组成一个一字节十六进制数(字符).
+  * @param  p_buf     : 源数据缓冲区首地址.
+  * @param  len       : 源缓冲区长度.
+  * @note  调用该接口会改变源缓冲区的长度
+  * @retval None
+  */
+void nbiot_buf2hex (char *p_buf , int len)
+{
+    int i = 0; 
+   
+    char tmp  = 0;
+    char tmp1 = 0;
+     
+    for (i = 0; i < len; i=i+2)
+    {
+        tmp = nbiot_chr2hex(p_buf[i]);       
+        tmp1 = nbiot_chr2hex(p_buf[i + 1]);      
+        p_buf[i / 2] = (tmp << 4)  |  tmp1;                    
+    } 
+    
+    p_buf[i / 2] = 0;      
+}
+
+
+/**
+  * @brief  缓冲区每1个字符重新组成为两个字符来显示
+  * @eg     例如字符'1'为十六进制0x31,则变成两个字符"31"来表示字符'1'
+  * @param  src_buf   : 源数据缓冲区首地址.
+  * @param  dest_buf  : 目标数据缓冲区首地址.
+  * @param  len       : 源缓冲区长度.
+  * @note   确保目的缓冲区长度足够容纳源缓冲区的数据,其长度至少为源缓冲区有效数据长度的2倍
+  * @retval None
+  */
+void nbiot_srcbuf2hexchrbuf (char *src_buf ,char *dest_buf, int len)
+{
+    int i = 0; 
+   
+    char tmp  = 0;
+    char tmp1 = 0;
+     
+    for (i = 0; i < len; i = i+1)
+    {
+        tmp = ((src_buf[i] >> 4) & 0x0f);      
+        tmp1 = ((src_buf[i]) & 0x0f);         
+        dest_buf[2 * i] = nbiot_hex2chr(tmp); 
+        dest_buf[2 * i + 1] = nbiot_hex2chr(tmp1);        
+    }
+    
+    dest_buf[2 * i + 2] = 0;      
+}
+
+
+/**
+  * @brief  缓冲区当中每两个字节重新组成一个一字节十六进制数(字符).
+  * @param  src_buf   : 源数据缓冲区首地址.
+  * @param  dest_buf  : 目标数据缓冲区首地址.
+  * @param  len       : 源缓冲区长度.
+  * @note   确保目的缓冲区长度足够容纳源缓冲区的数据,其长度至少为源缓冲区有效数据长度的一半
+  * @retval None
+  */
+void nbiot_srcbuf2hexbuf (char *src_buf ,char *dest_buf, int len)
+{
+    int i = 0; 
+   
+    char tmp  = 0;
+    char tmp1 = 0;
+    
+    for (i = 0; i < len; i=i+2)
+    {
+        tmp = nbiot_chr2hex(src_buf[i]);       
+        tmp1 = nbiot_chr2hex(src_buf[i + 1]);  
+       
+        dest_buf[i / 2] = (tmp << 4)  |  tmp1;                    
+    }     
+        
+    dest_buf[i / 2] = 0;      
 }
 
 

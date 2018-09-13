@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F429xx</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\OBJ;..\USER;..\HALLIB\STM32F4xx_HAL_Driver\Inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\LED;..\HARDWARE\KEY;..\HARDWARE\LCD;..\EXAMPLE\atk_nbiot_bc28;..\HARDWARE\NBIOT_UART;..\ATK_RING_BUF;..\EXAMPLE;..\ATK_SOFT_TIMER;..\HARDWARE\BC28;..\HARDWARE\TIMER;..\HARDWARE\PCF8574;..\HARDWARE\IIC;..\HARDWARE\DHT11</IncludePath>
+              <IncludePath>..\CORE;..\OBJ;..\USER;..\HALLIB\STM32F4xx_HAL_Driver\Inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\LED;..\HARDWARE\KEY;..\HARDWARE\LCD;..\EXAMPLE\atk_nbiot_bc28;..\HARDWARE\NBIOT_UART;..\ATK_RING_BUF;..\EXAMPLE;..\ATK_SOFT_TIMER;..\HARDWARE\BC28;..\HARDWARE\TIMER;..\HARDWARE\PCF8574;..\HARDWARE\IIC;..\HARDWARE\DHT11;..\HARDWARE\SDRAM</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -624,21 +624,11 @@
               <FileType>1</FileType>
               <FilePath>..\ATK_RING_BUF\atk_ring_buf.c</FilePath>
             </File>
-            <File>
-              <FileName>atk_ring_buf_demo_entry.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\ATK_RING_BUF\atk_ring_buf_demo_entry.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>EXAMPLE</GroupName>
           <Files>
-            <File>
-              <FileName>demo_led_entry.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\led\demo_led_entry.c</FilePath>
-            </File>
             <File>
               <FileName>demo_key_entry.c</FileName>
               <FileType>1</FileType>
@@ -670,11 +660,6 @@
               <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_info.c</FilePath>
             </File>
             <File>
-              <FileName>demo_entry.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\EXAMPLE\demo_entry.h</FilePath>
-            </File>
-            <File>
               <FileName>demo_dht11_entry.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\dht11\demo_dht11_entry.c</FilePath>
@@ -683,6 +668,26 @@
               <FileName>demo_soft_timer_entry.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\soft_timer\demo_soft_timer_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_ring_buf_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\ringbuf\demo_ring_buf_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_led_beep_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\led_beep\demo_led_beep_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_entry.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\EXAMPLE\demo_entry.h</FilePath>
+            </File>
+            <File>
+              <FileName>demo_rgb_led_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\led_beep\demo_rgb_led_entry.c</FilePath>
             </File>
           </Files>
         </Group>
