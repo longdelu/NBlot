@@ -81,9 +81,11 @@ void demo_uart_any_data_len_recv_entry(void)
 
     nbiot_handle = atk_nbiot_uart_init(9600);  
      
-    uart_event_registercb(nbiot_handle, uart_event_callback_handle, nbiot_handle);  
+    uart_event_registercb(nbiot_handle, uart_event_callback_handle, nbiot_handle); 
+    
 
-    uart_data_tx_poll(nbiot_handle, (uint8_t *)"nblot_uart rx tx test\r\n", sizeof("nblot_uart rx tx test\r\n") - 1, 20000);    
+    uart_data_tx_poll(nbiot_handle, (uint8_t *)"nblot_uart rx tx test\r\n", sizeof("nblot_uart rx tx test\r\n") - 1, 20000);   
+    
 
     while (1)
     {

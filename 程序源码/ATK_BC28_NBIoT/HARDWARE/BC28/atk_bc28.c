@@ -1444,7 +1444,7 @@ static uint8_t at_cmd_next (void)
           return FALSE;          
         
         }      
-         
+          
     }
    
      else if (g_nbiot_sm_status.main_status == NBIOT_NCDP_SEND) 

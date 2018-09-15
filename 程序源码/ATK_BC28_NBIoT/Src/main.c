@@ -79,7 +79,7 @@ int main(void)
         
 //    demo_uart_int_entry();
     
-//    demo_uart_any_data_len_recv_entry();
+    demo_uart_any_data_len_recv_entry();
     
 //    demo_nbiot_gprs_attach_entry();
     
@@ -93,7 +93,7 @@ int main(void)
 
 //    demo_nbiot_iot_entry();
 
-      demo_nbiot_huaweiiot_entry();
+//      demo_nbiot_huaweiiot_entry();
 
 //    demo_nbiot_easyiot_entry();    
     

@@ -635,11 +635,6 @@
               <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_info.c</FilePath>
             </File>
             <File>
-              <FileName>demo_bc28_iot_entry.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_iot_entry.c</FilePath>
-            </File>
-            <File>
               <FileName>demo_bc28_low_power_entry.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_low_power_entry.c</FilePath>

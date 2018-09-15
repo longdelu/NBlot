@@ -18,9 +18,18 @@
 //All rights reserved
 //********************************************************************************
 //V1.0 第一次应用 
-//////////////////////////////////////////////////////////////////////////////////  
+//////////////////////////////////////////////////////////////////////////////////
 
-//初始化及网络注册相关命令
+ /**
+  * @brief 使用对应iot平台的宏开关
+  */
+#define CTNB_IOT                    1    //电信iot平台
+//#define HUAWEI_IOT                  1    //华为iot平台
+//#define EASY_IOT                    1    //Easyiot平台
+
+/**
+  * @brief 初始化及网络注册相关命令
+  */
 #define AT_NCONFIG     "AT+NCONFIG"    //使能/禁能自动入网命令
 #define AT_QLEDMODE    "AT+QLEDMODE"   //使能/禁能LED
 #define AT_QREGSWT     "AT+QREGSWT"    //IOT平台注册模式选择
@@ -45,7 +54,9 @@
 #define AT_NSMI        "AT+NSMI"    
 #define AT_NNMI        "AT+NNMI" 
 
-//信息查询相关命令
+/**
+  * @brief 信息查询相关命令
+  */
 #define AT_CGMI        "AT+CGMI"        //获取产商ID命令
 #define AT_CGMM        "AT+CGMM"        //获取模型ID命令
 #define AT_CGMR        "AT+CGMR"        //获取软件版本命令 
@@ -53,28 +64,37 @@
 #define AT_CGSN        "AT+CGSN"        //获取产品序列号ID命令
 #define AT_NBAND       "AT+NBAND"       //获取频率信息
 
-//TCP/UDP相关命令
+
+/**
+  * @brief TCP/UDP相关命令
+  */
 #define AT_CSOC        "AT+CSOC"
 #define AT_CSOCON      "AT+CSOCON"      //获取连接状态, 为0则是IDLE状态 
 #define AT_CSOSEND     "AT+CSOSEND"
 #define AT_CSOCL       "AT+CSOCL" 
 
 
-//CoAP相关命令                        
+/**
+  * @brief CoAP相关命令
+  */
 #define AT_CCOAPSTA    "AT+CCOAPSTA"   //连接远端 CoAP 服务
 #define AT_CCOAPNEW    "AT+CCOAPNEW"   //创建客户端实例
 #define AT_CCOAPSEND   "AT+CCOAPSEND"  //发送16进制数据
 #define AT_CCOAPDEL    "AT+CCOAPDEL"   //释放并删除客户端实例
 
 
-//电信(华为)iot平台连接相关命令                        
+/**
+  * @brief 电信(华为)iot平台连接相关命令令
+  */
 #define AT_NCDP          "AT+NCDP"         //更新远端服务器
 #define AT_QLWULDATA     "AT+QLWULDATA"    //发送16进制数据
 #define AT_QLWULDATAEX   "AT+QLWULDATAEX"  //发送16进制数据,待模式
 #define AT_QLWSREGIND    "AT+QLWSREGIND"   //连接/删除iot平台
 
 
-//低功耗相关命令
+/**
+  * @brief 低功耗相关命令
+  */
 #define AT_CLAC        "AT+CLAC"
 #define AT_CGPADDR     "AT+CGPADDR"
 #define AT_CGDCONT     "AT+CGDCONT"
@@ -85,21 +105,24 @@
 #define AT_CEDRXRDP    "AT+CEDRXRDP"
 #define AT_CTZR        "AT+CTZR"
 
-    
+/**
+  * @brief Ping命令
+  */    
 #define  AT_CIPPING      "AT+CIPPING"     //Ping命令
 
 
-
+/**
+  * @brief AT指令的一些属性参数
+  */
 #define CMD_TRY_TIMES           10
 #define CMD_READ_ARGUMENT       "?"
 #define CMD_TEST_ARGUMENT       "=?"
-
 #define CMD_OK_RES              "OK"
 
-//#define CTNB_IOT                    1
-#define HUAWEI_IOT                  1
-//#define EASY_IOT                    1
 
+/**
+  * @brief 电信iot平台服务器
+  */
 #if CTNB_IOT
 #define REMOTE_SERVER_IP        "180.101.147.115"
 #define REMOTE_COAP_PORT        "5683"
@@ -108,6 +131,9 @@
 
 #define REMOTE_COAP_INFO        "180.101.147.115,5683"
 
+/**
+  * @brief 华为iot平台服务器
+  */
 #elif HUAWEI_IOT
 
 #define REMOTE_SERVER_IP        "139.159.140.34"
@@ -117,6 +143,9 @@
 
 #define REMOTE_COAP_INFO        "139.159.140.34,5683"
 
+/**
+  * @brief easyiot平台服务器
+  */
 #elif EASY_IOT
 
 #define REMOTE_SERVER_IP        "117.60.157.137"
@@ -131,6 +160,9 @@
 
 #endif
 
+/**
+  * @brief 工作带宽
+  */
 #define BAND_850MHZ_ID           5
 #define BAND_850MHZ_STR          "850"
 
@@ -144,12 +176,15 @@
 #define BAND_700MHZ_STR          "700"
 
 
-//AT指令响应的最大参数个数
+
+/**
+  * @brief AT指令响应的最大参数个数
+  */
 #define AT_CMD_RESPONSE_PAR_NUM_MAX   16
 
 
-/*
- * AT指令属性枚举
+/**
+ * @brief AT指令属性枚举
  */
 typedef enum
 {
@@ -159,8 +194,9 @@ typedef enum
    CMD_EXCUTE        //命令EXCUTE操作
 }cmd_property_t;
 
-/*
- * AT指令动作行为枚举
+
+/**
+ * @brief AT指令动作行为枚举
  */
 typedef enum
 {
@@ -172,7 +208,10 @@ typedef enum
     ACTION_OK_WAIT        = 0X20               //命令执行成功后将等待        
 }cmd_action_t;
 
-//AT指令结构类型
+
+/**
+ * @brief AT指令结构类型
+ */
 typedef struct at_cmd_info
 {
     const char*     p_atcmd;       // AT指令
@@ -186,33 +225,48 @@ typedef struct at_cmd_info
 }at_cmd_info_t;
 
 
-//声明AT cmd结构指针类型
+/**
+ * @brief声明AT cmd结构指针类型
+ */
 typedef at_cmd_info_t *at_cmdhandle;
 
 
-//通用错误代码定义 
+/**
+ * @brief nbiot通用错误代码定义
+ */
 #define   NBIOT_OK                  0
 #define   NBIOT_ERROR              -1
 #define   NBIOT_NOTSUPPORT         -2
 
-//指令执行流程
+
+/**
+ * @brief 指令执行流程
+ */
 #define   AT_CMD_OK                NBIOT_OK
 #define   AT_CMD_NEXT              1
 #define   AT_CMD_WAIT              2
 
-//指令执行结果
+
+/**
+ * @brief 指令执行结果
+ */
 #define   AT_CMD_RESULT_OK            NBIOT_OK
 #define   AT_CMD_RESULT_ERROR           -3
 #define   AT_CMD_RESULT_CONTINUE        -4
 #define   AT_CMD_RESULT_RANDOM_CODE     -5
 
-//指令出错处理
+/**
+ * @brief 指令出错处理
+ */
 #define   NBIOT_ERROR_TIMEOUT           -6
 #define   NBIOT_ERROR_RETRY             -7
 #define   NBIOT_ERROR_NEXT              -8
 #define   NBIOT_ERROR_CONTINUE          -9
 
-//nbiot主状态定义
+
+/**
+ * @brief nbiot AT指令当前主状态定义
+ */
 typedef enum nbiot_main_status
 {
     NBIOT_NONE,
@@ -243,7 +297,9 @@ typedef enum nbiot_main_status
 }nbiot_main_status_t;
 
 
-//nbiot子状态定义
+/**
+ * @brief nbiot AT指令当前子状态定义
+ */
 typedef enum nbiot_sub_status
 {
     NBIOT_SUB_NONE,
@@ -300,14 +356,19 @@ typedef enum nbiot_sub_status
 }nbiot_sub_status_t;
 
 
-//nbiot 状态信息,用于状态机
+/**
+ * @brief nbiot状态信息, 用于状态机
+ */
 typedef struct nbiot_status_sm
 {
     int   main_status;         //命令运行主阶段
     int   sub_status;          //命令运行子阶段，用于状态嵌套     
 }nbiot_status_sm_t;
 
-//nbiot 连接状态信息,用于指示使用哪种协议进行连接
+
+/**
+ * @brief nbiot 连接状态信息,用于指示使用哪种协议进行连接
+ */
 typedef struct nbiot_status_connect {
     uint8_t                connect_status;      //连接的状态
     uint8_t                connect_type;        //连接的类型
@@ -328,7 +389,9 @@ typedef struct nbiot_socket_info {
     uint16_t               data_len;            //提示数据长度   
 }nbiot_socket_info_t;
 
-//连接的协议类型
+/**
+ * @brief 连接的协议类型
+ */
 typedef enum nbiot_connect_type {
    NBIOT_NOCON,
    NBIOT_TCP  = 1,         
@@ -340,9 +403,9 @@ typedef enum nbiot_connect_type {
 }nbiot_connect_type_t;
 
 
-
-
-//NBIOT固件信息
+/**
+ * @brief NBIOT固件信息
+ */
 typedef struct nbiot_firmware_info
 {   char         name[32];
     uint8_t      IMSI[16];
@@ -350,31 +413,42 @@ typedef struct nbiot_firmware_info
 }nbiot_firmware_info_t;
 
 
-//连接的协议类型
+/**
+ * @brief 低功耗信息
+ */
 typedef enum nbiot_lpower_type {
    PSM  = 1,
    EDRX,         
    SLEEP, 
 }nbiot_lpower_type_t;
 
-//NBIOT低功耗信息结构体
+/**
+ * @brief NBIOT低功耗信息结构体
+ */
 typedef struct nbiot_lpower_info_t
 {   nbiot_lpower_type_t lpower_type;
     char time[4]; 
 }nbiot_lpower_info_t;
 
-//定义收发数据缓冲区长度
+/**
+ * @brief 收发数据的最大长度
+ */
 #define NBIOT_RECV_BUF_MAX_LEN    (RING_BUF_LEN + 1)
 #define NBIOT_SEND_BUF_MAX_LEN    (RING_BUF_LEN + 1)
 
-//接收缓存空间
+
+/**
+ * @brief 接收缓存结构体定义
+ */
 typedef struct nbiot_recv
 {
     char      buf[NBIOT_RECV_BUF_MAX_LEN];    //接收数据缓冲区
     uint16_t  len;                              //有效数据长度
 }nbiot_recv_t;
 
-//接收缓存空间
+/**
+ * @brief 发送缓存结构体定义
+ */
 typedef struct nbiot_send
 {
     char      buf[NBIOT_SEND_BUF_MAX_LEN];    //发送数据缓冲区
@@ -382,7 +456,9 @@ typedef struct nbiot_send
     
 }nbiot_send_t;
 
-//nbiot模块驱动函数结构体
+/**
+ * @brief nbiot模块驱动函数结构体定义
+ */
 struct nbiot_drv_funcs {
     
     //nbiot发送数据
@@ -392,6 +468,10 @@ struct nbiot_drv_funcs {
     int (*nbiot_recv_data) (void *p_arg, uint8_t *pData, uint16_t size, uint32_t Timeout);    
 };
 
+
+/**
+ * @brief nbiot模块事件类型
+ */
 #define    NBIOT_NONE_EVENT          0x0000           //没有事件发生
 #define    NBIOT_RECV_EVENT          0x0001           //收到回应数据事件(命令发送后模组回应事件）
 #define    NBIOT_TIMEOUT_EVENT       0x0002           //命令发送时出错产生超时事件或发送后得不到回应，产生超时事件
@@ -408,11 +488,16 @@ struct nbiot_drv_funcs {
 #define    NBIOT_EXIT_LPOWER_EVENT   0X1000           //退出低功耗事件
 #define    NBIOT_REBOOT_EVENT        0X2000           //重启事件
 
-//定义NBIOT事件回调函数指针
+
+/**
+ * @brief 定义NBIOT事件回调函数指针
+ */
 typedef void (*nbiot_cb)(void *p_arg, int, int ,char*);
 
 
-//nbiot设备结构体
+/**
+ * @brief nbiot设备结构体
+ */
 typedef struct nbiot_dev
 {     
     struct nbiot_drv_funcs *p_drv_funcs;
@@ -448,42 +533,83 @@ typedef struct nbiot_dev
                
 }nbiot_dev_t;
 
-//nbiot模块设备句柄
+
+/**
+ * @brief nbiot模块设备句柄
+ */
 typedef nbiot_dev_t *nbiot_handle_t;
 
 
-
-//nbiot at指令初始化
+/**
+  * @brief nbiot at指令初始化
+  * @param  at_cmd           : 具体AT指令
+  * @param  argument         : 指令对应的参数
+  * @param  property         : 指令参数
+  * @param  at_cmd_time_out  : 指令的超时时间
+  * @retval None
+  */
 void nbiot_at_cmd_param_init (at_cmdhandle cmd_handle,
                               const char *at_cmd,
                               char *argument,
                               cmd_property_t property,
                               uint32_t at_cmd_time_out);
                               
-//给nbiot模块发送AT指令
-//nbiot_handle  nbiot_handle模块设备句柄
-//cmd_handle    将要发送指令信息句柄          
-//note 调用该函数前先构造好命令的参数
+/**
+  * @brief  给nbiot模块发送AT指令.
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @param  cmd_handle    : 将要发送指令信息句柄
+  * @note   调用该函数前先                              
+  * @retval 返回 0 代表发送成功
+  */
 int nbiot_at_cmd_send(nbiot_handle_t nbiot_handle, at_cmdhandle cmd_handle);                              
 
 
-//设置nbiot模块事件
+/**
+  * @brief 设置nbiot事件  
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @param  nbiot_event   : 事件类型.
+  * @retval None  
+  */
 void nbiot_event_set (nbiot_handle_t nbiot_handle, int nbiot_event);
 
-//获取nbiot模块事件
+/**
+  * @brief  判断当前nbiot事件是否发生  
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @param  nbiot_event   : 事件类型.
+  * @retval 非0代表当前事件已经发生  
+  */
 int nbiot_event_get (nbiot_handle_t nbiot_handle, int nbiot_event);
 
 
-//清除nbiot模块事件
+/**
+  * @brief 清除nbiot事件  
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @param  nbiot_event   : 事件类型.
+  * @retval None  
+  */
 void nbiot_event_clr (nbiot_handle_t nbiot_handle, int nbiot_event);
 
-//nbiot模块初始化 
+/**
+  * @brief  nbiot模块设备实例初始化 .
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @param  cmd_handle    : 将要发送指令信息句柄
+  * @retval 返回 nbiot模块设备句柄的指针 
+  */
 nbiot_handle_t nbiot_dev_init(uart_handle_t nbiot_handle);
 
-//注册nbiot模块事件回调处理函数
+/**
+  * @brief  nb注册nbiot模块事件回调函数.
+  * @param  cb     : 模块设备回调.
+  * @param  p_arg  : 模块设备回调函数参数
+  * @retval 返回 nbiot模块设备句柄的指针 
+  */
 void nbiot_event_registercb (nbiot_handle_t nbiot_handle, nbiot_cb cb, void *p_arg);
 
-//nbiot模块事件处理函数
+/**
+  * @brief nbiot事件处理函数
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @retval NBIOT_OK 成功  
+  */
 int nbiot_event_poll (nbiot_handle_t nbiot_handle);
                                                                                                     
 #endif /* ATK_BC28_H */
