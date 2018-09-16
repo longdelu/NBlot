@@ -21,8 +21,7 @@
   * @retval None
   */
 void demo_led_entry(void)
-{
-    
+{   
   while (1)
   {
       LED0_Toggle;  

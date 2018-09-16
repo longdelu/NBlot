@@ -71,7 +71,7 @@ typedef enum nbiot_msg_id
   
     NBIOT_MSG_CSQ,        
     NBIOT_MSG_SIGNAL,     //信号强度获取完成消息
-    
+    NBIOT_MSG_CSCON,      //获取连接（活动）状态   
 
     NBIOT_MSG_TCPUDP_CREATE,
     NBIOT_MSG_TCPUDP_CLOSE,
@@ -91,6 +91,8 @@ typedef enum nbiot_msg_id
     NBIOT_MSG_NCDP_RECV,
     NBIOT_MSG_NCDP_STATUS,
     NBIOT_MSG_NCDP_CLOSE,
+    
+    NBIOT_MSG_CSCON_STATUS,    
 
     NBIOT_MSG_RESET,        //NB复位完成消息
     NBIOT_MSG_NCONFIG,      //自动入网设置完成消息

@@ -23,8 +23,8 @@
  /**
   * @brief 使用对应iot平台的宏开关
   */
-#define CTNB_IOT                    1    //电信iot平台
-//#define HUAWEI_IOT                  1    //华为iot平台
+//#define CTNB_IOT                    1    //电信iot平台
+#define HUAWEI_IOT                  1    //华为iot平台
 //#define EASY_IOT                    1    //Easyiot平台
 
 /**
@@ -35,6 +35,7 @@
 #define AT_QREGSWT     "AT+QREGSWT"    //IOT平台注册模式选择
 #define AT_NRB         "AT+NRB"        //重启命令 
 #define AT_SYNC        "AT"
+#define AT_QLEDMODE    "AT+QLEDMODE"
 #define AT_CMEE        "AT+CMEE"
 #define AT_NBAND       "AT+NBAND"
 #define AT_ATI         "ATI"
@@ -64,12 +65,15 @@
 #define AT_CGSN        "AT+CGSN"        //获取产品序列号ID命令
 #define AT_NBAND       "AT+NBAND"       //获取频率信息
 
+/**
+  * @brief 活动状态命令
+  */
+#define AT_CSCON       "AT+CSCON"      //获取连接状态, 为0则是IDLE状态 
 
 /**
   * @brief TCP/UDP相关命令
   */
 #define AT_CSOC        "AT+CSOC"
-#define AT_CSOCON      "AT+CSOCON"      //获取连接状态, 为0则是IDLE状态 
 #define AT_CSOSEND     "AT+CSOSEND"
 #define AT_CSOCL       "AT+CSOCL" 
 
@@ -269,10 +273,11 @@ typedef at_cmd_info_t *at_cmdhandle;
  */
 typedef enum nbiot_main_status
 {
-    NBIOT_NONE,
+    NBIOT_NONE= 0,
     NBIOT_INIT,         // 初始化操作
-    NBIOT_INFO,         // 获取 NB 模块厂商及固件，频段等信息
+    NBIOT_INFO,                     // 获取 NB 模块厂商及固件，频段等信息
     NBIOT_SIGNAL,       // 获取信号质量
+    NBIOT_CSCON,        // 获取模块的活动状态
     NBIOT_TCPUDP_CR,    // 创建 TCP/UDP
     NBIOT_TCPUDP_CL,    // 关闭 TCP/UDP
     NBIOT_TCPUDP_SEND,  // 利用已经创建的TCP/UDP发送数据
@@ -288,6 +293,7 @@ typedef enum nbiot_main_status
     NBIOT_NCDP_RECV,    // NCDP返回信息
     NBIOT_NCDP_STATUS,  // NCDP返回状态消息
     NBIOT_NCDP_CL,      // 关闭NCDP 
+    NBIOT_CSCON_STATUS, // 连接（活动）状态
     NBIOT_PSM,          // PSM
     NBIOT_EDRX,         // eDRX 
     NBIOT_SLEEP,        // SLEEP      
@@ -304,12 +310,14 @@ typedef enum nbiot_sub_status
 {
     NBIOT_SUB_NONE,
     NBIOT_SUB_SYNC,
+    NBIOT_SUB_QLED,  
     NBIOT_SUB_CMEE,     
     NBIOT_SUB_BAND, 
     NBIOT_SUB_QREGSWT,     
     NBIOT_SUB_CFUN,
+    NBIOT_SUB_CSCON,
     NBIOT_SUB_CGATT,  
-    NBIOT_SUB_CEREG,           
+    NBIOT_SUB_CEREG,   
     NBIOT_SUB_ATI,
     NBIOT_SUB_CPIN,
     NBIOT_SUB_CSQ,
@@ -327,6 +335,8 @@ typedef enum nbiot_sub_status
     NBIOT_SUB_CIMI,
     NBIOT_SUB_CGSN,  
     NBIOT_SUB_NBAND,
+    
+    NBIOT_SUB_CSCON_QUERY,    
 
     NBIOT_SUB_TCPUDP_CR,
     NBIOT_SUB_TCPUDP_CONNECT, 
@@ -347,6 +357,7 @@ typedef enum nbiot_sub_status
     NBIOT_SUB_NCDP_RECV,    // NCDP返回信息
     NBIOT_SUB_NCDP_STATUS,  // NCDP返回状态消息
     NBIOT_SUB_NCDP_CL,      // 关闭NCDP 
+    NBIOT_SUB_CSCON_STATUS, // 连接（活动）状态
     NBIOT_SUB_PSM,          // PSM
     NBIOT_SUB_EDRX,         // eDRX 
     NBIOT_SUB_SLEEP,        // SLEEP 
@@ -373,7 +384,8 @@ typedef struct nbiot_status_connect {
     uint8_t                connect_status;      //连接的状态
     uint8_t                connect_type;        //连接的类型
     int8_t                 connect_id;          //连接的id
-    int8_t                 m2m_status;          //m2m连接状态  
+    int8_t                 m2m_status;          //m2m连接状态
+    int8_t                 cscon_status;        //cscon_status连接状态    
     int8_t                 rssi;                //信号的质量
     int8_t                 cid;                 //连接的cid
     uint8_t                register_status;     //网络注册
@@ -484,11 +496,12 @@ struct nbiot_drv_funcs {
 #define    NBIOT_SOCKET_ERR_EVENT    0x0100           //SOCKET发生错误事件
 #define    NBIOT_NCDP_RECV_EVENT     0X0200           //NCDP接收事件
 #define    NBIOT_NCDP_STATUS_EVENT   0X0400           //NCDP状态事件
-#define    NBIOT_ENTER_LPOWER_EVENT  0X0800           //进入低功耗事件
-#define    NBIOT_EXIT_LPOWER_EVENT   0X1000           //退出低功耗事件
-#define    NBIOT_REBOOT_EVENT        0X2000           //重启事件
-
-
+#define    NBIOT_CSON_STATUS_EVENT   0X0800           //连接（活动）状态事件
+#define    NBIOT_ENTER_LPOWER_EVENT  0X1000           //进入低功耗事件
+#define    NBIOT_EXIT_LPOWER_EVENT   0X2000           //退出低功耗事件
+#define    NBIOT_REBOOT_EVENT        0X4000           //重启事件
+#define    NBIOT_OTHER_EVENT         0X8000           //其它事件
+                                    
 /**
  * @brief 定义NBIOT事件回调函数指针
  */
@@ -502,6 +515,7 @@ typedef struct nbiot_dev
 {     
     struct nbiot_drv_funcs *p_drv_funcs;
     
+    //关联的串口设备
     uart_dev_t               *p_uart_dev;
     
     //nbiot设备事件回调函数
@@ -598,7 +612,7 @@ void nbiot_event_clr (nbiot_handle_t nbiot_handle, int nbiot_event);
 nbiot_handle_t nbiot_dev_init(uart_handle_t nbiot_handle);
 
 /**
-  * @brief  nb注册nbiot模块事件回调函数.
+  * @brief  注册nbiot模块事件回调函数.
   * @param  cb     : 模块设备回调.
   * @param  p_arg  : 模块设备回调函数参数
   * @retval 返回 nbiot模块设备句柄的指针 

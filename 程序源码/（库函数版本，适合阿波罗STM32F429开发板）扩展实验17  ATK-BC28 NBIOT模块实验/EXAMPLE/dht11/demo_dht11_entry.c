@@ -116,6 +116,58 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             break;                   
         }
 
+        case NBIOT_MSG_CSCON:
+        {
+            NBIOT_APP_DEBUG_INFO("\r\n cscon status=%d\r\n",*msg);
+          
+            switch(*msg) 
+            {
+                case 0:
+
+                    NBIOT_APP_DEBUG_INFO("Idle status\r\n");
+
+                    break;                
+
+                case 1:
+
+                    NBIOT_APP_DEBUG_INFO("Connect status\r\n");
+
+                    break;             
+
+                default:
+
+                    break;                
+            }          
+                               
+            break;
+        } 
+
+        case NBIOT_MSG_CSCON_STATUS:
+        {
+            NBIOT_APP_DEBUG_INFO("\r\ncscon status=%d\r\n",*msg);
+            switch(*msg) 
+            {
+                case 0:
+
+                    NBIOT_APP_DEBUG_INFO("Idle status\r\n");
+
+                    break;                
+
+                case 1:
+
+                    NBIOT_APP_DEBUG_INFO("Connect status\r\n");
+
+                    break;             
+
+                default:
+
+                    break;                
+            }          
+                       
+                               
+            break;
+        }
+        
        
         case NBIOT_MSG_BAND:
             NBIOT_APP_DEBUG_INFO("\r\nFreq=%s\r\n",msg);
@@ -184,7 +236,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
                           
         case NBIOT_MSG_NCDP_SERVER:
         {
-            NBIOT_APP_DEBUG_INFO("\r\nmsg ncdp =%s\r\n",msg);
+            NBIOT_APP_DEBUG_INFO("\r\nmsg ncdp server =%s\r\n",msg);
           
             break;
         }
@@ -395,9 +447,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
         case NBIOT_APP_NCDP_CL:
         {
             NBIOT_APP_DEBUG_INFO("NCDP close start\r\n");
-            //创建完成NCDP客户端之后，需要根据当前网络的状态延时一段时间保证数据连接稳定
-            delay_ms(2000);
-              
+
             nbiot_ncdp_close(nbiot_handle, NBIOT_NCDP);
               
             *nbiot_app_status = NBIOT_END; 

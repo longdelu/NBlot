@@ -133,6 +133,17 @@ static void nbiot_status_set (nbiot_main_status_t  main_status, nbiot_sub_status
 }
 
 /**
+  * @brief 获取AT指令执行的流程  
+  * @param  None 
+  * @retval None  
+  */
+static void nbiot_status_get (nbiot_status_sm_t *p_sm_status)
+{
+    p_sm_status->main_status  = g_nbiot_sm_status.main_status ;
+    p_sm_status->sub_status   = g_nbiot_sm_status.sub_status;
+}
+
+/**
   * @brief 设置nbiot事件  
   * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
   * @param  nbiot_event   : 事件类型.
@@ -272,7 +283,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
     char *at_response_par[AT_CMD_RESPONSE_PAR_NUM_MAX] = {0};
     
     char *p_revc_buf_tmp = g_nbiot_recv_desc.buf;
-    
+        
     uint8_t index = 0;
         
     int8_t next_cmd = 0;
@@ -410,6 +421,8 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
               
                //收到的是乱码,强制接收结束，同时根据命令的属性判断命令是否重发或跳过该命令执行下一条命令
                next_cmd = nbiot_response_handle(nbiot_handle, FALSE);
+              
+               recv_cnt = 0;
                //清缓存            
                nbiot_recv_buf_reset();                
             }
@@ -453,35 +466,6 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
         nbiot_recv_buf_reset();   
     }
     
-    if (nbiot_handle->nbiot_event & NBIOT_TCP_RECV_EVENT) 
-    {
-        NBIOT_DEBUG_INFO("tcp recv event ok\r\n");
-      
-        //通知上层应用接收到TCP数据
-        nbiot_msg_send(nbiot_handle, NULL, TRUE);     
-        
-        nbiot_event_clr(nbiot_handle,NBIOT_TCP_RECV_EVENT);
-      
-        //清除缓存数据    
-        nbiot_recv_buf_reset();       
-    }
-
-    if (nbiot_handle->nbiot_event & NBIOT_UDP_RECV_EVENT) 
-    {
-        NBIOT_DEBUG_INFO("udp recv event ok\r\n");
-      
-        //通知上层应用网络注册结果
-        nbiot_msg_send(nbiot_handle, NULL, TRUE);    
-        
-        nbiot_event_clr(nbiot_handle, NBIOT_UDP_RECV_EVENT); 
-      
-      
-        //复位状态标志
-        nbiot_status_reset();   
-      
-        //清除缓存数据    
-        nbiot_recv_buf_reset();  
-    }
         
     if (nbiot_handle->nbiot_event & NBIOT_COAP_RECV_EVENT) 
     {
@@ -532,7 +516,22 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
       
         //清除缓存数据    
         nbiot_recv_buf_reset();  
-    }      
+    }
+
+
+    if (nbiot_handle->nbiot_event & NBIOT_CSON_STATUS_EVENT) 
+    {
+        
+        NBIOT_DEBUG_INFO("cson status event ok\r\n");
+      
+        //通知上层应用NCDP状态连接发生变化
+        nbiot_msg_send(nbiot_handle, NULL, TRUE);          
+             
+        nbiot_event_clr(nbiot_handle, NBIOT_CSON_STATUS_EVENT); 
+              
+        //清除缓存数据    
+        nbiot_recv_buf_reset();  
+    }     
     
     
     if (nbiot_handle->nbiot_event & NBIOT_SOCKET_ERR_EVENT) 
@@ -550,6 +549,16 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
         //清除缓存数据    
         nbiot_recv_buf_reset();  
     }
+    
+    if (nbiot_handle->nbiot_event & NBIOT_OTHER_EVENT) 
+    {       
+        NBIOT_DEBUG_INFO("other event\r\n");
+         
+        //清除缓存数据    
+        nbiot_recv_buf_reset();        
+        nbiot_event_clr(nbiot_handle, NBIOT_OTHER_EVENT); 
+      
+    }    
 
     if (nbiot_handle->nbiot_event & NBIOT_TIMEOUT_EVENT) 
     {        
@@ -588,7 +597,8 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
         } 
         
         //清除垃圾数据      
-        nbiot_recv_buf_reset();      
+        nbiot_recv_buf_reset(); 
+        recv_cnt = 0;        
                                                     
         nbiot_event_clr(nbiot_handle, NBIOT_TIMEOUT_EVENT); 
     } 
@@ -814,7 +824,7 @@ static int8_t at_cmd_result_parse (char *buf)
 static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
 {
     char *target_pos_start = NULL;
-       
+         
     if((target_pos_start = strstr(buf, "+CEREG:")) != NULL)
     {
         char *p_colon = strchr(target_pos_start,',');
@@ -839,51 +849,51 @@ static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
     }    
     else if((target_pos_start = strstr(buf,"+CSONMI")) != NULL)
     {
-        //收到服务器端发来TCP/UDP数据
-        char *p_colon = strchr(target_pos_start, ':');
-      
-//        int8_t socket_id = 0;
-        
-        //得到是哪个socket收到数据
-        if (p_colon)
-        {
-            p_colon++;
-//            socket_id = strtoul(p_colon,0,10);
-        } 
-        
-        //得到收到的数据长度
-        char *pComma = strchr(p_colon,',');
+//        //收到服务器端发来TCP/UDP数据
+//        char *p_colon = strchr(target_pos_start, ':');
+//      
+////        int8_t socket_id = 0;
+//        
+//        //得到是哪个socket收到数据
+//        if (p_colon)
+//        {
+//            p_colon++;
+////            socket_id = strtoul(p_colon,0,10);
+//        } 
+//        
+//        //得到收到的数据长度
+//        char *pComma = strchr(p_colon,',');
 
-        if (pComma)
-        {
-            pComma++;
-            g_socket_info[0].data_len = strtoul(pComma,0,10);
-        }     
-       
-        //得到有效数据的起始地址
-        char *p_data_offest = strchr(pComma,',');
+//        if (pComma)
+//        {
+//            pComma++;
+//            g_socket_info[0].data_len = strtoul(pComma,0,10);
+//        }     
+//       
+//        //得到有效数据的起始地址
+//        char *p_data_offest = strchr(pComma,',');
 
-        if (p_data_offest)
-        {
-            p_data_offest++;
-            g_socket_info[0].data_offest = p_data_offest;
-        }               
-        if (g_socket_info[0].socket_type == 2) 
-        {
-            nbiot_event_set(nbiot_handle, NBIOT_UDP_RECV_EVENT);             
-        }         
-        else if (g_socket_info[0].socket_type == NBIOT_TCP)
-        {
+//        if (p_data_offest)
+//        {
+//            p_data_offest++;
+//            g_socket_info[0].data_offest = p_data_offest;
+//        }               
+//        if (g_socket_info[0].socket_type == 2) 
+//        {
+//            nbiot_event_set(nbiot_handle, NBIOT_UDP_RECV_EVENT);             
+//        }         
+//        else if (g_socket_info[0].socket_type == NBIOT_TCP)
+//        {
 
-            nbiot_event_set(nbiot_handle, NBIOT_TCP_RECV_EVENT); 
-        } 
-        else 
-        {
-            //其它，默认产生接收事件
-            nbiot_event_set(nbiot_handle, NBIOT_RECV_EVENT);            
-        }
-        
-        nbiot_status_set(NBIOT_TCPUDP_RECV, NBIOT_SUB_TCPUDP_RECV);        
+//            nbiot_event_set(nbiot_handle, NBIOT_TCP_RECV_EVENT); 
+//        } 
+//        else 
+//        {
+//            //其它，默认产生接收事件
+//            nbiot_event_set(nbiot_handle, NBIOT_RECV_EVENT);            
+//        }
+//        
+//        nbiot_status_set(NBIOT_TCPUDP_RECV, NBIOT_SUB_TCPUDP_RECV);        
     }  
     else if((target_pos_start = strstr(buf,"+CSOERR")) != NULL)
     {
@@ -966,6 +976,34 @@ static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
         nbiot_event_set(nbiot_handle, NBIOT_NCDP_STATUS_EVENT);  
         nbiot_status_set(NBIOT_NCDP_STATUS, NBIOT_SUB_NCDP_STATUS);          
     }
+    
+    else if ((target_pos_start = strstr(buf,"+CSCON:")) != NULL)
+    {
+        //收到服务器端发来NCDP状态数据
+        char *p_colon = strchr(target_pos_start, ':');
+        nbiot_status_sm_t sm_status = {0,0};
+              
+        //得到NCDP当前的状态
+        if (p_colon)
+        {
+            p_colon++;
+            g_nbiot_connect_status.cscon_status = strtoul(p_colon,0,10);
+        } 
+                              
+        nbiot_event_set(nbiot_handle, NBIOT_CSON_STATUS_EVENT);
+        nbiot_status_get(&sm_status);
+
+        if ((sm_status.main_status != NBIOT_INIT) && (sm_status.main_status != NBIOT_INFO)) 
+        {          
+             nbiot_status_set(NBIOT_CSCON_STATUS, NBIOT_SUB_CSCON_STATUS);       
+        }          
+    } 
+
+    else if ((target_pos_start = strstr(buf,"REGISTERNOTIFY")) != NULL)
+    {
+                              
+        nbiot_event_set(nbiot_handle, NBIOT_OTHER_EVENT);      
+    }     
 
     else if ((target_pos_start = strstr(buf,"+NNMI:")) != NULL)
     {
@@ -1024,6 +1062,12 @@ static uint8_t at_cmd_next (void)
         case NBIOT_SUB_SYNC:
             
             break;
+        
+         case NBIOT_SUB_QLED:
+          
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_QLEDMODE, "1", CMD_SET, 500);
+          
+            break;       
         
         case NBIOT_SUB_CMEE:
           
@@ -1084,7 +1128,15 @@ static uint8_t at_cmd_next (void)
             g_at_cmd.cmd_action  = ACTION_OK_WAIT | ACTION_ERROR_AND_TRY;  
               
           }
-          break;  
+          break; 
+
+        // 使能CSCONT提示 
+        case NBIOT_SUB_CSCON:
+          {
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_CSCON, "1", CMD_SET, 500); 
+              
+          }
+          break;            
           
                  
         //查询PDP激活信息          
@@ -1241,6 +1293,13 @@ static uint8_t at_cmd_next (void)
         
         g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
         return FALSE;
+    }
+    
+    else if (g_nbiot_sm_status.main_status == NBIOT_CSCON)
+    {
+        
+        g_nbiot_sm_status.sub_status = NBIOT_SUB_END;
+        return FALSE;
     }    
     else if (g_nbiot_sm_status.main_status == NBIOT_RESET)
     {
@@ -1360,6 +1419,11 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
         case NBIOT_SUB_SYNC:
             
             break;
+        
+         case NBIOT_SUB_QLED:
+                   
+          
+            break;          
 
         case NBIOT_SUB_CMEE:
           
@@ -1401,6 +1465,10 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
         case NBIOT_SUB_CFUN:
             
             break;
+        
+        case NBIOT_SUB_CSCON:
+            
+            break;        
 
 
         case NBIOT_SUB_CEREG:
@@ -1592,12 +1660,12 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
                     uint8_t lqi =strtoul(p_colon,0, 10);
                     //运算取得每个数值对应的dbm范围
                     int8_t rssi = -110 + (lqi << 1);
-                    uint8_t len = snprintf(buf[1],10,"%d",rssi);
-                    *(buf[1]+len) = 0;
+                    uint8_t len = snprintf(buf[0],10,"%d",rssi);
+                    *(buf[0]+len) = 0;
                     
                     g_nbiot_connect_status.rssi = rssi;
                     
-                    nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_CSQ,len,buf[1]);
+                    nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_CSQ,len,buf[0]);
                   
                 }  
               
@@ -1616,6 +1684,43 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
         }
 
     }
+    
+    else if(g_nbiot_sm_status.main_status == NBIOT_CSCON)
+    {
+        switch(g_nbiot_sm_status.sub_status) 
+        { 
+            case NBIOT_SUB_CSCON_QUERY:
+            {
+                char *p_colon = strchr(buf[0],',');
+              
+                if (p_colon != NULL) 
+                {            
+                    p_colon++;
+                    //转换成10进制数字
+                    uint8_t active_status =strtoul(p_colon,0, 10);
+     
+                    
+                    g_nbiot_connect_status.cscon_status = active_status;
+                    
+                    nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_CSCON, 1, (char *)&g_nbiot_connect_status.cscon_status);
+                  
+                }  
+              
+                break;
+            } 
+              
+            case NBIOT_SUB_END:
+            {
+                nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_CSCON, 1, (char *)&g_nbiot_connect_status.cscon_status);
+                break;
+            }
+
+            default:
+              
+                break;
+        }
+
+    }    
     
     else if(g_nbiot_sm_status.main_status == NBIOT_SOCKET_ERR)
     {
@@ -1731,10 +1836,19 @@ static void nbiot_msg_send (nbiot_handle_t nbiot_handle, char**buf, int8_t is_ok
     {
         if (g_nbiot_sm_status.sub_status == NBIOT_SUB_NCDP_STATUS)
         {                      
-            nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_NCDP_STATUS,1, (char *)&g_nbiot_connect_status.m2m_status);
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg,(nbiot_msg_id_t)NBIOT_MSG_NCDP_STATUS, 1, (char *)&g_nbiot_connect_status.m2m_status);
                    
         }
-    }  
+    }
+
+    else if(g_nbiot_sm_status.main_status == NBIOT_CSCON_STATUS)
+    {
+        if (g_nbiot_sm_status.sub_status == NBIOT_SUB_CSCON_STATUS)
+        {                      
+            nbiot_handle->nbiot_cb(nbiot_handle->p_arg, (nbiot_msg_id_t)NBIOT_MSG_CSCON_STATUS, 1, (char *)&g_nbiot_connect_status.cscon_status);
+                   
+        }
+    }    
 
     else if(g_nbiot_sm_status.main_status == NBIOT_NCDP_CL)
     {
@@ -1900,7 +2014,7 @@ nbiot_handle_t nbiot_dev_init(uart_handle_t nbiot_handle)
 }
 
 /**
-  * @brief  nb注册nbiot模块事件回调函数.
+  * @brief  注册nbiot模块事件回调函数.
   * @param  cb     : 模块设备回调.
   * @param  p_arg  : 模块设备回调函数参数
   * @retval 返回 nbiot模块设备句柄的指针 

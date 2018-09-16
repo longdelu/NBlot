@@ -189,7 +189,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
                         
             break;
         }
-              
+                           
         case NBIOT_MSG_NCDP_STATUS:
         {
             printf("\r\nmsg ncdp status=%d\r\n",*msg);

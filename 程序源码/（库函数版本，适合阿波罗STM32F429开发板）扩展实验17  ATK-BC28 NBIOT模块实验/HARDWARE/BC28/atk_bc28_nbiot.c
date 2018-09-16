@@ -235,6 +235,31 @@ int nbiot_ncdp_close(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
 }
 
 /**
+  * @brief 查询活动状态
+  * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
+  * @retval NBIOT_OK 设置成功  NBIOT_ERROR 设置失败  
+  */
+int nbiot_cscon_query(nbiot_handle_t nbiot_handle)
+{
+  
+    if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
+    {
+        return NBIOT_ERROR;
+    }
+           
+                                                                                    
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CSCON, NULL, CMD_READ, 500);  
+
+    nbiot_handle->p_sm_status->main_status = NBIOT_CSCON;
+    nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CSCON_QUERY;
+
+    nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
+        
+    return NBIOT_OK;
+}
+
+
+/**
   * @brief 以hex格式字符串发送ncdp协议数据,数据有效长度必须是偶数个大小
   * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
   * @param  type          : 连接类型，值仅为枚举当中的值
