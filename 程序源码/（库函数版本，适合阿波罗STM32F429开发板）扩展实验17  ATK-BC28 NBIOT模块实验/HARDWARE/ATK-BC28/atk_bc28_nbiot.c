@@ -24,23 +24,25 @@
 static char cmd_buf_temp[NBIOT_RECV_BUF_MAX_LEN] = {0};
 
 /**
-  * @brief  设置nbiot模块初始化及完成网络注册
+  * @brief  设置nbiot模块初始化网络注册
   * @param  nbiot_handle   : 指向nbiot设备句柄的指针.
   * @retval NBIOT_OK 设置初始化成功  NBIOT_ERROR 设置初始化失败
   */
-int nbiot_init (nbiot_handle_t nbiot_handle)
+int nbiot_reg_init (nbiot_handle_t nbiot_handle)
 {    
     if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
 
+    //填充指令的描述结构体
     nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_SYNC, NULL, CMD_EXCUTE, 3000);
 
     //进入NBIOT_INIT状态
     nbiot_handle->p_sm_status->main_status = NBIOT_INIT;
     nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_SYNC;
 
+    //发送指令
     nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
   
     return NBIOT_OK;
@@ -96,8 +98,9 @@ int nbiot_nconfig(nbiot_handle_t nbiot_handle, uint8_t auto_flag)
     {
         p_auto_nconfig = "AUTOCONNECT,TRUE"; 
     }
-        
-    //命令最大超时时间为300ms，为留余量，这里超时设置为500ms    
+         
+    //填充指令的描述结构体 
+    //命令最大超时时间为300ms，为留余量，这里超时设置为500ms      
     nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_NCONFIG, p_auto_nconfig, CMD_SET, 500);
 
     //进入NBIOT_REBOOT状态
@@ -124,12 +127,14 @@ int nbiot_info_get(nbiot_handle_t nbiot_handle)
         return NBIOT_ERROR;
     }
     
+    //填充指令的描述结构体
     nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CEREG, NULL, CMD_READ, 3000);
 
     //进入NBIOT_INFO状态
     nbiot_handle->p_sm_status->main_status = NBIOT_INFO;
     nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_CEREG_QUERY;
 
+    //发送指令
     nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
     
     return NBIOT_OK;
@@ -190,14 +195,13 @@ int nbiot_ncdp_update(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
                                     REMOTE_COAP_PORT);
                                                                        
     //最大响应时间为300ms。留余量这里保持为500ms                                           
-    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_NCDP, cmd_buf_temp, CMD_SET, 500);
-                                    
-//    nbiot_handle->p_nbiot_cmd->cmd_action = ACTION_OK_AND_NEXT | ACTION_ERROR_BUT_NEXT; 
+    nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_NCDP, cmd_buf_temp, CMD_SET, 500);                                   
                                        
-    //进入创建客户端状态
+    //进入更新CDP服务器
     nbiot_handle->p_sm_status->main_status = NBIOT_NCDP_SERVER;
     nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_NCDP_SERVER;
 
+    //发送指令
     nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
     
     return NBIOT_OK;
@@ -211,8 +215,7 @@ int nbiot_ncdp_update(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
   * @retval NBIOT_OK 设置成功  NBIOT_ERROR 设置失败  
   */
 int nbiot_ncdp_close(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
-{
-  
+{  
     if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
@@ -239,15 +242,14 @@ int nbiot_ncdp_close(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type)
   * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
   * @retval NBIOT_OK 设置成功  NBIOT_ERROR 设置失败  
   */
-int nbiot_cscon_query(nbiot_handle_t nbiot_handle)
+int nbiot_cscon_query (nbiot_handle_t nbiot_handle)
 {
   
     if (nbiot_handle->p_sm_status->main_status != NBIOT_NONE)
     {
         return NBIOT_ERROR;
     }
-           
-                                                                                    
+                                                                                              
     nbiot_at_cmd_param_init(nbiot_handle->p_nbiot_cmd, AT_CSCON, NULL, CMD_READ, 500);  
 
     nbiot_handle->p_sm_status->main_status = NBIOT_CSCON;
@@ -260,18 +262,21 @@ int nbiot_cscon_query(nbiot_handle_t nbiot_handle)
 
 
 /**
-  * @brief 以hex格式字符串发送ncdp协议数据,数据有效长度必须是偶数个大小
+  * @brief 以hex格式字符串发送业务逻辑数据,数据有效长度必须是偶数个大小且不能包含特殊字符
   * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
   * @param  type          : 连接类型，值仅为枚举当中的值
   * @param  mode          : 一般设为为NULL即可
-  * @retval NBIOT_OK 设置成功  NBIOT_ERROR 设置失败  
+  * @retval NBIOT_OK 设置成功  NBIOT_ERROR 设置失败  NBIOT_NOTSUPPORT 数据有效长度不为偶数个长度 
   */
-int nbiot_ncdp_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type, char *mode)
+int nbiot_ncdp_send_hexstr (nbiot_handle_t nbiot_handle, 
+                            int len, 
+                            char *msg, 
+                            nbiot_connect_type_t type, 
+                            char *mode)
 { 
     
     int16_t msg_len = 0;
-    char buf_head[3] = {0};  
-    
+    char buf_head[3] = {0};     
     char buf_head_tmp[5] = {0};    
     
     char *p_at_cmd = NULL;
@@ -318,7 +323,7 @@ int nbiot_ncdp_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_c
         msg_len = snprintf(cmd_buf_temp,
                                str_len,
                                "%d,%s%s,%s",
-                               (strlen(msg) / 2), 
+                               (strlen(msg) / 2 + 2), 
                                 buf_head_tmp,
                                 msg,
                                 mode); 
@@ -340,6 +345,7 @@ int nbiot_ncdp_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_c
     nbiot_handle->p_sm_status->main_status = NBIOT_NCDP_SEND;
     nbiot_handle->p_sm_status->sub_status  = NBIOT_SUB_NCDP_SEND;
 
+    //发送指令
     nbiot_at_cmd_send(nbiot_handle, nbiot_handle->p_nbiot_cmd);
          
     return NBIOT_OK;

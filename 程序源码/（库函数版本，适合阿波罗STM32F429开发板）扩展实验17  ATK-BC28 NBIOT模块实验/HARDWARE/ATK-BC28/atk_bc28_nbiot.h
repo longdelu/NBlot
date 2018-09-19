@@ -116,11 +116,11 @@ typedef enum nbiot_msg_id
 #define  CON_MESSAGE_RELEASE  "0X0101"
 
 /**
-  * @brief  设置nbiot模块初始化及完成网络注册
+  * @brief  设置nbiot模块初始化网络注册
   * @param  nbiot_handle   : 指向nbiot设备句柄的指针.
   * @retval NBIOT_OK 设置初始化成功  NBIOT_ERROR 设置初始化失败
   */
-int nbiot_init (nbiot_handle_t nbiot_handle);
+int nbiot_reg_init (nbiot_handle_t nbiot_handle);
 
 /**
   * @brief 设置重启nbiot模块
@@ -171,13 +171,17 @@ int nbiot_ncdp_update(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type);
 int nbiot_ncdp_close(nbiot_handle_t nbiot_handle, nbiot_connect_type_t type);
 
 /**
-  * @brief 以hex格式字符串发送ncdp协议数据,数据有效长度必须是偶数个大小
+  * @brief 以hex格式字符串发送业务逻辑数据,数据有效长度必须是偶数个大小且不能包含特殊字符
   * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
   * @param  type          : 连接类型，值仅为枚举当中的值
   * @param  mode          : 一般设为为NULL即可
-  * @retval NBIOT_OK 设置成功  NBIOT_ERROR 设置失败  
+  * @retval NBIOT_OK 设置成功  NBIOT_ERROR 设置失败  NBIOT_NOTSUPPORT 数据有效长度不为偶数个长充 
   */
-int nbiot_ncdp_send_hex(nbiot_handle_t nbiot_handle, int len, char *msg, nbiot_connect_type_t type, char *mode);
+int nbiot_ncdp_send_hexstr (nbiot_handle_t nbiot_handle, 
+                            int len, 
+                            char *msg, 
+                            nbiot_connect_type_t type, 
+                            char *mode);
 
 
 /**

@@ -23,7 +23,11 @@ int main(void)
     uart1_init(9600);               //初始化调试USART
     led_init();                     //初始化LED 
     LCD_Init();                     //初始化LCD 
-    SDRAM_Init();                   //初始化SDRAM    
+    SDRAM_Init();                   //初始化SDRAM 
+  
+    POINT_COLOR=RED;  
+    LCD_ShowString(30,10,200,16,16,(uint8_t *)"ATOM@ALIENTEK");  
+    LCD_ShowString(30,30,200,16,16,(uint8_t *)"ATK@BC28@NBIoT");  
     
 //    demo_led_entry(); 
     
@@ -37,9 +41,9 @@ int main(void)
 
 //    demo_nbiot_info_get_entry(); 
 
-//    demo_nbiot_huaweiiot_entry();  
+    demo_nbiot_huaweiiot_entry();  
 
-    demo_dht11_entry();
+//    demo_dht11_entry();
         
     while(1)
     {              

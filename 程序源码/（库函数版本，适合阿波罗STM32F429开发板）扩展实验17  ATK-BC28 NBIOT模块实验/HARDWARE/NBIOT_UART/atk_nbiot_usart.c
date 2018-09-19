@@ -168,18 +168,17 @@ void HAL_USART3_MspInit(UART_HandleTypeDef *huart)
   * @param  line: The line in file as a number.
   * @retval None
   */
-void _Error_Handler(char *file, int line)
+static void _Error_Handler(char *file, int line)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  while(1)
-  {
+    /* USER CODE BEGIN Error_Handler_Debug */
+    /* User can add his own implementation to report the HAL error return state */
+    while(1)
+    {
       
-  }
+    }
     
-  /* USER CODE END Error_Handler_Debug */
+    /* USER CODE END Error_Handler_Debug */
 }
-
 
 
 /**
@@ -244,7 +243,7 @@ uart_dev_t *atk_nbiot_uart_init (u32 bound)
     __HAL_UART_ENABLE_IT(&nbiot_uart, UART_IT_IDLE);    //开启空闲中断 
     
 
-    HAL_NVIC_EnableIRQ(USART3_IRQn);                //使能USART1中断通道
+    HAL_NVIC_EnableIRQ(USART3_IRQn);                //使能USART3中断通道
     HAL_NVIC_SetPriority(USART3_IRQn,3,3);          //抢占优先级3，子优先级3
     
     //使能串口
@@ -433,38 +432,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 #else 
 
- /**
-  * @brief 该函数在数据接收完成时被调用
-  */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if(huart->Instance==USART3)//如果是串口1
-    {
-       //接收在超时时间内正常完成，停止超时  
-       atk_soft_timer_stop(&uart_dev.uart_rx_timer);
-       
-       //设置串口接收完成事件
-       uart_event_set(&uart_dev,UART_RX_EVENT);
-              
-    }
-}
 
- /**
-  * @brief 串口3中断服务程序
-  */
-void USART3_IRQHandler(void)                    
-{         
-    HAL_UART_IRQHandler(&nbiot_uart);    //调用HAL库中断处理公用函数 
-
-    //ilde中断产生，代表当前数据帧接收结束
-    if ((__HAL_UART_GET_FLAG(&nbiot_uart, UART_FLAG_IDLE)!=RESET))  
-    {
-     
-        //清除ilde中断标记
-        __HAL_UART_CLEAR_IT(&nbiot_uart, UART_FLAG_IDLE); 
-                                         
-    }    
-}
 #endif   //end if UART_ANY_DATA_LEN_RECV 
 
 

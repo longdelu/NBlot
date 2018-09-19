@@ -46,12 +46,14 @@ typedef void (*uart_cb)(void *p_arg);
   */
 typedef struct uart_dev
 {  
+    //hal库串口设备结构体指针
     UART_HandleTypeDef *p_huart; 
   
+    //定义收发数据超时软定时器
     struct atk_soft_timer uart_rx_timer;  
     struct atk_soft_timer uart_tx_timer;
     
-    //如果不使用形形缓冲区，此值为NULL
+    //环形缓冲区结构体指针
     atk_ring_buf_t *p_uart_ring_buff;  
     
     //事件回调函数

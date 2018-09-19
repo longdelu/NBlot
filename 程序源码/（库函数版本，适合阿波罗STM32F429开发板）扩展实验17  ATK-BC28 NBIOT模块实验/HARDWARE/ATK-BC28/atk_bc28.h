@@ -39,13 +39,11 @@
 #define AT_CMEE        "AT+CMEE"
 #define AT_NBAND       "AT+NBAND"
 #define AT_ATI         "ATI"
-//#define AT_CPIN        "AT+CPIN"       //查询SIM卡的状态(SIM7020)
 #define AT_NCCID       "AT+NCCID"     //查询SIM卡的ID
 #define AT_CSQ         "AT+CSQ"
 #define AT_CFUN        "AT+CFUN"
-//#define AT_CGREG       "AT+CGREG"      //注册网络
+
 #define AT_CEREG       "AT+CEREG"      //注册网络
-//#define AT_CGACT       "AT+CGACT"      //PDP上下文设置(SIM7020） 
 #define AT_CIPCA       "AT+CIPCA"       //PDP上下文设置 
 #define AT_CGATT       "AT+CGATT"
 #define AT_NUESTATS    "AT+NUESTATS"

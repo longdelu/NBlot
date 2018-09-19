@@ -41,6 +41,8 @@ u8 dht11_flag  = 0;
 static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
 { 
     nbiot_handle_t nbiot_handle = (nbiot_handle_t)p_arg; 
+  
+
     
     (void)nbiot_handle;
     
@@ -333,8 +335,10 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
     }             
 }
 
-//nbiot 状态处理函数
-//nbiot_app_status；nbiot所处的主状态阶段
+
+/**
+  * @brief  app流程
+  */
 static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_status)
 {    
     switch (*nbiot_app_status)
@@ -346,9 +350,9 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                                       
         case NBIOT_APP_INIT:
         {
-            NBIOT_APP_DEBUG_INFO("atk_nbiot init start\r\n");
+            NBIOT_APP_DEBUG_INFO("nbiot init start\r\n");
                     
-            nbiot_init(nbiot_handle);        
+            nbiot_reg_init(nbiot_handle);        
 
             *nbiot_app_status = NBIOT_END;
             break;
@@ -356,7 +360,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                     
         case NBIOT_APP_RESET:
         {
-            NBIOT_APP_DEBUG_INFO("atk_nbiot reboot start\r\n");
+            NBIOT_APP_DEBUG_INFO("nbiot reboot start\r\n");
                     
             nbiot_reboot(nbiot_handle);        
 
@@ -366,7 +370,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
           
         case NBIOT_APP_NCONFIG:
         {
-            NBIOT_APP_DEBUG_INFO("atk_nbiot auto reg start\r\n");
+            NBIOT_APP_DEBUG_INFO("nbiot auto reg start\r\n");
                     
             nbiot_nconfig(nbiot_handle, 0);        
 
@@ -376,7 +380,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                      
         case NBIOT_APP_INFO:
         {
-             NBIOT_APP_DEBUG_INFO("atk_nbiot get signal start\r\n");
+             NBIOT_APP_DEBUG_INFO("nbiot get info start\r\n");
                     
              nbiot_info_get(nbiot_handle);
 
@@ -387,7 +391,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                                    
         case NBIOT_APP_SIGNAL:
         {
-            NBIOT_APP_DEBUG_INFO("atk_nbiot rssi(db) start\r\n");
+            NBIOT_APP_DEBUG_INFO("nbiot rssi(db) start\r\n");
             
             nbiot_signal_get(nbiot_handle);
             
@@ -397,7 +401,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                          
         case NBIOT_APP_NCDP_SERVER:
         {
-            NBIOT_APP_DEBUG_INFO("NCDP server set start\r\n");
+            NBIOT_APP_DEBUG_INFO("cdp server set start\r\n");
             
             nbiot_ncdp_update(nbiot_handle, NBIOT_NCDP); 
 
@@ -410,14 +414,12 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
         {
             char dht11_src_buf[10] = {0};
             char dht11_dest_buf[20] = {0};  
-
-            
-                                            
-            NBIOT_APP_DEBUG_INFO("NCDP send start\r\n");
+                                                        
+            NBIOT_APP_DEBUG_INFO("data send start\r\n");
                                                              
             PCF8574_ReadBit(BEEP_IO);                   //读取一次PCF8574的任意一个IO，使其释放掉PB12引脚，
                                                         //否则读取DHT11可能会出问题            
-            DHT11_Read_Data(&temperature, &humidity);    //读取温湿度值 
+            DHT11_Read_Data(&temperature, &humidity);   //读取温湿度值 
                                
             snprintf(dht11_src_buf,
                      sizeof(dht11_src_buf) - 1,
@@ -430,7 +432,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                                         
                      
             //发送当前温湿度到iot平台            
-            nbiot_ncdp_send_hex(nbiot_handle, strlen(dht11_dest_buf), dht11_dest_buf, NBIOT_NCDP, NULL);                      
+            nbiot_ncdp_send_hexstr(nbiot_handle, strlen(dht11_dest_buf), dht11_dest_buf, NBIOT_NCDP, NULL);                      
                       
             *nbiot_app_status = NBIOT_END; 
             
@@ -439,14 +441,14 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
                     
         case NBIOT_APP_NCDP_RECV:
         {
-            NBIOT_APP_DEBUG_INFO("NCDP recv start\r\n");
+            NBIOT_APP_DEBUG_INFO("data recv start\r\n");
             *nbiot_app_status = NBIOT_END;
             break;          
         }
           
         case NBIOT_APP_NCDP_CL:
         {
-            NBIOT_APP_DEBUG_INFO("NCDP close start\r\n");
+            NBIOT_APP_DEBUG_INFO("cdp close start\r\n");
 
             nbiot_ncdp_close(nbiot_handle, NBIOT_NCDP);
               
@@ -463,32 +465,42 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
 }
 
 
+/**
+  * @brief  按键事件回调函数
+  */
 static void key_event_handle(u32 key_event,void *p_arg)
 {   
   
     switch(key_event)
     {
-        case KEY0_PRES://KEY0按下,再一次发送数据
-            NBIOT_APP_DEBUG_INFO("key0 press\r\n");
+        case KEY0_PRES://KEY0按下, 
+
+            //初始化网络注册
+            nbiot_app_status = NBIOT_INFO;           
+            break;
+        
+        case KEY1_PRES://KEY1按下,
+          
+            //查询模块信息，得到imei号
+            nbiot_app_status = NBIOT_INFO;                   
+            break;
+        
+        case KEY2_PRES://KEY2按下,
+           
+            //发送数据
             nbiot_app_status = NBIOT_NCDP_SEND;
             break;
         
-        case KEY1_PRES://KEY1按下,写入sector
-            NBIOT_APP_DEBUG_INFO("key1 press\r\n");
-            nbiot_app_status = NBIOT_NCDP_CL;
-            break;
-        case KEY2_PRES://KEY2按下,恢复sector的数据
-            NBIOT_APP_DEBUG_INFO("key2 press\r\n");
-            break;
-        
-        case WKUP_PRES://KEY2按下,恢复sector的数据
-            NBIOT_APP_DEBUG_INFO("WKUP_PRES press\r\n");
-            break;        
-        
-    }   
-    
-}
+        case WKUP_PRES://KEY2按下
+            
+            break; 
 
+        default:
+          
+            break;          
+        
+    }      
+}
 
 
 /**
@@ -529,11 +541,8 @@ void demo_dht11_entry(void)
     nbiot_event_registercb(nbiot_handle, __nbiot_msg_cb_handler, nbiot_handle); 
     
     PCF8574_Init();                 //初始化PCF8574
-    POINT_COLOR=RED;
-    LCD_ShowString(30,50,200,16,16,"Apollo STM32F4/F7"); 
-    LCD_ShowString(30,70,200,16,16,"NBIOT DHT11 ");    
-    LCD_ShowString(30,90,200,16,16,"ATOM@ALIENTEK");
-    LCD_ShowString(30,110,200,16,16,"2018/9/13");    
+
+    LCD_ShowString(30,50,200,16,16,"NBIOT DHT11 ");      
     PCF8574_ReadBit(BEEP_IO);       //由于DHT11和PCF8574的中断引脚共用一个IO，
                                     //所以在初始化DHT11之前要先读取一次PCF8574的任意一个IO，
                                     //使其释放掉中断引脚所占用的IO(PB12引脚),否则初始化DS18B20会出问题    
@@ -545,10 +554,10 @@ void demo_dht11_entry(void)
         delay_ms(200);
     }
     
-    LCD_ShowString(30,130,200,16,16,"DHT11 OK");
+    LCD_ShowString(30,70,200,16,16,"DHT11 OK");
     POINT_COLOR=BLUE;//设置字体为蓝色 
-    LCD_ShowString(30,150,200,16,16,"Temp:  C");
-    LCD_ShowString(30,170,200,16,16,"Humi:  %");   
+    LCD_ShowString(30,90,200,16,16,"Temp:  C");
+    LCD_ShowString(30,110,200,16,16,"Humi:  %");   
     
     //软件定时器200ms周期定时
     atk_soft_timer_init(&dht11_timer, __dht11_timer_callback, NULL, 200, 200); 
@@ -560,14 +569,13 @@ void demo_dht11_entry(void)
         nbiot_event_poll(nbiot_handle);      
         uart_event_poll(uart_handle);         
         atk_key_event_poll(key_handle); 
-
         if (dht11_flag == 1)
         {            
             PCF8574_ReadBit(BEEP_IO);                   //读取一次PCF8574的任意一个IO，使其释放掉PB12引脚，
                                                         //否则读取DHT11可能会出问题            
             DHT11_Read_Data(&temperature,&humidity);    //读取温湿度值                        
-            LCD_ShowNum(30+40,150,temperature,2,16);    //显示温度                  
-            LCD_ShowNum(30+40,170,humidity,2,16);       //显示湿度
+            LCD_ShowNum(30+40,90,temperature,2,16);    //显示温度                  
+            LCD_ShowNum(30+40,110,humidity,2,16);       //显示湿度
             dht11_flag = 0;
             LED1=!LED1;            
         }

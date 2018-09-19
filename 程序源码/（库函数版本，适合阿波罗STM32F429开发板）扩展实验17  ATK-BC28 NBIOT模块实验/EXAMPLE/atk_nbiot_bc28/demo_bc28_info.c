@@ -178,7 +178,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
       {
         printf("atk_nbiot init start\r\n");
                 
-        nbiot_init(nbiot_handle);        
+        nbiot_reg_init(nbiot_handle);        
 
         *nbiot_app_status = NBIOT_END;
       }
@@ -188,7 +188,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
       {
         printf("atk_nbiot reboot start\r\n");
                 
-        nbiot_init(nbiot_handle);        
+        nbiot_reg_init(nbiot_handle);        
 
         *nbiot_app_status = NBIOT_END;
       }
@@ -198,7 +198,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
       {
         printf("atk_nbiot auto reg start\r\n");
                 
-        nbiot_init(nbiot_handle);        
+        nbiot_reg_init(nbiot_handle);        
 
         *nbiot_app_status = NBIOT_END;
       }
