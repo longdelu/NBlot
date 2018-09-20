@@ -191,18 +191,18 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>133</LineNumber>
+          <LineNumber>916</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134245584</Address>
+          <Address>134252336</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>G:\NBlot\ALIENTEK\绋嬪簭婧愮爜\锛堝簱鍑芥暟鐗堟湰锛岄€傚悎闃挎尝缃桽TM32F429寮€鍙戞澘锛夋墿灞曞疄楠?7  ATK-BC28 NBIOT妯″潡瀹為獙\EXAMPLE\atk_nbiot_bc28\demo_bc28_huaweiiot_entry.c</Filename>
+          <Filename>G:\NBlot\ALIENTEK\绋嬪簭婧愮爜\锛堝簱鍑芥暟鐗堟湰锛岄€傚悎闃挎尝缃桽TM32F429寮€鍙戞澘锛夋墿灞曞疄楠?7  ATK-BC28 NBIOT妯″潡瀹為獙\HARDWARE\ATK-BC28\atk_bc28.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\NBIoT\../EXAMPLE/atk_nbiot_bc28/demo_bc28_huaweiiot_entry.c\133</Expression>
+          <Expression>\\NBIoT\../HARDWARE/ATK-BC28/atk_bc28.c\916</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>

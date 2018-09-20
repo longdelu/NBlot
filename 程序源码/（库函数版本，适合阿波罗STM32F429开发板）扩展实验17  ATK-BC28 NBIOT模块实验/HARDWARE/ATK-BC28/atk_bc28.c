@@ -393,12 +393,7 @@ int nbiot_event_poll(nbiot_handle_t nbiot_handle)
             
             //命令未执行完成，正常情况下，收到的的是命令回显, 接下来的还是当前命令响应数据的接收, 重新启动接收超时               
             atk_soft_timer_timeout_change(&nbiot_handle->p_uart_dev->uart_rx_timer, 8000);
-                      
-            //处于TCP/UDP创建状态时
-            if (g_nbiot_sm_status.main_status == NBIOT_TCPUDP_CR) {
-                //通知上层应用，获取相关的信息
-                nbiot_msg_send(nbiot_handle, at_response_par, NBIOT_ERROR_CONTINUE);
-            }          
+                             
              
             //命令未完成            
         }       
@@ -836,80 +831,17 @@ static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
                 g_nbiot_connect_status.register_status = (*p_colon - '0');
             }
         }
-        
-        
-        
+                       
         if (p_colon !=NULL)
         {                      
             nbiot_event_set(nbiot_handle, NBIOT_REG_STA_EVENT);  
+        } 
+        else
+        {
+             //如果收到回复，其它是AT命令响应的数据
+             nbiot_event_set(nbiot_handle, NBIOT_RECV_EVENT);           
         }          
     }    
-    else if((target_pos_start = strstr(buf,"+CSOERR")) != NULL)
-    {
-        //收到服务器端发来TCP/UDP错误码
-        char *p_colon = strchr(target_pos_start,':');
-      
-//        int8_t socket_id = 0;
-      
-        int8_t socket_err = 0;
-        
-        //得到是哪个socket收到数据
-        if (p_colon)
-        {
-            p_colon++;          
-//            socket_id = strtoul(p_colon,0,10);
-        }
-        
-        //得到收到的socket错误码
-        char *pComma = strchr(p_colon,',');
-        
-        if(pComma)
-        {
-          pComma++;
-          socket_err = strtoul(pComma, 0, 10);          
-          g_socket_info[0].socket_errcode = socket_err; 
-        }
-                
-        nbiot_event_set(nbiot_handle, NBIOT_SOCKET_ERR_EVENT); 
-        nbiot_status_set(NBIOT_SOCKET_ERR, NBIOT_SUB_SOCKET_ERR);        
-    }
-    
-    //收到Coap数据包
-    else if((target_pos_start = strstr(buf,"+CCOAPNMI")) != NULL)
-    {
-        //收到服务器端发来CoAP数据
-        char *p_colon = strchr(target_pos_start, ':');
-      
-//        int8_t coap_id = 0;
-        
-        //得到是哪个coap收到的数据
-        if (p_colon)
-        {
-            p_colon++;
-//            coap_id = strtoul(p_colon,0,10);
-        } 
-        
-        //得到收到的数据长度
-        char *pComma = strchr(p_colon,',');
-
-        if (pComma)
-        {
-            pComma++;
-            g_nbiot_connect_status.data_len = strtoul(pComma,0,10);
-        }     
-       
-        //得到有效数据的起始地址
-        char *p_data_offest = strchr(pComma,',');
-
-        if (p_data_offest)
-        {
-            p_data_offest++;
-            g_nbiot_connect_status.data_offest = p_data_offest;
-        }                   
-      
-        nbiot_event_set(nbiot_handle, NBIOT_COAP_RECV_EVENT);  
-        nbiot_status_set(NBIOT_CoAP_RECV, NBIOT_SUB_CoAP_RECV);  
-    } 
     else if ((target_pos_start = strstr(buf,"+QLWEVTIND:")) != NULL)
     {
         //收到服务器端发来NCDP状态数据

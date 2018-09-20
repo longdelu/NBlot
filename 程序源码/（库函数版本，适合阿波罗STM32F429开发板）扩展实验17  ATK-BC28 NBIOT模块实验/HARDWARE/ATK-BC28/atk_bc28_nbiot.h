@@ -69,7 +69,8 @@ typedef enum nbiot_msg_id
     NBIOT_MSG_MREV,       //软件版本号获取完成消息
     NBIOT_MSG_BAND,       //工作频段获取完成消息
   
-    NBIOT_MSG_CSQ,        
+    NBIOT_MSG_CSQ,
+    NBIOT_MSG_STATUS,  
     NBIOT_MSG_SIGNAL,     //信号强度获取完成消息
     NBIOT_MSG_CSCON,      //获取连接（活动）状态   
 

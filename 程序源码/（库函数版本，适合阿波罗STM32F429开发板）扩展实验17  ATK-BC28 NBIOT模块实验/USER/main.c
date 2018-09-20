@@ -29,22 +29,8 @@ int main(void)
     LCD_ShowString(30,10,200,16,16,(uint8_t *)"ATOM@ALIENTEK");  
     LCD_ShowString(30,30,200,16,16,(uint8_t *)"ATK@BC28@NBIoT");  
     
-//    demo_led_entry(); 
-    
-//    demo_key_entry();
-    
-//    demo_timer_timing_entry();
-
-//    demo_uart_any_data_len_recv_entry();   
-
-//    demo_nbiot_gprs_attach_entry();  
-
-//    demo_nbiot_info_get_entry(); 
-
-    demo_nbiot_huaweiiot_entry();  
-
-//    demo_dht11_entry();
-        
+    demo_nbiot_huaweiiot_entry();  //调用demo入口函数 
+      
     while(1)
     {              
         delay_ms(1000);

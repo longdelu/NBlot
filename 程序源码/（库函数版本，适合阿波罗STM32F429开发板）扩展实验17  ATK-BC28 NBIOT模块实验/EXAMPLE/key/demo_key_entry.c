@@ -16,7 +16,7 @@
 #include "atk_key.h"
 #include "stm32f4xx_hal.h"
 
-static void key_event_handle(u32 key_event,void *p_arg)
+static void __key_event_handle(u32 key_event,void *p_arg)
 {     
     switch(key_event)
     {
@@ -49,11 +49,10 @@ void demo_key_entry(void)
 
     key_handle = atk_key_exit_init(); 
 
-    atk_key_registercb(key_handle, key_event_handle, NULL);
+    atk_key_registercb(key_handle, __key_event_handle, NULL);
   
-    atk_key_registercb(key_handle, key_event_handle, NULL);
+    atk_key_registercb(key_handle, __key_event_handle, NULL);
     
-
     while (1)
     {  
           

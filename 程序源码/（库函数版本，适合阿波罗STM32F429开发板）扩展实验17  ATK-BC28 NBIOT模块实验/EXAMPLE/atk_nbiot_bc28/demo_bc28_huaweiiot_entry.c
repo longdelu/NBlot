@@ -29,7 +29,9 @@
 
 static int nbiot_app_status = NBIOT_APP_NONE;
 
-//nbiot消息事件处理函数
+/**
+  * @brief  nbiot消息事件处理函数
+  */
 static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
 { 
     nbiot_handle_t nbiot_handle = (nbiot_handle_t)p_arg; 
@@ -40,6 +42,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
     
     switch(msg_id)
     {
+        //处理命令出错但跳过该命令消息
         case NBIOT_MSG_CMD_NEXT:
           
             sprintf((char*)lcd_buf,"msg %s err but next", msg);           
@@ -50,7 +53,8 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             NBIOT_APP_DEBUG_INFO("msg %s err but next\r\n",msg);
         
             break;
-                          
+        
+        //处理命令出错重试消息       
         case NBIOT_MSG_CMD_RETRY:
           
             sprintf((char*)lcd_buf,"msg %s err but try", msg);           
@@ -62,6 +66,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         
             break;        
         
+        //处理命令失败消息
         case NBIOT_MSG_CMD_FAIL: 
 
             sprintf((char*)lcd_buf,"msg %s failed", msg);           
@@ -71,10 +76,10 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         
             NBIOT_APP_DEBUG_INFO("msg %s failed\r\n",msg);         
             break;                     
-              
+        
+        //处理nbiot模块初始化完成消息        
         case NBIOT_MSG_INIT:
-        {
-          
+        {         
             sprintf((char*)lcd_buf,"msg init=%s", msg);           
             //先清该区域
             LCD_Fill(30,50,30+200,50+16,WHITE);            
@@ -82,11 +87,11 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
           
             NBIOT_APP_DEBUG_INFO("msg init=%s\r\n",msg);
                     
-            break;
-                     
+            break;                    
         }
-                  
-        case NBIOT_MSG_RESET:        //NB复位完成消息
+        
+        //nbiot复位完成消息         
+        case NBIOT_MSG_RESET:        
         {  
             nbiot_app_status = NBIOT_APP_INIT;
             sprintf((char*)lcd_buf,"msg reboot=%s", msg); 
@@ -96,8 +101,8 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             NBIOT_APP_DEBUG_INFO("msg reboot=%s\r\n",msg);          
             break;  
         }
-                              
-        case NBIOT_MSG_NCONFIG:      //自动入网设置完成消息 
+        //自动入网设置完成消息                      
+        case NBIOT_MSG_NCONFIG:       
         {
             nbiot_app_status = NBIOT_APP_RESET;
             //先清该区域
@@ -107,16 +112,16 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
           
             NBIOT_APP_DEBUG_INFO("msg nconfig=%s\r\n",msg); 
             break;  
-        }
-               
+        }      
+        //处理imsi号消息       
         case NBIOT_MSG_IMSI:
         {
             sprintf((char*)lcd_buf,"msg imsi=%s", msg);                       
             LCD_ShowString(30,110,200,16,16, lcd_buf);            
             NBIOT_APP_DEBUG_INFO("msg imsi=%s\r\n",msg);           
             break;
-        }
-        
+        }       
+        //处理imei号消息
         case NBIOT_MSG_IMEI:
         {
             sprintf((char*)lcd_buf,"msg imei=%s", msg);                       
@@ -124,7 +129,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             NBIOT_APP_DEBUG_INFO("msg imei=%s\r\n",msg); 
             break;
         }        
-                                    
+        //处理网络注册消息                            
         case NBIOT_MSG_REG:
         {
              NBIOT_APP_DEBUG_INFO("msg reg status=%d\r\n",*msg);  
@@ -151,7 +156,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
                                  
             break;                                                     
         }
-        
+        //处理查询CSQ消息
         case NBIOT_MSG_CSQ:
             sprintf((char*)lcd_buf,"msg rssi=%sdbm", msg); 
             //先清该区域
@@ -160,7 +165,8 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
           
             NBIOT_APP_DEBUG_INFO("msg rssi=%sdbm\r\n",msg);       
             break;        
-               
+        
+        //处理查询信号质量消息
         case NBIOT_MSG_SIGNAL:
         {  
             NBIOT_APP_DEBUG_INFO("msg signal get=%s\r\n",msg);
@@ -171,7 +177,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             LCD_ShowString(30,50,200,16,16, lcd_buf);  
             break;
         }
-                             
+        //处理查询模块信息成功消息                     
         case NBIOT_MSG_INFO:
           
         {
@@ -184,7 +190,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
           
             break;                   
         }
-
+        //处理模块连接（活动）状态消息
         case NBIOT_MSG_CSCON_STATUS:
         {
             //先清该区域
@@ -207,12 +213,13 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             }                                                                
             break;
         }
-              
+        
+        //带宽消息      
         case NBIOT_MSG_BAND:
             NBIOT_APP_DEBUG_INFO("msg freq=%s\r\n",msg);
             break;
         
-        //产商ID
+        //产商ID消息
         case NBIOT_MSG_MID:
         {
             NBIOT_APP_DEBUG_INFO("msg mid=%s\r\n",msg);
@@ -220,7 +227,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         }
         
         
-        //模块型号
+        //模块型号消息
         case NBIOT_MSG_MMODEL:
         {
             NBIOT_APP_DEBUG_INFO("msg mmodel=%s\r\n",msg); 
@@ -234,7 +241,8 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             NBIOT_APP_DEBUG_INFO("msg mrev=%s\r\n",msg);
             break;
         }
-                                                                     
+        
+        //cdp服务器更新消息                                                             
         case NBIOT_MSG_NCDP_SERVER:
         {         
             sprintf((char*)lcd_buf,"msg cdp server update=%s", msg); 
@@ -246,6 +254,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             break;
         }
         
+        //业务数据发送消息
         case NBIOT_MSG_NCDP_SEND:
         {
             NBIOT_APP_DEBUG_INFO("msg data send=%s\r\n",msg); 
@@ -257,6 +266,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
           
         }
         
+        //业务数据接收消息
         case NBIOT_MSG_NCDP_RECV:
         {
             NBIOT_APP_DEBUG_INFO("msg data recv=%s\r\n",msg);
@@ -267,7 +277,8 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
                         
             break;
         }
-              
+        
+        //设备在iot平台状态消息      
         case NBIOT_MSG_NCDP_STATUS:
         {
             NBIOT_APP_DEBUG_INFO("\r\nmsg ncdp status=%d\r\n",*msg);
@@ -297,7 +308,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
 
                     //先清该区域
                     LCD_Fill(30,50,30+200,50+16,WHITE);            
-                    LCD_ShowString(30,50,200,16,16,(uint8_t *)"dev reg ok in iot platform"); 
+                    LCD_ShowString(30,50,200,16,16,(uint8_t *)"msg dev reg=ok"); 
                 
                     break; 
 
@@ -328,8 +339,9 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             }
             
             break; 
-        }        
-                      
+        }
+        
+        //设备解除在iot平台注册消息             
         case NBIOT_MSG_NCDP_CLOSE:
         {
             NBIOT_APP_DEBUG_INFO("msg cdp close=%s\r\n",msg);
@@ -460,33 +472,33 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
 /**
   * @brief  按键事件回调函数
   */
-static void key_event_handle(u32 key_event,void *p_arg)
+static void __key_event_handle(u32 key_event,void *p_arg)
 {   
   
     switch(key_event)
     {
-        case KEY0_PRES://KEY0按下 
+      case KEY0_PRES://KEY0按下,应用状态为NBIOT_APP_NCONFIG 
             
             //初始化网络注册
             nbiot_app_status = NBIOT_APP_NCONFIG; 
             
             break;
         
-        case KEY1_PRES://KEY1按下
+        case KEY1_PRES://KEY1按下，应用状态为NBIOT_APP_INFO 
              
             //查询模块信息，得到imei号
             nbiot_app_status = NBIOT_APP_INFO; 
                             
             break;
         
-        case KEY2_PRES://KEY2按下
+        case KEY2_PRES://KEY2按下，应用状态为NBIOT_APP_NCDP_SERVER
                        
              //跳到更新cdp服务器,在iot平台注册设备
              nbiot_app_status = NBIOT_APP_NCDP_SERVER;  
                        
             break;
         
-        case WKUP_PRES://KEY2按下
+        case WKUP_PRES://WKUP按下，应用状态为NBIOT_APP_NCDP_SEND
                   
             //发送数据
             nbiot_app_status = NBIOT_APP_NCDP_SEND;
@@ -506,28 +518,43 @@ static void key_event_handle(u32 key_event,void *p_arg)
   * @retval None
   */
 void demo_nbiot_huaweiiot_entry(void)
-{         
-    uart_handle_t uart_handle = NULL; 
+{   
+    //串口设备句柄  
+    uart_handle_t   uart_handle = NULL; 
 
+    //nbiot设备句柄
     nbiot_handle_t  nbiot_handle = NULL; 
 
-    key_handle_t  key_handle = NULL;
+    //按键设备句柄 
+    key_handle_t    key_handle = NULL;
 
+    //获取按键设备句柄 
     key_handle = atk_key_exit_init(); 
     
-    atk_key_registercb(key_handle, key_event_handle, NULL);  
-   
+    //注册按键设备回调函数
+    atk_key_registercb(key_handle, __key_event_handle, NULL); 
+  
+    //获取串口设备句柄
     uart_handle = atk_nbiot_uart_init(9600);  
     
+    //获取nbiot设备句柄
     nbiot_handle = nbiot_dev_init(uart_handle);
-     
+    
+    //注册nb设备回调函数   
     nbiot_event_registercb(nbiot_handle, __nbiot_msg_cb_handler, nbiot_handle);
                  
     while (1)
     {
-        nbiot_app_status_poll(nbiot_handle, &nbiot_app_status);      
-        nbiot_event_poll(nbiot_handle);      
-        uart_event_poll(uart_handle);         
+        //应用状态轮询
+        nbiot_app_status_poll(nbiot_handle, &nbiot_app_status);
+      
+        //nbiot事件轮询
+        nbiot_event_poll(nbiot_handle);
+      
+        //串口事件轮询
+        uart_event_poll(uart_handle);
+        
+        //按键事件轮询       
         atk_key_event_poll(key_handle);
     }
 }
