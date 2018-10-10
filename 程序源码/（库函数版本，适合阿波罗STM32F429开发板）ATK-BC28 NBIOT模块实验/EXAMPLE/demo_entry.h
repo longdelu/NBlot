@@ -99,6 +99,36 @@ void demo_dht11_entry(void);
 
 
 /**
+  * @brief  The demo rgb led application entry point.
+  *
+  * @retval None
+  */
+void demo_rgb_led_entry(void);
+
+/**
+  * @brief  The demo led  beep application entry point.
+  *
+  * @retval None
+  */
+void demo_led_beep_entry(void);
+
+/**
+  * @brief  The demo ds18b20 iot entry entry point.
+  *
+  * @retval None
+  */
+void demo_ds18b20_entry(void);
+
+
+/**
+  * @brief  The demo ap3216 iot entry entry point.
+  *
+  * @retval None
+  */
+void demo_ap3216_entry(void);
+
+
+/**
   * @}
   */
 

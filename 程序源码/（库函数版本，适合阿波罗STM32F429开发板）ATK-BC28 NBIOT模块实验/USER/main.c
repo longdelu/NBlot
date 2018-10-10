@@ -29,12 +29,21 @@ int main(void)
     LCD_ShowString(30,10,200,16,16,(uint8_t *)"ATOM@ALIENTEK");  
     LCD_ShowString(30,30,200,16,16,(uint8_t *)"ATK@BC28@NBIoT");  
     
-//    demo_nbiot_huaweiiot_entry();  //调用demo入口函数 
+    //demo入口函数
+//    demo_soft_timer_entry();
+//    demo_atk_ring_buf_entry();
+//    demo_key_entry();  
+//    demo_uart_any_data_len_recv_entry();    
+//    demo_nbiot_huaweiiot_entry();  
+    demo_dht11_entry();  
+//    demo_rgb_led_entry();
   
-    demo_dht11_entry();
+//    demo_led_beep_entry();
       
     while(1)
     {              
+        LED0_Toggle;
+        LED1_Toggle;
         delay_ms(1000);
     }
 }

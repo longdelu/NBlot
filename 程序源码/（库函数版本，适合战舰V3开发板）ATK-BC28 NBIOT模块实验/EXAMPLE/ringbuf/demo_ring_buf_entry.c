@@ -19,7 +19,6 @@ static atk_ring_buf_t g_uart_ring_buf;
 
 static void timer_callback (void *p_arg)
 {
-    printf("timer timeout!\r\n");
    
     uint8_t buf[8] = {0,1,2,3,4,5,6,7};
   
@@ -34,44 +33,45 @@ static void timer_callback (void *p_arg)
   */
 void demo_atk_ring_buf_entry(void)
 {
-    int err = 0;
     int len = 0;
     int i   = 0;
   
     uint8_t buf[32];
                     
-    //接收接收环形缓冲区
-    err = atk_ring_buf_init(&g_uart_ring_buf);
-
-    printf("ring buf init failed %d\r\n", err);  
+    //初始化环形缓冲区
+    atk_ring_buf_init(&g_uart_ring_buf);
 
     atk_soft_timer_init(&timer, timer_callback, NULL, 1000, 1000); //1s loop
     atk_soft_timer_start(&timer);  
      
     while(1) {        
         
+        //获取环形缓冲当区有效数据个数
         len = atk_ring_buf_avail_len(&g_uart_ring_buf);
-        
-        printf("rx data timeout %d\r\n", len);
-                     
+                            
         if (len > 0)
         {
             if(len > sizeof(buf)) 
             {
                len = sizeof(buf);
               
+               //读取缓冲区数据
                atk_ring_buf_size_read(&g_uart_ring_buf, buf, sizeof(buf));
             }
             else
             {
+               //读取缓冲区数据
                atk_ring_buf_size_read(&g_uart_ring_buf, buf, len);
             }
-            
-            printf("the ring buf is\r\n");
+           
+            printf("ring buf data len %d\r\n", len);            
+            printf("ring buf data is\r\n");
             for (i = 0; i < len; i++)
             {
                 printf("%d ", buf[i]); 
             }
+            
+            printf("\r\n"); 
   
         };
     }

@@ -53,7 +53,10 @@ typedef struct key_dev
     
 }key_dev_t;
 
-//按键设备句柄
+
+/**
+  * @brief  按键设备句柄.
+  */
 typedef key_dev_t *key_handle_t;
 
 

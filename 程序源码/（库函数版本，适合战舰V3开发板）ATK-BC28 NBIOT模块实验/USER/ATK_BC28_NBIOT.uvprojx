@@ -310,7 +310,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>3</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>0</OneElfS>
@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\KEY;..\HARDWARE\LCD;..\HARDWARE\RTC;..\HARDWARE\RTC;..\HARDWARE\WKUP;..\HARDWARE\ADC;..\HARDWARE\DAC;..\HARDWARE\DMA;..\HARDWARE\IIC;..\HARDWARE\24CXX;..\HARDWARE\SPI;..\HARDWARE\FLASH;..\HARDWARE\TOUCH;..\HARDWARE\REMOTE;..\HARDWARE\ADXL345;..\HARDWARE\DS18B20;..\HARDWARE\DHT11;..\EXAMPLE;..\HARDWARE\ATK-BC28;..\HARDWARE\NBIOT_UART;..\HARDWARE\GPS;..\ATK_RING_BUF;..\ATK_SOFT_TIMER;..\HARDWARE\TIMER</IncludePath>
+              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\KEY;..\HARDWARE\LCD;..\HARDWARE\RTC;..\HARDWARE\RTC;..\HARDWARE\WKUP;..\HARDWARE\ADC;..\HARDWARE\DAC;..\HARDWARE\DMA;..\HARDWARE\IIC;..\HARDWARE\24CXX;..\HARDWARE\SPI;..\HARDWARE\FLASH;..\HARDWARE\TOUCH;..\HARDWARE\REMOTE;..\HARDWARE\ADXL345;..\HARDWARE\DS18B20;..\HARDWARE\DHT11;..\EXAMPLE;..\HARDWARE\ATK-BC28;..\HARDWARE\NBIOT_UART;..\HARDWARE\GPS;..\ATK_RING_BUF;..\ATK_SOFT_TIMER;..\HARDWARE\TIMER;..\HARDWARE\RGB_LED</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -400,14 +400,14 @@
           <GroupName>HARDWARE</GroupName>
           <Files>
             <File>
-              <FileName>lcd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\HARDWARE\LCD\lcd.c</FilePath>
-            </File>
-            <File>
               <FileName>dht11.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\DHT11\dht11.c</FilePath>
+            </File>
+            <File>
+              <FileName>lcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\LCD\lcd.c</FilePath>
             </File>
             <File>
               <FileName>atk_led.c</FileName>
@@ -428,6 +428,11 @@
               <FileName>atk_timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\TIMER\atk_timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>atk_rgb_led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\RGB_LED\atk_rgb_led.c</FilePath>
             </File>
           </Files>
         </Group>

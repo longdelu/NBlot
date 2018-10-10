@@ -894,7 +894,7 @@ static uint8_t nbiot_event_notify (nbiot_handle_t nbiot_handle, char *buf)
         //得到有效数据的起始地址
         if (p_colon)
         {
-            p_colon =  p_colon + 3;
+            p_colon =  p_colon + 8;
             g_nbiot_connect_status.data_offest = p_colon;
                      
         } 

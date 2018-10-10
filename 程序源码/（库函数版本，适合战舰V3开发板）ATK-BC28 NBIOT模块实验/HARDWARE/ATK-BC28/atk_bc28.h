@@ -23,8 +23,8 @@
  /**
   * @brief 使用对应iot平台的宏开关
   */
-//#define CTNB_IOT                    1    //电信iot平台
-#define HUAWEI_IOT                  1    //华为iot平台
+#define CTNB_IOT                    1    //电信iot平台
+//#define HUAWEI_IOT                  1    //华为iot平台
 //#define EASY_IOT                    1    //Easyiot平台
 
 /**

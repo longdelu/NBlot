@@ -91,13 +91,16 @@ static void uart_event_callback_handle(void *p_arg)
   */
 void demo_uart_any_data_len_recv_entry(void)
 { 
-   
+    //串口设备句柄
     uart_handle_t nbiot_handle = NULL;  
 
+    //初始化串口设备
     nbiot_handle = atk_nbiot_uart_init(9600);  
-     
+    
+    //注册串口事件回调函数
     uart_event_registercb(nbiot_handle, uart_event_callback_handle, nbiot_handle);  
-
+  
+    //发送提示信息
     uart_data_tx_poll(nbiot_handle, (uint8_t *)"nblot_uart rx tx test\r\n", sizeof("nblot_uart rx tx test\r\n") - 1, 20000);    
 
     while (1)

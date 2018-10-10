@@ -30,11 +30,16 @@ int main(void)
     LCD_ShowString(30,10,200,16,16,(uint8_t *)"ATOM@ALIENTEK");  
     LCD_ShowString(30,30,200,16,16,(uint8_t *)"ATK@BC28@NBIoT"); 
   
-    atk_tim3_int_init(4999,7199); 
-  
     //demoÈë¿Úº¯Êý
 //    demo_dht11_entry(); 
     demo_soft_timer_entry();
+//    demo_key_entry();  
+//    demo_uart_any_data_len_recv_entry();    
+//    demo_nbiot_huaweiiot_entry();
+  
+//    demo_dht11_entry();
+    
+//    demo_rgb_led_entry();
                
     while(1)
     {          

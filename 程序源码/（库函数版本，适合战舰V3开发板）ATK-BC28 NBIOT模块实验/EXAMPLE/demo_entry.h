@@ -82,7 +82,6 @@ void demo_nbiot_gprs_attach_entry(void);
 void demo_nbiot_info_get_entry(void);
 
 
-
 /**
   * @brief  The demo nbiot iot entry entry point.
   *
@@ -96,6 +95,13 @@ void demo_nbiot_huaweiiot_entry(void);
   * @retval None
   */
 void demo_dht11_entry(void);
+
+/**
+  * @brief  The demo rgb led application entry point.
+  *
+  * @retval None
+  */
+void demo_rgb_led_entry(void);
 
 
 /**

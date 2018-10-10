@@ -287,6 +287,9 @@ static void __lpuart_rx_timeout_cb (void *p_arg)
                                   
     //清除帧错误中断标记
     __HAL_UART_CLEAR_FEFLAG(p_huart); 
+    
+    //清除NE错误中断标记
+    __HAL_UART_CLEAR_NEFLAG(p_huart);
                                        
     //清除校验中断标记
     __HAL_UART_CLEAR_PEFLAG(p_huart); 
@@ -343,18 +346,15 @@ void USART3_IRQHandler(void)
 { 
     
     if ((__HAL_UART_GET_FLAG(&nbiot_uart, UART_FLAG_RXNE) != RESET))  
-    { 
-      
+    {      
         //把数据写入环形缓冲区
         atk_ring_buf_write(&g_uart_ring_buf, nbiot_uart.Instance->DR);  
-          
-             
+                      
         //收到一个数据，重置超时为500ms 
         atk_soft_timer_timeout_change(&uart_dev.uart_rx_timer, 500);
                
         // 收到数据表明，发送在超时时间内正常完成，停止发送超时  
-        atk_soft_timer_stop(&uart_dev.uart_tx_timer);
-                                   
+        atk_soft_timer_stop(&uart_dev.uart_tx_timer);                                   
     }
     
     //ilde中断产生，代表当前数据帧接收结束
@@ -386,8 +386,10 @@ void USART3_IRQHandler(void)
               
               //reset the p_huart->RxState
               nbiot_uart.State= HAL_UART_STATE_READY; 
-              
-               
+                           
+              //清除NE错误中断标记
+              __HAL_UART_CLEAR_NEFLAG(&nbiot_uart);
+                                                                 
               //清除溢出中断标记
               __HAL_UART_CLEAR_OREFLAG(&nbiot_uart); 
                                           
@@ -400,22 +402,15 @@ void USART3_IRQHandler(void)
               //清除接收中断
               __HAL_UART_CLEAR_FLAG(&nbiot_uart, UART_FLAG_RXNE);
             
-
-
               //重新开启接收中断 
               __HAL_UART_ENABLE_IT(&nbiot_uart, UART_IT_RXNE);                
-                                                                                
-         
-         
+
         } 
 
         //清除ilde中断标记
         __HAL_UART_CLEAR_IDLEFLAG(&nbiot_uart);     
                             
-    }
-    
-    //调用HAL中断处理程序
-//    HAL_UART_IRQHandler(&nbiot_uart);    
+    }      
 }   
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)

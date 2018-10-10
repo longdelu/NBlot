@@ -310,7 +310,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>3</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F429xx</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\OBJ;..\USER;..\HALLIB\STM32F4xx_HAL_Driver\Inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\LED;..\HARDWARE\KEY;..\HARDWARE\LCD;..\EXAMPLE\atk_nbiot_bc28;..\HARDWARE\NBIOT_UART;..\ATK_RING_BUF;..\EXAMPLE;..\ATK_SOFT_TIMER;..\HARDWARE\BC28;..\HARDWARE\TIMER;..\HARDWARE\PCF8574;..\HARDWARE\IIC;..\HARDWARE\DHT11;..\HARDWARE\SDRAM;..\HARDWARE\ATK-BC28</IncludePath>
+              <IncludePath>..\CORE;..\OBJ;..\USER;..\HALLIB\STM32F4xx_HAL_Driver\Inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\LED;..\HARDWARE\KEY;..\HARDWARE\LCD;..\EXAMPLE\atk_nbiot_bc28;..\HARDWARE\NBIOT_UART;..\ATK_RING_BUF;..\EXAMPLE;..\ATK_SOFT_TIMER;..\HARDWARE\BC28;..\HARDWARE\TIMER;..\HARDWARE\PCF8574;..\HARDWARE\IIC;..\HARDWARE\DHT11;..\HARDWARE\SDRAM;..\HARDWARE\ATK-BC28;..\HARDWARE\RGB_LED;..\HARDWARE\BEEP;..\HARDWARE\AP3216C;..\HARDWARE\DS18B20</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -594,6 +594,26 @@
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\PCF8574\pcf8574.c</FilePath>
             </File>
+            <File>
+              <FileName>atk_rgb_led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\RGB_LED\atk_rgb_led.c</FilePath>
+            </File>
+            <File>
+              <FileName>atk_beep.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\BEEP\atk_beep.c</FilePath>
+            </File>
+            <File>
+              <FileName>ap3216c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\AP3216C\ap3216c.c</FilePath>
+            </File>
+            <File>
+              <FileName>ds18b20.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\DS18B20\ds18b20.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -693,6 +713,16 @@
               <FileName>demo_entry.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\EXAMPLE\demo_entry.h</FilePath>
+            </File>
+            <File>
+              <FileName>demo_ap3216c_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\ap3216c\demo_ap3216c_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_ds18b20_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\ds18b20\demo_ds18b20_entry.c</FilePath>
             </File>
           </Files>
         </Group>

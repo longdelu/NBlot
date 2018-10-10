@@ -146,18 +146,19 @@ uart_dev_t *atk_nbiot_uart_init (u32 bound)
     
     //使能USART3，GPIOB时钟  
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);  
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3,ENABLE);  
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3,ENABLE);
+    USART_DeInit(USART3);  //复位串口3  
   
     //USART3_TX   GPIOB10
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10; 
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;    //复用推挽输出
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
    
     //USART3_RX      GPIOB11初始化
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;//浮空输入
-    GPIO_Init(GPIOA, &GPIO_InitStructure);                
+    GPIO_Init(GPIOB, &GPIO_InitStructure);                
 
     //Usart3 NVIC 配置
     NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
@@ -195,23 +196,23 @@ uart_dev_t *atk_nbiot_uart_init (u32 bound)
     }
      
     //清除rx中断标记
-    USART_ClearITPendingBit(USART3, USART_IT_RXNE);
+    USART_ClearITPendingBit(uart_dev.p_huart, USART_IT_RXNE);
       
     //清除ilde中断标记
-    USART_GetITStatus(USART3, USART_IT_IDLE);
-    USART_ReceiveData(USART3);
+    USART_GetITStatus(uart_dev.p_huart, USART_IT_IDLE);
+    USART_ReceiveData(uart_dev.p_huart);
 
     //禁能串口发送与发送完成中断
-    USART_ITConfig(USART3, USART_IT_TXE, DISABLE);
-    USART_ITConfig(USART3, USART_IT_TC,  DISABLE);    
+    USART_ITConfig(uart_dev.p_huart, USART_IT_TXE, DISABLE);
+    USART_ITConfig(uart_dev.p_huart, USART_IT_TC,  DISABLE);    
      
-    USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);  //开启串口接收中断
-    USART_ITConfig(USART3, USART_IT_IDLE, ENABLE);  //开启空闲中断 
+    USART_ITConfig(uart_dev.p_huart, USART_IT_RXNE, ENABLE);  //开启串口接收中断
+    USART_ITConfig(uart_dev.p_huart, USART_IT_IDLE, ENABLE);  //开启空闲中断 
         
     //使能串口
-    USART_Cmd(USART3, ENABLE);                    
+    USART_Cmd(uart_dev.p_huart, ENABLE);                    
        
-    return  &uart_dev;   
+    return &uart_dev;   
 }
 
  /**
@@ -400,18 +401,20 @@ int uart_data_tx_poll(uart_handle_t uart_handle, uint8_t *pData,uint16_t size, u
     //初始超时计算
     atk_soft_timer_init(&uart_handle->uart_tx_timer, __lpuart_tx_timeout_cb, uart_handle, Timeout, 0); 
     
-    //设置超时响应事件
+    //设置发送超时响应事件
     atk_soft_timer_start(&uart_handle->uart_tx_timer); 
     
     for (i = 0; i < size; i ++)
-    {
+    {  
+         //等待上一次数据发送完成 
+         while((uart_handle->p_huart->SR&0X40)==0);
          //发送数据
          USART_SendData(uart_handle->p_huart, pData[i]);
     } 
 
     //设置串口发送完成事件
     uart_event_set(&uart_dev, UART_TX_EVENT);
-
+    
     return 0;    
 }
 
