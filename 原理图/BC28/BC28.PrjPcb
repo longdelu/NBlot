@@ -42,21 +42,6 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
 [Document2]
-DocumentPath=ATK_BC28_01.PcbDoc
-AnnotationEnabled=1
-AnnotateStartValue=1
-AnnotationIndexControlEnabled=0
-AnnotateSuffix=
-AnnotateScope=All
-AnnotateOrder=-1
-DoLibraryUpdate=1
-DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
-ClassGenNCAutoScope=None
-DItemRevisionGUID=
-
-[Document3]
 DocumentPath=ATK_BC28_01.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -71,7 +56,7 @@ ClassGenCCAutoRoomEnabled=1
 ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
-[Document4]
+[Document3]
 DocumentPath=BC28.OutJob
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -95,6 +80,10 @@ DocumentPath=Project Outputs for SIM7020\Design Rule Check - ATK_BC28_01.html
 DItemRevisionGUID=
 
 [GeneratedDocument3]
+DocumentPath=Project Outputs for SIM7020\Design Rule Check - ATK_BC28_02.html
+DItemRevisionGUID=
+
+[GeneratedDocument4]
 DocumentPath=PcbLib1(1).PcbLib.htm
 DItemRevisionGUID=
 
@@ -291,7 +280,7 @@ OutputName1=Composite Drawing
 OutputDocumentPath1=G:\NBlot\ALIENTEK\‘≠¿ÌÕº\BC28\ATK_BC28_02.PcbDoc
 OutputVariantName1=
 OutputDefault1=0
-PageOptions1=Record=PageOptions|CenterHorizontal=True|CenterVertical=True|PrintScale=3.31|XCorrection=1.00|YCorrection=1.00|PrintKind=1|BorderSize=5000000|LeftOffset=0|BottomOffset=0|Orientation=2|PaperLength=1000|PaperWidth=1000|Scale=100|PaperSource=7|PrintQuality=-4|MediaType=1|DitherType=10|PaperKind=A4|PrintScaleMode=1
+PageOptions1=Record=PageOptions|CenterHorizontal=True|CenterVertical=True|PrintScale=4.67|XCorrection=1.00|YCorrection=1.00|PrintKind=1|BorderSize=5000000|LeftOffset=0|BottomOffset=0|Orientation=2|PaperLength=1000|PaperWidth=1000|Scale=100|PaperSource=7|PrintQuality=-4|MediaType=1|DitherType=10|PaperKind=A4|PrintScaleMode=1
 Configuration1_Name1=OutputConfigurationParameter1
 Configuration1_Item1=PrintArea=DesignExtent|PrintAreaLowerLeftCornerX=0|PrintAreaLowerLeftCornerY=0|PrintAreaUpperRightCornerX=0|PrintAreaUpperRightCornerY=0|Record=PcbPrintView
 Configuration1_Name2=OutputConfigurationParameter2
