@@ -27,7 +27,7 @@ PushECOToAnnotationFile=1
 DItemRevisionGUID=
 
 [Document1]
-DocumentPath=ATK_BC28_01.PcbDoc
+DocumentPath=ATK_BC28_02.PcbDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -42,6 +42,21 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
 [Document2]
+DocumentPath=ATK_BC28_01.PcbDoc
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+
+[Document3]
 DocumentPath=ATK_BC28_01.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -56,7 +71,7 @@ ClassGenCCAutoRoomEnabled=1
 ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
-[Document3]
+[Document4]
 DocumentPath=BC28.OutJob
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -77,6 +92,10 @@ DItemRevisionGUID=
 
 [GeneratedDocument2]
 DocumentPath=Project Outputs for SIM7020\Design Rule Check - ATK_BC28_01.html
+DItemRevisionGUID=
+
+[GeneratedDocument3]
+DocumentPath=PcbLib1(1).PcbLib.htm
 DItemRevisionGUID=
 
 [Generic_SmartPDF]
