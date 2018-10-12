@@ -127,6 +127,13 @@ void demo_ds18b20_entry(void);
   */
 void demo_ap3216_entry(void);
 
+/**
+  * @brief  The demo nbiot low power entry  point.
+  *
+  * @retval None
+  */
+void demo_bc28_low_power_entry(void);
+
 
 /**
   * @}

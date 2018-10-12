@@ -724,6 +724,11 @@
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\ds18b20\demo_ds18b20_entry.c</FilePath>
             </File>
+            <File>
+              <FileName>demo_bc28_low_power_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_low_power_entry.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
