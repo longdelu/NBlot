@@ -42,7 +42,7 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
 [Document2]
-DocumentPath=AD9LIB\ATK-SIM800C.PcbLib
+DocumentPath=AD9LIB\ALIENTEK_COMPONENT\alientek_sch_lib.PcbLib
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -57,7 +57,7 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
 [Document3]
-DocumentPath=AD9LIB\EVB_M1.PcbLib
+DocumentPath=AD9LIB\ATK-SIM800C.PcbLib
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -72,7 +72,7 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
 [Document4]
-DocumentPath=AD9LIB\EVB_M1.SCHLIB
+DocumentPath=AD9LIB\EVB_M1.PcbLib
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -87,7 +87,7 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
 [Document5]
-DocumentPath=AD9LIB\MG2260_SCH.Lib
+DocumentPath=AD9LIB\EVB_M1.SCHLIB
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -102,7 +102,7 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
 [Document6]
-DocumentPath=AD9LIB\MG2260_PCB.lib
+DocumentPath=AD9LIB\MG2260_SCH.Lib
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -117,6 +117,21 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
 [Document7]
+DocumentPath=AD9LIB\MG2260_PCB.lib
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+
+[Document8]
 DocumentPath=AD9LIB\ATK_BC28_01.PcbLib
 AnnotationEnabled=1
 AnnotateStartValue=1

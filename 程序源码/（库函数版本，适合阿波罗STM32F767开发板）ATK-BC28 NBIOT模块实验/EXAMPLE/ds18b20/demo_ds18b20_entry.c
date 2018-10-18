@@ -1,23 +1,27 @@
-/************************************************
- Copyright (c) ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾ 2014-2024
+ /************************************************
+ Copyright (c) å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸ 2014-2024
  All rights reserved 
- ALIENTEK °¢²¨ÂŞSTM32F429¿ª·¢°å 
- NBIOTÍøÂç¸½×ÅÊµÏÖ
- ¼¼ÊõÖ§³Ö£ºwww.openedv.com
- ÌÔ±¦µêÆÌ£ºhttp://eboard.taobao.com 
- ¹Ø×¢Î¢ĞÅ¹«ÖÚÆ½Ì¨Î¢ĞÅºÅ£º"ÕıµãÔ­×Ó"£¬Ãâ·Ñ»ñÈ¡STM32×ÊÁÏ¡£
- ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾  
- ×÷Õß£ºÕıµãÔ­×Ó @ALIENTEK
+ ALIENTEK é˜¿æ³¢ç½—STM32F429å¼€å‘æ¿ 
+ NBIOT æ¸©æ¹¿åº¦ä¼ æ„Ÿå™¨æ•°æ®ä¸Šä¼ åä¸ºç‰©è”ç½‘IOTå¹³å°å®éªŒ
+ æŠ€æœ¯æ”¯æŒï¼šwww.openedv.com
+ æ·˜å®åº—é“ºï¼šhttp://eboard.taobao.com 
+ å…³æ³¨å¾®ä¿¡å…¬ä¼—å¹³å°å¾®ä¿¡å·ï¼š"æ­£ç‚¹åŸå­"ï¼Œå…è´¹è·å–STM32èµ„æ–™ã€‚
+ å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸  
+ ä½œè€…ï¼šæ­£ç‚¹åŸå­ @ALIENTEK
 ************************************************/ 
-  
+
 #include "atk_sys.h"
 #include "atk_led.h"
-#include "lcd.h"
-#include "atk_key.h"
 #include "atk_delay.h"
 #include "atk_bc28_nbiot.h"
 #include "atk_bc28.h"
 #include "atk_bc28_nbiot.h"
+#include "atk_key.h"
+#include "ds18b20.h"
+#include "lcd.h"
+#include "pcf8574.h"
+#include "atk_soft_timer.h"
+
 
 #define NBIOT_APP_DEBUG  
 #ifdef NBIOT_APP_DEBUG
@@ -26,10 +30,12 @@
 #define NBIOT_APP_DEBUG_INFO(...)
 #endif
 
-static int nbiot_app_status = NBIOT_APP_NCONFIG;
+static int nbiot_app_status = NBIOT_APP_NCONFIG; 
+static short temperature = 0; 
+static u8 ds18b20_flag  = 0;
 
 /**
-  * @brief  nbiotÏûÏ¢ÊÂ¼ş´¦Àíº¯Êı
+  * @brief  nbiotæ¶ˆæ¯äº‹ä»¶å¤„ç†å‡½æ•°
   */
 static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
 { 
@@ -41,11 +47,11 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
     
     switch(msg_id)
     {
-        //´¦ÀíÃüÁî³ö´íµ«Ìø¹ı¸ÃÃüÁîÏûÏ¢
+        //å¤„ç†å‘½ä»¤å‡ºé”™ä½†è·³è¿‡è¯¥å‘½ä»¤æ¶ˆæ¯
         case NBIOT_MSG_CMD_NEXT:
           
             sprintf((char*)lcd_buf,"msg %s err but next", msg);           
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,50,30+200,50+16,WHITE);
             LCD_ShowString(30,50,200,16,16, lcd_buf);         
         
@@ -53,11 +59,11 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         
             break;
         
-        //´¦ÀíÃüÁî³ö´íÖØÊÔÏûÏ¢       
+        //å¤„ç†å‘½ä»¤å‡ºé”™é‡è¯•æ¶ˆæ¯       
         case NBIOT_MSG_CMD_RETRY:
           
             sprintf((char*)lcd_buf,"msg %s err but try", msg);           
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,50,30+200,50+16,WHITE);            
             LCD_ShowString(30,50,200,16,16, lcd_buf);  
         
@@ -65,22 +71,25 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         
             break;        
         
-        //´¦ÀíÃüÁîÊ§°ÜÏûÏ¢
+        //å¤„ç†å‘½ä»¤å¤±è´¥æ¶ˆæ¯
         case NBIOT_MSG_CMD_FAIL: 
 
             sprintf((char*)lcd_buf,"msg %s failed", msg);           
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,50,30+200,50+16,WHITE);            
             LCD_ShowString(30,50,200,16,16, lcd_buf);  
         
             NBIOT_APP_DEBUG_INFO("msg %s failed\r\n",msg);         
             break;                     
         
-        //´¦ÀínbiotÄ£¿é³õÊ¼»¯Íê³ÉÏûÏ¢        
+        //å¤„ç†nbiotæ¨¡å—åˆå§‹åŒ–å®Œæˆæ¶ˆæ¯        
         case NBIOT_MSG_INIT:
-        {         
+        {  
+            //æŸ¥è¯¢æ¨¡å—ä¿¡æ¯ï¼Œå¾—åˆ°imeiå·
+            nbiot_app_status = NBIOT_APP_INFO; 
+          
             sprintf((char*)lcd_buf,"msg init=%s", msg);           
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,50,30+200,50+16,WHITE);            
             LCD_ShowString(30,50,200,16,16, lcd_buf);
           
@@ -89,21 +98,23 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             break;                    
         }
         
-        //nbiot¸´Î»Íê³ÉÏûÏ¢         
+        //nbiotå¤ä½å®Œæˆæ¶ˆæ¯         
         case NBIOT_MSG_RESET:        
-        {          
+        {   
+            //åˆå§‹åŒ–ç½‘ç»œæ³¨å†Œ
+            nbiot_app_status = NBIOT_APP_INIT;           
             sprintf((char*)lcd_buf,"msg reboot=%s", msg); 
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,50,30+200,50+16,WHITE);          
             LCD_ShowString(30,50,200,16,16, lcd_buf);          
             NBIOT_APP_DEBUG_INFO("msg reboot=%s\r\n",msg);          
             break;  
         }
-        //×Ô¶¯ÈëÍøÉèÖÃÍê³ÉÏûÏ¢                      
+        //è‡ªåŠ¨å…¥ç½‘è®¾ç½®å®Œæˆæ¶ˆæ¯                      
         case NBIOT_MSG_NCONFIG:       
         {
             nbiot_app_status = NBIOT_APP_RESET;
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,50,30+200,50+16,WHITE);          
             sprintf((char*)lcd_buf,"msg nconfig=%s", msg);                       
             LCD_ShowString(30,50,200,16,16, lcd_buf);           
@@ -111,7 +122,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             NBIOT_APP_DEBUG_INFO("msg nconfig=%s\r\n",msg); 
             break;  
         }      
-        //´¦ÀíimsiºÅÏûÏ¢       
+        //å¤„ç†imsiå·æ¶ˆæ¯       
         case NBIOT_MSG_IMSI:
         {
             sprintf((char*)lcd_buf,"msg imsi=%s", msg);                       
@@ -119,7 +130,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             NBIOT_APP_DEBUG_INFO("msg imsi=%s\r\n",msg);           
             break;
         }       
-        //´¦ÀíimeiºÅÏûÏ¢
+        //å¤„ç†imeiå·æ¶ˆæ¯
         case NBIOT_MSG_IMEI:
         {
             sprintf((char*)lcd_buf,"msg imei=%s", msg);                       
@@ -127,11 +138,11 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             NBIOT_APP_DEBUG_INFO("msg imei=%s\r\n",msg); 
             break;
         }        
-        //´¦ÀíÍøÂç×¢²áÏûÏ¢                            
+        //å¤„ç†ç½‘ç»œæ³¨å†Œæ¶ˆæ¯                            
         case NBIOT_MSG_REG:
         {
              NBIOT_APP_DEBUG_INFO("msg reg status=%d\r\n",*msg);  
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,90,30+200,90+16,WHITE);            
             switch(*msg) 
             {
@@ -154,44 +165,44 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
                                  
             break;                                                     
         }
-        //´¦Àí²éÑ¯CSQÏûÏ¢
+        //å¤„ç†æŸ¥è¯¢CSQæ¶ˆæ¯
         case NBIOT_MSG_CSQ:
             sprintf((char*)lcd_buf,"msg rssi=%sdbm", msg); 
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,70,30+200,70+16,WHITE);          
             LCD_ShowString(30,70,200,16,16, lcd_buf);   
           
             NBIOT_APP_DEBUG_INFO("msg rssi=%sdbm\r\n",msg);       
             break;        
         
-        //´¦Àí²éÑ¯ĞÅºÅÖÊÁ¿ÏûÏ¢
+        //å¤„ç†æŸ¥è¯¢ä¿¡å·è´¨é‡æ¶ˆæ¯
         case NBIOT_MSG_SIGNAL:
         {  
             NBIOT_APP_DEBUG_INFO("msg signal get=%s\r\n",msg);
             sprintf((char*)lcd_buf,"msg signal get=%s", msg);
           
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,50,30+200,50+16,WHITE);          
             LCD_ShowString(30,50,200,16,16, lcd_buf);  
             break;
         }
-        //´¦Àí²éÑ¯Ä£¿éĞÅÏ¢³É¹¦ÏûÏ¢                     
-        case NBIOT_MSG_INFO:
-          
+        //å¤„ç†æŸ¥è¯¢æ¨¡å—ä¿¡æ¯æˆåŠŸæ¶ˆæ¯                     
+        case NBIOT_MSG_INFO:         
         {
+            //è·³åˆ°æ›´æ–°cdpæœåŠ¡å™¨,åœ¨iotå¹³å°æ³¨å†Œè®¾å¤‡
+            nbiot_app_status = NBIOT_APP_NCDP_SERVER;  
             NBIOT_APP_DEBUG_INFO("msg info get=%s\r\n",msg);
             sprintf((char*)lcd_buf,"msg info get=%s", msg);
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,50,30+200,50+16,WHITE);          
             LCD_ShowString(30,50,200,16,16, lcd_buf);  
-       
-          
+                
             break;                   
         }
-        //´¦ÀíÄ£¿éÁ¬½Ó£¨»î¶¯£©×´Ì¬ÏûÏ¢
+        //å¤„ç†æ¨¡å—è¿æ¥ï¼ˆæ´»åŠ¨ï¼‰çŠ¶æ€æ¶ˆæ¯
         case NBIOT_MSG_CSCON_STATUS:
         {
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,150,30+200,150+16,WHITE); 
             NBIOT_APP_DEBUG_INFO("msg cscon status=%d\r\n",*msg);
             switch(*msg) 
@@ -212,12 +223,12 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             break;
         }
         
-        //´ø¿íÏûÏ¢      
+        //å¸¦å®½æ¶ˆæ¯      
         case NBIOT_MSG_BAND:
             NBIOT_APP_DEBUG_INFO("msg freq=%s\r\n",msg);
             break;
         
-        //²úÉÌIDÏûÏ¢
+        //äº§å•†IDæ¶ˆæ¯
         case NBIOT_MSG_MID:
         {
             NBIOT_APP_DEBUG_INFO("msg mid=%s\r\n",msg);
@@ -225,7 +236,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         }
         
         
-        //Ä£¿éĞÍºÅÏûÏ¢
+        //æ¨¡å—å‹å·æ¶ˆæ¯
         case NBIOT_MSG_MMODEL:
         {
             NBIOT_APP_DEBUG_INFO("msg mmodel=%s\r\n",msg); 
@@ -233,18 +244,18 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
         }
                
 
-        //Èí¼ş°æ±¾ºÅ
+        //è½¯ä»¶ç‰ˆæœ¬å·
         case NBIOT_MSG_MREV:
         {
             NBIOT_APP_DEBUG_INFO("msg mrev=%s\r\n",msg);
             break;
         }
         
-        //cdp·şÎñÆ÷¸üĞÂÏûÏ¢                                                             
+        //cdpæœåŠ¡å™¨æ›´æ–°æ¶ˆæ¯                                                             
         case NBIOT_MSG_NCDP_SERVER:
         {         
             sprintf((char*)lcd_buf,"msg cdp server update=%s", msg); 
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,50,30+200,50+16,WHITE);          
             LCD_ShowString(30,50,200,16,16, lcd_buf);            
             NBIOT_APP_DEBUG_INFO("msg cdp server update=%s\r\n",msg);
@@ -252,31 +263,31 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             break;
         }
         
-        //ÒµÎñÊı¾İ·¢ËÍÏûÏ¢
+        //ä¸šåŠ¡æ•°æ®å‘é€æ¶ˆæ¯
         case NBIOT_MSG_NCDP_SEND:
         {
             NBIOT_APP_DEBUG_INFO("msg data send=%s\r\n",msg); 
             sprintf((char*)lcd_buf,"msg data send=ok"); 
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,50,30+200,50+16,WHITE);          
             LCD_ShowString(30,50,200,16,16, lcd_buf);                        
             break;
           
         }
         
-        //ÒµÎñÊı¾İ½ÓÊÕÏûÏ¢
+        //ä¸šåŠ¡æ•°æ®æ¥æ”¶æ¶ˆæ¯
         case NBIOT_MSG_NCDP_RECV:
         {
             NBIOT_APP_DEBUG_INFO("msg data recv=%s\r\n",msg);
             sprintf((char*)lcd_buf,"msg data recv=ok"); 
-            //ÏÈÇå¸ÃÇøÓò
+            //å…ˆæ¸…è¯¥åŒºåŸŸ
             LCD_Fill(30,50,30+200,50+16,WHITE);          
             LCD_ShowString(30,50,200,16,16, lcd_buf);             
                         
             break;
         }
         
-        //Éè±¸ÔÚiotÆ½Ì¨×´Ì¬ÏûÏ¢      
+        //è®¾å¤‡åœ¨iotå¹³å°çŠ¶æ€æ¶ˆæ¯      
         case NBIOT_MSG_NCDP_STATUS:
         {
             NBIOT_APP_DEBUG_INFO("\r\nmsg ncdp status=%d\r\n",*msg);
@@ -304,9 +315,12 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
                 case 3:
                     NBIOT_APP_DEBUG_INFO("Object 19/0/0 observe completed\r\n");
 
-                    //ÏÈÇå¸ÃÇøÓò
+                    //å…ˆæ¸…è¯¥åŒºåŸŸ
                     LCD_Fill(30,50,30+200,50+16,WHITE);            
                     LCD_ShowString(30,50,200,16,16,(uint8_t *)"msg dev reg=ok"); 
+                
+                    //å‘é€æ•°æ®
+                    nbiot_app_status = NBIOT_APP_NCDP_SEND;
                 
                     break; 
 
@@ -339,7 +353,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             break; 
         }
         
-        //Éè±¸½â³ıÔÚiotÆ½Ì¨×¢²áÏûÏ¢             
+        //è®¾å¤‡è§£é™¤åœ¨iotå¹³å°æ³¨å†Œæ¶ˆæ¯             
         case NBIOT_MSG_NCDP_CLOSE:
         {
             NBIOT_APP_DEBUG_INFO("msg cdp close=%s\r\n",msg);
@@ -358,7 +372,7 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
 
 
 /**
-  * @brief  appÁ÷³Ì
+  * @brief  appæµç¨‹
   */
 static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_status)
 {    
@@ -430,13 +444,34 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
               
             break;
         }
-                       
+        
+        //å‘é€ä¸šåŠ¡æ•°æ®         
         case NBIOT_APP_NCDP_SEND:
         {
-            //·¢ËÍÊı¾İiotÆ½Ì¨            
-            nbiot_ncdp_send_hexstr(nbiot_handle, strlen("313232"), "313232", NBIOT_NCDP, NULL);                      
+            char ds18b20_src_buf[10] = {0};
+            char ds18b20_dest_buf[20] = {0};  
+                                                        
+            NBIOT_APP_DEBUG_INFO("data send start\r\n");
+                                                             
+            PCF8574_ReadBit(BEEP_IO);                   //è¯»å–ä¸€æ¬¡PCF8574çš„ä»»æ„ä¸€ä¸ªIOï¼Œä½¿å…¶é‡Šæ”¾æ‰PB12å¼•è„šï¼Œ
+                                                        //å¦åˆ™è¯»å–ds18b20å¯èƒ½ä¼šå‡ºé—®é¢˜            
+            temperature = DS18B20_Get_Temp();           //è¯»å–æ¸©åº¦å€¼ 
+                               
+            snprintf(ds18b20_src_buf,
+                     sizeof(ds18b20_src_buf) - 1,
+                     "%d",
+                     temperature); 
+                                
+            
+            //è½¬æ¢æ•°æ®æ ¼å¼                     
+            nbiot_srcbuf2hexchrbuf(ds18b20_src_buf, ds18b20_dest_buf, strlen(ds18b20_src_buf)); 
+                                        
+                     
+            //å‘é€å½“å‰æ¸©åº¦åˆ°iotå¹³å°            
+            nbiot_ncdp_send_hexstr(nbiot_handle, strlen(ds18b20_dest_buf), ds18b20_dest_buf, NBIOT_NCDP, NULL);                      
                       
-            *nbiot_app_status = NBIOT_END; 
+            *nbiot_app_status = NBIOT_END;                    
+                      
             
             break;        
         }
@@ -468,37 +503,37 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
 
 
 /**
-  * @brief  °´¼üÊÂ¼ş»Øµ÷º¯Êı
+  * @brief  æŒ‰é”®äº‹ä»¶å›è°ƒå‡½æ•°
   */
 static void __key_event_handle(u32 key_event,void *p_arg)
 {   
   
     switch(key_event)
     {
-      case KEY0_PRES://KEY0°´ÏÂ,Ó¦ÓÃ×´Ì¬ÎªNBIOT_APP_NCONFIG 
+      case KEY0_PRES://KEY0æŒ‰ä¸‹,åº”ç”¨çŠ¶æ€ä¸ºNBIOT_APP_NCONFIG 
             
-            //³õÊ¼»¯ÍøÂç×¢²á
+            //åˆå§‹åŒ–ç½‘ç»œæ³¨å†Œ
             nbiot_app_status = NBIOT_APP_INIT; 
             
             break;
         
-        case KEY1_PRES://KEY1°´ÏÂ£¬Ó¦ÓÃ×´Ì¬ÎªNBIOT_APP_INFO 
+        case KEY1_PRES://KEY1æŒ‰ä¸‹ï¼Œåº”ç”¨çŠ¶æ€ä¸ºNBIOT_APP_INFO 
              
-            //²éÑ¯Ä£¿éĞÅÏ¢£¬µÃµ½imeiºÅ
+            //æŸ¥è¯¢æ¨¡å—ä¿¡æ¯ï¼Œå¾—åˆ°imeiå·
             nbiot_app_status = NBIOT_APP_INFO; 
                             
             break;
         
-        case KEY2_PRES://KEY2°´ÏÂ£¬Ó¦ÓÃ×´Ì¬ÎªNBIOT_APP_NCDP_SERVER
+        case KEY2_PRES://KEY2æŒ‰ä¸‹ï¼Œåº”ç”¨çŠ¶æ€ä¸ºNBIOT_APP_NCDP_SERVER
                        
-             //Ìøµ½¸üĞÂcdp·şÎñÆ÷,ÔÚiotÆ½Ì¨×¢²áÉè±¸
+             //è·³åˆ°æ›´æ–°cdpæœåŠ¡å™¨,åœ¨iotå¹³å°æ³¨å†Œè®¾å¤‡
              nbiot_app_status = NBIOT_APP_NCDP_SERVER;  
                        
             break;
         
-        case WKUP_PRES://WKUP°´ÏÂ£¬Ó¦ÓÃ×´Ì¬ÎªNBIOT_APP_NCDP_SEND
+        case WKUP_PRES://WKUPæŒ‰ä¸‹ï¼Œåº”ç”¨çŠ¶æ€ä¸ºNBIOT_APP_NCDP_SEND
                   
-            //·¢ËÍÊı¾İ
+            //å‘é€æ•°æ®
             nbiot_app_status = NBIOT_APP_NCDP_SEND;
                        
             break; 
@@ -512,51 +547,129 @@ static void __key_event_handle(u32 key_event,void *p_arg)
 
 
 /**
-  * @brief  The demo nbiot gprs attach application entry point.
-  *
-  * @retval None
+  * @brief  å®šæ—¶å›è°ƒæ›´æ–°ds18b20é‡‡é›†åˆ°çš„æ¸©æ¹¿åº¦çš„å€¼.
   */
-void demo_nbiot_gprs_attach_entry(void)
-{           
-    //´®¿ÚÉè±¸¾ä±ú  
-    uart_handle_t   uart_handle = NULL; 
-
-    //nbiotÉè±¸¾ä±ú
-    nbiot_handle_t  nbiot_handle = NULL; 
-
-    //°´¼üÉè±¸¾ä±ú 
-    key_handle_t    key_handle = NULL;
-
-    //»ñÈ¡°´¼üÉè±¸¾ä±ú 
-    key_handle = atk_key_exit_init(); 
-    
-    //×¢²á°´¼üÉè±¸»Øµ÷º¯Êı
-    atk_key_registercb(key_handle, __key_event_handle, NULL); 
-  
-    //»ñÈ¡´®¿ÚÉè±¸¾ä±ú
-    uart_handle = atk_nbiot_uart_init(9600);  
-    
-    //»ñÈ¡nbiotÉè±¸¾ä±ú
-    nbiot_handle = nbiot_dev_init(uart_handle);
-    
-    //×¢²ánbÉè±¸»Øµ÷º¯Êı   
-    nbiot_event_registercb(nbiot_handle, __nbiot_msg_cb_handler, nbiot_handle);
-                 
-    while (1)
-    {   
-        //Ó¦ÓÃ×´Ì¬ÂÖÑ¯
-        nbiot_app_status_poll(nbiot_handle, &nbiot_app_status);
-      
-        //nbiotÊÂ¼şÂÖÑ¯
-        nbiot_event_poll(nbiot_handle);
-      
-        //´®¿ÚÊÂ¼şÂÖÑ¯
-        uart_event_poll(uart_handle);
-        
-        //°´¼üÊÂ¼şÂÖÑ¯       
-        atk_key_event_poll(key_handle);    
-    }
+static void __ds18b20_timer_callback (void *p_arg)
+{   
+    ds18b20_flag = 1;
 }
 
 
 
+
+/**
+  * @brief  The demo ds18b20 iot entry entry point.
+  *
+  * @retval None
+  */
+void demo_ds18b20_entry(void)
+{
+    int t = 0;
+  
+    char ds18b20_src_buf[10] = {0};
+    char ds18b20_dest_buf[20] = {0};  
+    
+    struct atk_soft_timer ds18b20_timer;
+
+    uart_handle_t uart_handle = NULL; 
+
+    nbiot_handle_t  nbiot_handle = NULL; 
+
+    key_handle_t  key_handle = NULL;
+
+    key_handle = atk_key_exit_init(); 
+    
+    atk_key_registercb(key_handle, __key_event_handle, NULL);  
+   
+    uart_handle = atk_nbiot_uart_init(9600);  
+    
+    nbiot_handle = nbiot_dev_init(uart_handle);
+     
+    nbiot_event_registercb(nbiot_handle, __nbiot_msg_cb_handler, nbiot_handle); 
+    
+    PCF8574_Init();                 //åˆå§‹åŒ–PCF8574
+
+    LCD_ShowString(30,170,200,16,16,"NBIOT ds18b20");  
+
+    PCF8574_ReadBit(BEEP_IO);       //ç”±äºds18b20å’ŒPCF8574çš„ä¸­æ–­å¼•è„šå…±ç”¨ä¸€ä¸ªIOï¼Œ
+                                    //æ‰€ä»¥åœ¨åˆå§‹åŒ–ds18b20ä¹‹å‰è¦å…ˆè¯»å–ä¸€æ¬¡PCF8574çš„ä»»æ„ä¸€ä¸ªIOï¼Œ
+                                    //ä½¿å…¶é‡Šæ”¾æ‰ä¸­æ–­å¼•è„šæ‰€å ç”¨çš„IO(PB12å¼•è„š),å¦åˆ™åˆå§‹åŒ–DS18B20ä¼šå‡ºé—®é¢˜    
+    while(DS18B20_Init())    //ds18b20åˆå§‹åŒ–    
+    {
+        LCD_ShowString(30,190,200,16,16,"ds18b20 Error");
+        delay_ms(200);
+        LCD_Fill(30,190,239,130+16,WHITE);
+        delay_ms(200);
+    }
+
+    //å…ˆæ¸…è¯¥åŒºåŸŸ
+    LCD_Fill(30,190,30+200,190+16,WHITE);
+    LCD_ShowString(30,190,200,16,16,"ds18b20 OK");
+    LCD_ShowString(30,210,200,16,16,"Temp:   . C");
+
+    PCF8574_ReadBit(BEEP_IO);                   //è¯»å–ä¸€æ¬¡PCF8574çš„ä»»æ„ä¸€ä¸ªIOï¼Œä½¿å…¶é‡Šæ”¾æ‰PB12å¼•è„šï¼Œ
+                                                //å¦åˆ™è¯»å–ds18b20å¯èƒ½ä¼šå‡ºé—®é¢˜            
+    temperature = DS18B20_Get_Temp();           //è¯»å–æ¸©åº¦å€¼ 
+
+    LCD_ShowNum(30+40,210,temperature,2,16);    //æ˜¾ç¤ºæ¸©åº¦                     
+    
+    //è½¯ä»¶å®šæ—¶å™¨1000mså‘¨æœŸå®šæ—¶
+    atk_soft_timer_init(&ds18b20_timer, __ds18b20_timer_callback, NULL, 1000, 1000); 
+    atk_soft_timer_start(&ds18b20_timer);                                         
+    
+    while(1)
+    {                       
+        nbiot_app_status_poll(nbiot_handle, &nbiot_app_status);      
+        nbiot_event_poll(nbiot_handle);      
+        uart_event_poll(uart_handle);         
+        atk_key_event_poll(key_handle); 
+      
+        //å®šæ—¶é‡‡é›†æ¸©åº¦
+        if (ds18b20_flag == 1)
+        {            
+            PCF8574_ReadBit(BEEP_IO);                   //è¯»å–ä¸€æ¬¡PCF8574çš„ä»»æ„ä¸€ä¸ªIOï¼Œä½¿å…¶é‡Šæ”¾æ‰PB12å¼•è„šï¼Œ
+                                                        //å¦åˆ™è¯»å–ds18b20å¯èƒ½ä¼šå‡ºé—®é¢˜            
+            temperature = DS18B20_Get_Temp();           //è¯»å–æ¸©åº¦å€¼åº¦å€¼ 
+                               
+            t++;
+          
+            if (t == 1800)
+            {
+                snprintf(ds18b20_src_buf,
+                         sizeof(ds18b20_src_buf) - 1,
+                         "%d",
+                         temperature); 
+                                    
+                
+                //è½¬æ¢æ•°æ®æ ¼å¼                     
+                nbiot_srcbuf2hexchrbuf(ds18b20_src_buf, ds18b20_dest_buf, strlen(ds18b20_src_buf)); 
+                                            
+                         
+                //å‘é€å½“å‰æ¸©åº¦åˆ°iotå¹³å°            
+                nbiot_ncdp_send_hexstr(nbiot_handle, strlen(ds18b20_dest_buf), ds18b20_dest_buf, NBIOT_NCDP, NULL);  
+                         
+                t = 0;          
+            }
+
+            if(temperature<0)
+            {
+                LCD_ShowChar(30+40,210,'-',16,0);       //æ˜¾ç¤ºè´Ÿå·
+                temperature=-temperature;               //è½¬ä¸ºæ­£æ•°
+            }
+            else
+            {
+                LCD_ShowChar(30+40,210,' ',16,0);             //å»æ‰è´Ÿå·
+                LCD_ShowNum(30+40+8,210,temperature/10,2,16); //æ˜¾ç¤ºæ­£æ•°éƒ¨åˆ†        
+                LCD_ShowNum(30+40+32,210,temperature%10,1,16);//æ˜¾ç¤ºå°æ•°éƒ¨åˆ†  
+            }             
+                     
+               
+            ds18b20_flag = 0;
+            LED1_Toggle;;            
+        }
+        
+    }
+}
+
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -18,7 +18,7 @@
 #include "atk_bc28_nbiot.h"
 #include "atk_bc28.h"
 #include "atk_bc28_nbiot.h"
-#include "atk_bsp.h"
+#include "atk_bc28_nbiot.h"
 
 
 #define NBIOT_APP_DEBUG  

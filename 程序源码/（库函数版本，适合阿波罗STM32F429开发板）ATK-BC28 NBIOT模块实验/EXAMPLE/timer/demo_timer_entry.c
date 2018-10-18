@@ -14,7 +14,7 @@
 #include "atk_led.h"
 #include "atk_delay.h"
 #include "atk_timer.h"
-#include "stm32f4xx_hal.h"
+#include "atk_bsp.h"
 
 /**
   * @brief  The timer timing application entry point.

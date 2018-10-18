@@ -31,19 +31,27 @@ int main(void)
     LCD_ShowString(30,30,200,16,16,(uint8_t *)"ATK@BC28@NBIoT"); 
   
     //demoÈë¿Úº¯Êý
-//    demo_dht11_entry(); 
-    demo_soft_timer_entry();
+//    demo_soft_timer_entry();
+//    demo_atk_ring_buf_entry();
 //    demo_key_entry();  
 //    demo_uart_any_data_len_recv_entry();    
-//    demo_nbiot_huaweiiot_entry();
-  
-//    demo_dht11_entry();
-    
+//    demo_nbiot_huaweiiot_entry();  
+//    demo_dht11_entry();  
 //    demo_rgb_led_entry();
+  
+//    demo_led_beep_entry();
+
+    demo_bc28_low_power_entry();
+
+//    demo_ds18b20_entry();
+
+
                
     while(1)
     {          
-        delay_ms(500);
+        LED0_Toggle;
+        LED1_Toggle;
+        delay_ms(1000);
               
     }
 }

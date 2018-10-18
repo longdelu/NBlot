@@ -14,7 +14,7 @@
 #include "atk_led.h"
 #include "atk_delay.h"
 #include "atk_key.h"
-#include "atk_bsp.h"
+
 
 /**
   * @brief  按键回调函数
@@ -65,7 +65,8 @@ void demo_key_entry(void)
     while (1)
     {  
         //轮询按键事件  
-        atk_key_event_poll(key_handle);                        
+        atk_key_event_poll(key_handle);
+                            
     }
 }
 

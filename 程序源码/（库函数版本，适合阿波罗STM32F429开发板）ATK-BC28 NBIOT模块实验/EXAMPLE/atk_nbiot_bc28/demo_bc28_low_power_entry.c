@@ -23,11 +23,11 @@
 
 static int nbiot_app_status = NBIOT_APP_NCONFIG;
 static int nbiot_net_flag   = 0;
-static int lower_power_flag = 1;
 
  
-
+#define VEN_PIN_Toggle (HAL_GPIO_TogglePin(GPIOI, GPIO_PIN_11))
 #define VEN_PIN PIout(11)   
+#define RST_PIN PAout(4)  
 
 /**
   * @brief  led初始化
@@ -38,14 +38,25 @@ static void ___low_power__init(void)
 {
     GPIO_InitTypeDef GPIO_Initure;
     __HAL_RCC_GPIOI_CLK_ENABLE();           //开启GPIOI时钟
+    __HAL_RCC_GPIOA_CLK_ENABLE();           //开启GPIOA时钟
 
     GPIO_Initure.Pin=GPIO_PIN_11;           //PI11
-    GPIO_Initure.Mode=GPIO_MODE_OUTPUT_OD;  //开漏输出
-    GPIO_Initure.Pull=GPIO_PULLDOWN;        //下拉
+    GPIO_Initure.Mode=GPIO_MODE_OUTPUT_PP;  //推挽输出
+    GPIO_Initure.Pull=GPIO_PULLUP;          //上拉
     GPIO_Initure.Speed=GPIO_SPEED_HIGH;     //高速
-    HAL_GPIO_Init(GPIOB,&GPIO_Initure);
+    HAL_GPIO_Init(GPIOI,&GPIO_Initure);
 
     HAL_GPIO_WritePin(GPIOI,GPIO_PIN_11,GPIO_PIN_SET);    //PI11置1 
+
+
+    GPIO_Initure.Pin=GPIO_PIN_4;            //PA4
+    GPIO_Initure.Mode=GPIO_MODE_OUTPUT_PP;  //推挽输出
+    GPIO_Initure.Pull=GPIO_PULLUP;          //上拉
+    GPIO_Initure.Speed=GPIO_SPEED_HIGH;     //高速
+    HAL_GPIO_Init(GPIOA,&GPIO_Initure);
+
+    HAL_GPIO_WritePin(GPIOA,GPIO_PIN_4,GPIO_PIN_SET);    //PA4置1   
+  
 }
 
 /**
@@ -105,6 +116,9 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             LCD_ShowString(30,50,200,16,16, lcd_buf);
           
             NBIOT_APP_DEBUG_INFO("msg init=%s\r\n",msg);
+
+            //查询模块信息，得到imei号
+            nbiot_app_status = NBIOT_APP_INFO;  
                     
             break;                    
         }
@@ -116,7 +130,11 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             //先清该区域
             LCD_Fill(30,50,30+200,50+16,WHITE);          
             LCD_ShowString(30,50,200,16,16, lcd_buf);          
-            NBIOT_APP_DEBUG_INFO("msg reboot=%s\r\n",msg);          
+            NBIOT_APP_DEBUG_INFO("msg reboot=%s\r\n",msg);    
+
+            //初始化网络注册
+            nbiot_app_status = NBIOT_APP_INIT; 	
+
             break;  
         }
         //自动入网设置完成消息                      
@@ -205,6 +223,8 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             LCD_Fill(30,50,30+200,50+16,WHITE);          
             LCD_ShowString(30,50,200,16,16, lcd_buf);  
        
+            //跳到更新cdp服务器,在iot平台注册设备
+            nbiot_app_status = NBIOT_APP_NCDP_SERVER;  
           
             break;                   
         }
@@ -497,24 +517,39 @@ static void __key_event_handle(u32 key_event,void *p_arg)
   
     switch(key_event)
     {
-      case KEY0_PRES://KEY0按下,应用状态为NBIOT_APP_NCONFIG 
+        case KEY0_PRES://KEY0按下,应用状态为NBIOT_APP_NCONFIG 
+                 
+            //已经入网了，断电
+            if (nbiot_net_flag == 1) 
+            {              
+                VEN_PIN = 0;
+                NBIOT_APP_DEBUG_INFO("power down\r\n");  
+                nbiot_net_flag = 0;              
+            }                   
             
-            //初始化网络注册
-            nbiot_app_status = NBIOT_APP_INIT; 
-            
+             break;
+        
+        case KEY1_PRES://KEY1按下，重新注册入网 
+          
+            //已经断电，肯定不在入网状态了
+            if (nbiot_net_flag == 0) 
+            {              
+                VEN_PIN = 1;
+              
+                RST_PIN = 0;
+              
+                delay_ms(150);
+              
+                RST_PIN = 1;
+              
+                //重新开始入网
+                nbiot_app_status = NBIOT_APP_NCONFIG;           
+            }                   
+                                                            
             break;
         
-        case KEY1_PRES://KEY1按下，应用状态为NBIOT_APP_INFO 
-             
-            //查询模块信息，得到imei号
-            nbiot_app_status = NBIOT_APP_INFO; 
-                            
-            break;
-        
-        case KEY2_PRES://KEY2按下，应用状态为NBIOT_APP_NCDP_SERVER
+        case KEY2_PRES://KEY2按下
                        
-             //跳到更新cdp服务器,在iot平台注册设备
-             nbiot_app_status = NBIOT_APP_NCDP_SERVER;  
                        
             break;
         
@@ -533,13 +568,6 @@ static void __key_event_handle(u32 key_event,void *p_arg)
 }
 
 
-/**
-  * @brief  定时睡眠与唤醒入网.
-  */
-static void __low_power_timer_callback (void *p_arg)
-{   
-    lower_power_flag = !lower_power_flag;
-}
 
 
 /**
@@ -549,7 +577,6 @@ static void __low_power_timer_callback (void *p_arg)
   */
 void demo_bc28_low_power_entry(void)
 {   
-    struct atk_soft_timer low_power_timer;  
   
     //串口设备句柄  
     uart_handle_t   uart_handle = NULL; 
@@ -577,10 +604,6 @@ void demo_bc28_low_power_entry(void)
     
     //低功耗引脚初始化
     ___low_power__init();
-    
-    //软件定时器30s周期定时
-    atk_soft_timer_init(&low_power_timer, __low_power_timer_callback, NULL, 30000, 30000); 
-    atk_soft_timer_start(&low_power_timer);      
                  
     while (1)
     {
@@ -595,16 +618,7 @@ void demo_bc28_low_power_entry(void)
         
         //按键事件轮询       
         atk_key_event_poll(key_handle);
-//      
-//        if (lower_power_flag == 0) 
-//        {
-//            //已经入网了，断电
-//            if (nbiot_net_flag == 1) 
-//            {              
-//                VEN_PIN = 0;
-//                NBIOT_APP_DEBUG_INFO("power down\r\n");             
-//            }                   
-//        }
+          
     }
 }
 

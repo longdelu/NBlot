@@ -68,11 +68,11 @@ void demo_atk_ring_buf_entry(void);
 
 
 /**
-  * @brief  The demo nbiot gprs attach application entry point.
+  * @brief  The demo nbiot net attach application entry point.
   *
   * @retval None
   */
-void demo_nbiot_gprs_attach_entry(void);
+void demo_nbiot_net_attach_entry(void);
 
 /**
   * @brief  The demo nbiot nblot info get application entry point.

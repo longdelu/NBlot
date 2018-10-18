@@ -31,7 +31,7 @@
 #endif
 
 static int nbiot_app_status = NBIOT_APP_NCONFIG; 
-static u8 temperature = 0; 
+static short temperature = 0; 
 static u8 ds18b20_flag  = 0;
 
 /**
@@ -589,7 +589,8 @@ void demo_ds18b20_entry(void)
     
     PCF8574_Init();                 //初始化PCF8574
 
-    LCD_ShowString(30,170,200,16,16,"NBIOT ds18b20");      
+    LCD_ShowString(30,170,200,16,16,"NBIOT ds18b20");  
+
     PCF8574_ReadBit(BEEP_IO);       //由于ds18b20和PCF8574的中断引脚共用一个IO，
                                     //所以在初始化ds18b20之前要先读取一次PCF8574的任意一个IO，
                                     //使其释放掉中断引脚所占用的IO(PB12引脚),否则初始化DS18B20会出问题    
@@ -600,10 +601,11 @@ void demo_ds18b20_entry(void)
         LCD_Fill(30,190,239,130+16,WHITE);
         delay_ms(200);
     }
+
     //先清该区域
     LCD_Fill(30,190,30+200,190+16,WHITE);
     LCD_ShowString(30,190,200,16,16,"ds18b20 OK");
-    LCD_ShowString(30,210,200,16,16,"Temp:  C");
+    LCD_ShowString(30,210,200,16,16,"Temp:   . C");
 
     PCF8574_ReadBit(BEEP_IO);                   //读取一次PCF8574的任意一个IO，使其释放掉PB12引脚，
                                                 //否则读取ds18b20可能会出问题            
@@ -627,8 +629,8 @@ void demo_ds18b20_entry(void)
         {            
             PCF8574_ReadBit(BEEP_IO);                   //读取一次PCF8574的任意一个IO，使其释放掉PB12引脚，
                                                         //否则读取ds18b20可能会出问题            
-            temperature = DS18B20_Get_Temp();           //读取温度值度值   
-
+            temperature = DS18B20_Get_Temp();           //读取温度值度值 
+                               
             t++;
           
             if (t == 1800)
@@ -647,9 +649,21 @@ void demo_ds18b20_entry(void)
                 nbiot_ncdp_send_hexstr(nbiot_handle, strlen(ds18b20_dest_buf), ds18b20_dest_buf, NBIOT_NCDP, NULL);  
                          
                 t = 0;          
-            }                         
+            }
+
+            if(temperature<0)
+            {
+                LCD_ShowChar(30+40,210,'-',16,0);       //显示负号
+                temperature=-temperature;               //转为正数
+            }
+            else
+            {
+                LCD_ShowChar(30+40,210,' ',16,0);             //去掉负号
+                LCD_ShowNum(30+40+8,210,temperature/10,2,16); //显示正数部分	    
+                LCD_ShowNum(30+40+32,210,temperature%10,1,16);//显示小数部分  
+            }             
                      
-            LCD_ShowNum(30+40,210,temperature,2,16);    //显示温度                  
+               
             ds18b20_flag = 0;
             LED1=!LED1;            
         }

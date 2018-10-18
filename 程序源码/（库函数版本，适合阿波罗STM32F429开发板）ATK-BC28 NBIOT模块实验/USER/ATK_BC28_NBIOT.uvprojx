@@ -310,7 +310,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>3</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -680,9 +680,9 @@
               <FilePath>..\EXAMPLE\ringbuf\demo_ring_buf_entry.c</FilePath>
             </File>
             <File>
-              <FileName>demo_bc28_gprs_attach_entry.c</FileName>
+              <FileName>demo_bc28_net_attach_entry.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_gprs_attach_entry.c</FilePath>
+              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_net_attach_entry.c</FilePath>
             </File>
             <File>
               <FileName>demo_bc28_info.c</FileName>

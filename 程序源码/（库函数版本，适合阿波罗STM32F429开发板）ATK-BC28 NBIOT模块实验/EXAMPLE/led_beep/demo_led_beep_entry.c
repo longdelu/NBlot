@@ -323,17 +323,22 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             
             led_beep_action_buf[0] = msg[0];
             led_beep_action_buf[1] = msg[1];
+            
+            //先清该区域
+            LCD_Fill(30,170,30+200,170 + 3* 16,WHITE);               
          
             //前面2个字节是LED0        
             if (strstr(led_beep_action_buf, "31")) 
             {                          
                 board_led_dev[0].led_status = 1;               
-                LED0 = 0;              
+                LED0 = 0; 
+                LCD_ShowString(30,170,200,16,16,"NBIOT LED0 ON");               
             } 
             else
             {
                 board_led_dev[0].led_status = 0;               
-                LED0 = 1;               
+                LED0 = 1;          
+                LCD_ShowString(30,170,200,16,16,"NBIOT LED0 OFF");               
                
             }
 
@@ -345,11 +350,13 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             {                          
                 board_led_dev[1].led_status = 1;               
                 LED1 = 0;              
+                LCD_ShowString(30,190,200,16,16,"NBIOT LED1 ON"); 
             } 
             else
             {
                 board_led_dev[1].led_status = 0;               
-                LED1 = 1;               
+                LED1 = 1;   
+                LCD_ShowString(30,190,200,16,16,"NBIOT LED1 OFF");               
                
             } 
 
@@ -360,12 +367,14 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             if(strstr(led_beep_action_buf, "31")) 
             {                          
                board_beep_dev.beep_status = 1;               
-               beep_on();              
+               beep_on();    
+               LCD_ShowString(30,210,200,16,16,"NBIOT BEEP ON");               
             } 
             else
             {
                 board_beep_dev.beep_status = 0;               
-                beep_off();                               
+                beep_off();        
+                LCD_ShowString(30,210,200,16,16,"NBIOT BEEP OFF");               
             }  
             
                                                                                               
@@ -536,41 +545,50 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
 
             char led_beep_status_buf[8]={0};            
             NBIOT_APP_DEBUG_INFO("data send start\r\n");
+            
+            //先清该区域
+            LCD_Fill(30,170,30+200,170 + 3* 16,WHITE);               
                                      
             //0，1字节代表LED0状态            
             if (board_led_dev[0].led_status == 1) 
             {         
                 led_beep_status_buf[0] = '3';
-                led_beep_status_buf[1] = '1';                                                      
+                led_beep_status_buf[1] = '1'; 
+                LCD_ShowString(30,170,200,16,16,"NBIOT LED0 ON"); 
             }
             else      
             {   
                 led_beep_status_buf[0] = '3';
-                led_beep_status_buf[1] = '0';           
+                led_beep_status_buf[1] = '0';               
+                LCD_ShowString(30,170,200,16,16,"NBIOT LED0 OFF");
             }
             
             //2，3字节代表LED1
             if (board_led_dev[1].led_status == 1)
             {              
                 led_beep_status_buf[2] = '3';
-                led_beep_status_buf[3] = '1';                    
+                led_beep_status_buf[3] = '1';     
+                LCD_ShowString(30,190,200,16,16,"NBIOT LED1 ON");               
             }
             else
             {
                 led_beep_status_buf[2] = '3';
-                led_beep_status_buf[3] = '0';        
+                led_beep_status_buf[3] = '0';   
+                LCD_ShowString(30,190,200,16,16,"NBIOT LED1 OFF");                 
             }
 
             //4，5字节代表蜂鸣器状态 
             if (board_beep_dev.beep_status == 1)   
             {              
                 led_beep_status_buf[4] = '3';
-                led_beep_status_buf[5] = '1';                    
+                led_beep_status_buf[5] = '1';    
+                LCD_ShowString(30,210,200,16,16,"NBIOT BEEP ON");                   
             }
             else
             {
                 led_beep_status_buf[4] = '3';
-                led_beep_status_buf[5] = '0';        
+                led_beep_status_buf[5] = '0';
+                LCD_ShowString(30,210,200,16,16,"NBIOT BEEP OFF");   
             } 
             
             //发送数据iot平台          

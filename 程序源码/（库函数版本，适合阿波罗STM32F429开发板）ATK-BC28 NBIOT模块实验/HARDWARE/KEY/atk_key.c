@@ -16,7 +16,7 @@
 
 static key_dev_t key_dev = {0,0, NULL, NULL};
 
-//按键初始化函数
+
 
 /**
   * @brief  按键初始化函数

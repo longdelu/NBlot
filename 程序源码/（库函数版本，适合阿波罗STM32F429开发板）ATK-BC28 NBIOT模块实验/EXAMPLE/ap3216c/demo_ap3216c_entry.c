@@ -590,15 +590,15 @@ void demo_ap3216_entry(void)
                                     //所以在初始化ap3216c之前要先读取一次PCF8574的任意一个IO，
                                     //使其释放掉中断引脚所占用的IO(PB12引脚),否则初始化DS18B20会出问题    
                                     
-    while(AP3216C_Init())		//检测不到AP3216C
-	  {
+    while(AP3216C_Init())           //检测不到AP3216C
+    {
 
         LCD_ShowString(30,190,200,16,16,"AP3216C Error");
         delay_ms(200);
         LCD_Fill(30,190,239,130+16,WHITE);
         delay_ms(200);      
       
-    }	                                
+    }                              
     //先清该区域
     LCD_Fill(30,190,30+200,190+16,WHITE);
     LCD_ShowString(30,190,200,16,16,"AP3216C OK");

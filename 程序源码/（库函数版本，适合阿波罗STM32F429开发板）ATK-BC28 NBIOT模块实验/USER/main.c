@@ -40,7 +40,11 @@ int main(void)
   
 //    demo_led_beep_entry();
 
-    demo_bc28_low_power_entry();
+//    demo_bc28_low_power_entry();
+
+//    demo_ds18b20_entry();
+
+//    demo_ap3216_entry();
       
     while(1)
     {              

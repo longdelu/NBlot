@@ -15,7 +15,7 @@
         <TargetCommonOption>
           <Device>STM32F103ZE</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32F1xx_DFP.2.2.0</PackID>
+          <PackID>Keil.STM32F1xx_DFP.1.0.5</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IROM(0x08000000,0x80000) IRAM(0x20000000,0x10000) CPUTYPE("Cortex-M3") CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\KEY;..\HARDWARE\LCD;..\HARDWARE\RTC;..\HARDWARE\RTC;..\HARDWARE\WKUP;..\HARDWARE\ADC;..\HARDWARE\DAC;..\HARDWARE\DMA;..\HARDWARE\IIC;..\HARDWARE\24CXX;..\HARDWARE\SPI;..\HARDWARE\FLASH;..\HARDWARE\TOUCH;..\HARDWARE\REMOTE;..\HARDWARE\ADXL345;..\HARDWARE\DS18B20;..\HARDWARE\DHT11;..\EXAMPLE;..\HARDWARE\ATK-BC28;..\HARDWARE\NBIOT_UART;..\HARDWARE\GPS;..\ATK_RING_BUF;..\ATK_SOFT_TIMER;..\HARDWARE\TIMER;..\HARDWARE\RGB_LED</IncludePath>
+              <IncludePath>..\HARDWARE\LED;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\KEY;..\HARDWARE\LCD;..\HARDWARE\RTC;..\HARDWARE\RTC;..\HARDWARE\WKUP;..\HARDWARE\ADC;..\HARDWARE\DAC;..\HARDWARE\DMA;..\HARDWARE\IIC;..\HARDWARE\24CXX;..\HARDWARE\SPI;..\HARDWARE\FLASH;..\HARDWARE\TOUCH;..\HARDWARE\REMOTE;..\HARDWARE\ADXL345;..\HARDWARE\DS18B20;..\HARDWARE\DHT11;..\EXAMPLE;..\HARDWARE\ATK-BC28;..\HARDWARE\NBIOT_UART;..\HARDWARE\GPS;..\ATK_RING_BUF;..\ATK_SOFT_TIMER;..\HARDWARE\TIMER;..\HARDWARE\RGB_LED;..\HARDWARE\BEEP;..\HARDWARE\DS18B20</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -433,6 +433,16 @@
               <FileName>atk_rgb_led.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\RGB_LED\atk_rgb_led.c</FilePath>
+            </File>
+            <File>
+              <FileName>atk_beep.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\BEEP\atk_beep.c</FilePath>
+            </File>
+            <File>
+              <FileName>ds18b20.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\DS18B20\ds18b20.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -550,9 +560,9 @@
           <GroupName>EXAMPLE</GroupName>
           <Files>
             <File>
-              <FileName>demo_bc28_gprs_attach_entry.c</FileName>
+              <FileName>demo_bc28_net_attach_entry.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_gprs_attach_entry.c</FilePath>
+              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_net_attach_entry.c</FilePath>
             </File>
             <File>
               <FileName>demo_bc28_info.c</FileName>
@@ -563,6 +573,11 @@
               <FileName>demo_bc28_huaweiiot_entry.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_huaweiiot_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_bc28_low_power_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\atk_nbiot_bc28\demo_bc28_low_power_entry.c</FilePath>
             </File>
             <File>
               <FileName>demo_led_beep_entry.c</FileName>
@@ -598,6 +613,11 @@
               <FileName>demo_soft_timer_entry.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\soft_timer\demo_soft_timer_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_ds18b20_entry.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\ds18b20\demo_ds18b20_entry.c</FilePath>
             </File>
           </Files>
         </Group>
