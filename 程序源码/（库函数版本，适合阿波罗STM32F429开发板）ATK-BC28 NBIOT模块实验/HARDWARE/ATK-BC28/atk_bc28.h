@@ -23,8 +23,8 @@
  /**
   * @brief 使用对应iot平台的宏开关
   */
-//#define CTNB_IOT                    1    //电信iot平台
-#define HUAWEI_IOT                  1    //华为iot平台
+#define CTNB_IOT                    1    //电信iot平台
+//#define HUAWEI_IOT                  1    //华为iot平台
 //#define EASY_IOT                    1    //Easyiot平台
 
 /**
@@ -509,12 +509,30 @@ typedef void (*nbiot_cb)(void *p_arg, int, int ,char*);
 /**
  * @brief nbiot设备结构体
  */
+typedef struct nbiot_dev_info
+{ 
+    GPIO_TypeDef  *GPIO_VEN;     
+    int ven_pin;  
+  
+    GPIO_TypeDef  *GPIO_RST;   
+    int rst_pin; 
+  
+}nbiot_dev_info_t;
+
+
+/**
+ * @brief nbiot设备结构体
+ */
 typedef struct nbiot_dev
 {     
-    struct nbiot_drv_funcs *p_drv_funcs;
+    struct nbiot_drv_funcs   *p_drv_funcs;
+  
+    //设备信息结构体
+    struct nbiot_dev_info    *p_dev_info;  
     
     //关联的串口设备
     uart_dev_t               *p_uart_dev;
+  
     
     //nbiot设备事件回调函数
     nbiot_cb                  nbiot_cb;  
@@ -541,7 +559,7 @@ typedef struct nbiot_dev
     nbiot_firmware_info_t   *p_firmware_info; 
 
     //帧格式，超时成帧或者ILDE成帧
-    uint8_t                   frame_format;  
+    uint8_t                   frame_format;              
                
 }nbiot_dev_t;
 

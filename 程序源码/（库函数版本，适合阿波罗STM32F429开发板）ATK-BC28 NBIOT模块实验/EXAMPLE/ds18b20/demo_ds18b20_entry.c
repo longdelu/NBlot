@@ -19,8 +19,8 @@
 #include "atk_key.h"
 #include "ds18b20.h"
 #include "lcd.h"
-#include "pcf8574.h"
 #include "atk_soft_timer.h"
+#include "atk_bsp.h"
 
 
 #define NBIOT_APP_DEBUG  

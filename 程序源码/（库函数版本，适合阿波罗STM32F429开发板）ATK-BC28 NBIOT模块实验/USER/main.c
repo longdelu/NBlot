@@ -35,7 +35,7 @@ int main(void)
 //    demo_key_entry();  
 //    demo_uart_any_data_len_recv_entry();    
 //    demo_nbiot_huaweiiot_entry();  
-//    demo_dht11_entry();  
+    demo_dht11_entry();  
 //    demo_rgb_led_entry();
   
 //    demo_led_beep_entry();

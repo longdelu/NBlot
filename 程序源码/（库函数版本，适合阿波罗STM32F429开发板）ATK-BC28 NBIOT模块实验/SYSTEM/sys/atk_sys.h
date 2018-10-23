@@ -1,7 +1,8 @@
 #ifndef _ATK_SYS_H
 #define _ATK_SYS_H
 
-#include "atk_bsp.h"
+#include "stm32f4xx.h"
+#include "stm32f4xx_hal_rcc.h"
 
 //////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途

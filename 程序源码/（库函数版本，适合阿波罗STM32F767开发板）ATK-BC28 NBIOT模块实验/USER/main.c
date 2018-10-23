@@ -36,13 +36,13 @@ int main(void)
 //    demo_atk_ring_buf_entry();
 //    demo_key_entry();  
 //    demo_uart_any_data_len_recv_entry();    
-//    demo_nbiot_huaweiiot_entry();  
+   demo_nbiot_huaweiiot_entry();  
 //   demo_dht11_entry();  
 //    demo_rgb_led_entry();
   
 //    demo_led_beep_entry();
 
-   demo_bc28_low_power_entry();
+//   demo_bc28_low_power_entry();
 
 //    demo_ds18b20_entry();
 
