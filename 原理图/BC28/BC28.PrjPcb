@@ -107,7 +107,7 @@ SCH_ShowNoErc=-1
 SCH_ShowParameter=-1
 SCH_ShowProbes=-1
 SCH_ShowBlankets=-1
-OutputFileName=ATK_BC28_01.PcbDoc=G:\NBlot\ALIENTEK\原理图\BC28\ATK_BC28_01.pdf
+OutputFileName=ATK_BC28_01.SchDoc=G:\NBlot\ALIENTEK\原理图\BC28\ATK_BC28_01.pdf
 SCH_ExpandLogicalToPhysical=-1
 SCH_VariantName=[No Variations]
 SCH_ExpandComponentDesignators=-1

@@ -23,4 +23,8 @@
 void RGBLED_Init(void);//RGB灯IO初始化
 void RGBLED_Show(u8 r,u8 g,u8 b);//RGB灯颜色控制
 
+void atk_sda_set(int leve);  //sda高低电平设置
+
+void atk_scl_set(int leve);  //scl高低电平设置
+
 #endif

@@ -19,7 +19,7 @@
 /**
   * @brief 调试宏开关
   */
-#define NBIOT_DEBUG                   
+//#define NBIOT_DEBUG                   
 #ifdef NBIOT_DEBUG
 #define NBIOT_DEBUG_INFO(...)    (int)printf(__VA_ARGS__)
 #else
@@ -1824,7 +1824,7 @@ static int nbiot_data_recv(nbiot_handle_t nbiot_handle, uint8_t *pData, uint16_t
 }
 
 
-void __nbiot_plfm_init (void)
+static void __nbiot_plfm_init (void)
 {
     GPIO_InitTypeDef GPIO_Initure;
     __HAL_RCC_GPIOF_CLK_ENABLE();           //开启GPIOF时钟
@@ -1858,6 +1858,9 @@ void __nbiot_plfm_init (void)
     HAL_GPIO_WritePin(g_nbiot_dev_info.GPIO_RST, g_nbiot_dev_info.rst_pin, GPIO_PIN_SET);    //RST置1    
        
 }
+
+
+
 
 
 
@@ -1904,6 +1907,26 @@ void nbiot_event_registercb (nbiot_handle_t nbiot_handle, nbiot_cb cb, void *p_a
         nbiot_handle->nbiot_cb  = (nbiot_cb)cb;
         nbiot_handle->p_arg     = p_arg;
     }
+}
+
+/**
+  * @brief  nbiot低功耗设置
+  */
+void nbiot_lowpower_set (nbiot_handle_t nbiot_handle, int en)
+{
+  
+    HAL_GPIO_WritePin(nbiot_handle->p_dev_info->GPIO_VEN, nbiot_handle->p_dev_info->ven_pin, (GPIO_PinState)en);    
+
+}
+
+
+/**
+  * @brief  nbiot复位设置
+  */
+void nbiot_rst_set (nbiot_handle_t nbiot_handle, int en)
+{
+    
+    HAL_GPIO_WritePin(nbiot_handle->p_dev_info->GPIO_RST, nbiot_handle->p_dev_info->rst_pin, (GPIO_PinState)en);
 }
 
 

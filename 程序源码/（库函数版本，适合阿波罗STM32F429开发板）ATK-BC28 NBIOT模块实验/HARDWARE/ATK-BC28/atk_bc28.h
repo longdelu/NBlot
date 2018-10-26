@@ -42,6 +42,7 @@
 #define AT_NCCID       "AT+NCCID"     //查询SIM卡的ID
 #define AT_CSQ         "AT+CSQ"
 #define AT_CFUN        "AT+CFUN"
+#define AT_NCSEARFCN   "AT+NCSEARFCN"  //清除频点 
 
 #define AT_CEREG       "AT+CEREG"      //注册网络
 #define AT_CIPCA       "AT+CIPCA"       //PDP上下文设置 
@@ -309,9 +310,12 @@ typedef enum nbiot_sub_status
     NBIOT_SUB_NONE,
     NBIOT_SUB_SYNC,
     NBIOT_SUB_QLED,  
-    NBIOT_SUB_CMEE,     
+
+    NBIOT_SUB_CMEE, 
+    NBIOT_SUB_CFUN_DISABLE,  
+    NBIOT_SUB_NCSEARFCN,  
     NBIOT_SUB_BAND, 
-    NBIOT_SUB_QREGSWT,     
+    NBIOT_SUB_QREGSWT, 
     NBIOT_SUB_CFUN,
     NBIOT_SUB_CSCON,
     NBIOT_SUB_CGATT,  
@@ -641,5 +645,17 @@ void nbiot_event_registercb (nbiot_handle_t nbiot_handle, nbiot_cb cb, void *p_a
   * @retval NBIOT_OK 成功  
   */
 int nbiot_event_poll (nbiot_handle_t nbiot_handle);
+
+
+/**
+  * @brief  nbiot低功耗设置
+  */
+void nbiot_lowpower_set (nbiot_handle_t nbiot_handle, int en);
+
+
+/**
+  * @brief  nbiot复位设置
+  */
+void nbiot_rst_set (nbiot_handle_t nbiot_handle, int en);
                                                                                                     
 #endif /* ATK_BC28_H */

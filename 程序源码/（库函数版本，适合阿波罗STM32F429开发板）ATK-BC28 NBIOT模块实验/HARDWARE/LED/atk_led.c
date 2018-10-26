@@ -18,7 +18,7 @@
   * @param  None
   * @retval None
   */
-void led_init(void)
+void atk_led_init(void)
 {
     GPIO_InitTypeDef GPIO_Initure;
     __HAL_RCC_GPIOB_CLK_ENABLE();           //¿ªÆôGPIOBÊ±ÖÓ
@@ -31,5 +31,66 @@ void led_init(void)
 
     HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0,GPIO_PIN_SET);    //PB0ÖÃ1 
     HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,GPIO_PIN_SET);    //PB1ÖÃ1  
+}
+
+
+/**
+  * @brief  ledÁÁ
+  * @param  led_id  
+  * @retval None
+  */
+void atk_led_on(int led_id)
+{
+  
+    if (0 == led_id)
+    {
+       LED0 = 0;                
+    }
+    
+    else 
+    {
+      
+       LED1 = 0;  
+    }
+
+}
+
+
+/**
+  * @brief  ledÃð
+  * @param  led_id
+  * @retval None
+  */
+void atk_led_off(int led_id)
+{
+    if (0 == led_id)
+    {
+       LED0 = 1;        
+        
+    }
+    
+    else 
+    {
+       LED1 = 1;        
+      
+    }
+}
+
+/**
+  * @brief  led·­×ª
+  * @param  led_id
+  * @retval None
+  */
+void atk_led_toggle(int led_id)
+{
+    if (0 == led_id)
+    {      
+       LED0_Toggle; 
+    }
+    
+    else 
+    {      
+       LED1_Toggle;
+    }
 }
 

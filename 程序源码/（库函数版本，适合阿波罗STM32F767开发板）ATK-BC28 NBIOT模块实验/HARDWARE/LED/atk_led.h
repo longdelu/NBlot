@@ -22,6 +22,29 @@
 #define LED0_Toggle (HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_1))
 #define LED1_Toggle (HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0))
 
-void led_init(void);
+void atk_led_init(void);
+
+/**
+  * @brief  ledÁÁ
+  * @param  led_id  
+  * @retval None
+  */
+void atk_led_on(int led_id);
+
+
+/**
+  * @brief  ledÃð
+  * @param  led_id
+  * @retval None
+  */
+void atk_led_off(int led_id);
+
+/**
+  * @brief  led·­×ª
+  * @param  led_id
+  * @retval None
+  */
+void atk_led_toggle(int led_id);
+
 
 #endif

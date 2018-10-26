@@ -19,8 +19,8 @@ int main(void)
     HAL_Init();                     //初始化HAL库   
     Stm32_Clock_Init(336,8,2,7);    //设置时钟,168Mhz
     delay_init(168);                //初始化延时函数
-    uart_init(115200);                //初始化调试USART 
-    led_init();                     //初始化LED 
+    uart_init(9600);                //初始化调试USART 
+    atk_led_init();                 //初始化LED 
     LCD_Init();                     //初始化LCD 
   
     POINT_COLOR=RED;  
@@ -38,7 +38,11 @@ int main(void)
 //  
 //    demo_led_beep_entry();
 
-    demo_bc28_low_power_entry();
+//    demo_bc28_low_power_entry();
+
+//    demo_timer_timing_entry();
+
+//    demo_ds18b20_entry();
       
     while(1)
     {              

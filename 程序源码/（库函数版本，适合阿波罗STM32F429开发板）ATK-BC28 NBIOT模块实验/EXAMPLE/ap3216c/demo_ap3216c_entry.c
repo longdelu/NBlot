@@ -591,12 +591,10 @@ void demo_ap3216_entry(void)
                                     
     while(AP3216C_Init())           //检测不到AP3216C
     {
-
         LCD_ShowString(30,190,200,16,16,"AP3216C Error");
         delay_ms(200);
         LCD_Fill(30,190,239,130+16,WHITE);
-        delay_ms(200);      
-      
+        delay_ms(200);            
     }                              
     //先清该区域
     LCD_Fill(30,190,30+200,190+16,WHITE);
@@ -646,8 +644,7 @@ void demo_ap3216_entry(void)
 
             ap3216c_flag = 0;
             LED1=!LED1;            
-        }
-        
+        }       
     }
 }
 

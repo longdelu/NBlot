@@ -24,7 +24,7 @@ int main(void)
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置中断优先级分组为组2：2位抢占优先级，2位响应优先级  
     delay_init(SystemCoreClock);                   //延时函数初始化      
     uart_init(9600);                               //串口初始化为115200
-    led_init();                                    //初始化与LED连接的硬件接口
+    atk_led_init();                                //初始化与LED连接的硬件接口
     LCD_Init();                                    //初始化LCD 
     POINT_COLOR=RED;  
     LCD_ShowString(30,10,200,16,16,(uint8_t *)"ATOM@ALIENTEK");  
@@ -41,7 +41,7 @@ int main(void)
   
 //    demo_led_beep_entry();
 
-    demo_bc28_low_power_entry();
+//    demo_bc28_low_power_entry();
 
 //    demo_ds18b20_entry();
 

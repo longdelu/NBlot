@@ -511,7 +511,7 @@ static void __key_event_handle(u32 key_event,void *p_arg)
             //已经入网了，断电
             if (nbiot_net_flag == 1) 
             {              
-                HAL_GPIO_WritePin(nbiot_handle->p_dev_info->GPIO_VEN, nbiot_handle->p_dev_info->ven_pin, GPIO_PIN_RESET);
+                nbiot_lowpower_set(nbiot_handle, 0);
                 NBIOT_APP_DEBUG_INFO("power down\r\n");  
                 nbiot_net_flag = 2;              
             }                   
@@ -522,16 +522,14 @@ static void __key_event_handle(u32 key_event,void *p_arg)
           
             //已经断电，肯定不在入网状态了
             if (nbiot_net_flag == 2) 
-            { 
-
-            
-                HAL_GPIO_WritePin(nbiot_handle->p_dev_info->GPIO_VEN, nbiot_handle->p_dev_info->ven_pin, GPIO_PIN_SET);
+            {            
+                nbiot_lowpower_set(nbiot_handle, 1);
               
-                HAL_GPIO_WritePin(nbiot_handle->p_dev_info->GPIO_RST, nbiot_handle->p_dev_info->rst_pin, GPIO_PIN_RESET);  //RST置0
+                nbiot_rst_set(nbiot_handle, 0);    //RST置0
 
                 delay_ms(50);
                 
-                HAL_GPIO_WritePin(nbiot_handle->p_dev_info->GPIO_RST, nbiot_handle->p_dev_info->rst_pin, GPIO_PIN_SET);    //RST置1   
+                nbiot_rst_set(nbiot_handle, 1);    //RST置1   
               
                 //重新开始入网
                 nbiot_app_status = NBIOT_APP_NCONFIG;           

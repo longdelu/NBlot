@@ -19,9 +19,8 @@
 #include "atk_key.h"
 #include "dht11.h"
 #include "lcd.h"
-#include "pcf8574.h"
 #include "atk_soft_timer.h"
-
+#include "atk_bsp.h"
 
 #define NBIOT_APP_DEBUG  
 #ifdef NBIOT_APP_DEBUG
@@ -452,9 +451,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
             char dht11_dest_buf[20] = {0};  
                                                         
             NBIOT_APP_DEBUG_INFO("data send start\r\n");
-                                                             
-            PCF8574_ReadBit(BEEP_IO);                   //读取一次PCF8574的任意一个IO，使其释放掉PB12引脚，
-                                                        //否则读取DHT11可能会出问题            
+                                                                     
             DHT11_Read_Data(&temperature, &humidity);   //读取温湿度值 
                                
             snprintf(dht11_src_buf,
@@ -585,12 +582,8 @@ void demo_dht11_entry(void)
      
     nbiot_event_registercb(nbiot_handle, __nbiot_msg_cb_handler, nbiot_handle); 
     
-    PCF8574_Init();                 //初始化PCF8574
-
     LCD_ShowString(30,170,200,16,16,"NBIOT DHT11 ");      
-    PCF8574_ReadBit(BEEP_IO);       //由于DHT11和PCF8574的中断引脚共用一个IO，
-                                    //所以在初始化DHT11之前要先读取一次PCF8574的任意一个IO，
-                                    //使其释放掉中断引脚所占用的IO(PB12引脚),否则初始化DS18B20会出问题    
+
     while(DHT11_Init())    //DHT11初始化    
     {
         LCD_ShowString(30,190,200,16,16,"DHT11 Error");
@@ -604,8 +597,7 @@ void demo_dht11_entry(void)
     LCD_ShowString(30,210,200,16,16,"Temp:  C");
     LCD_ShowString(30,230,200,16,16,"Humi:  %");
 
-    PCF8574_ReadBit(BEEP_IO);                   //读取一次PCF8574的任意一个IO，使其释放掉PB12引脚，
-                                                //否则读取DHT11可能会出问题            
+          
     DHT11_Read_Data(&temperature,&humidity);    //读取温湿度值 
 
     LCD_ShowNum(30+40,210,temperature,2,16);    //显示温度                  
@@ -624,9 +616,7 @@ void demo_dht11_entry(void)
       
         //定时采集温度
         if (dht11_flag == 1)
-        {            
-            PCF8574_ReadBit(BEEP_IO);                   //读取一次PCF8574的任意一个IO，使其释放掉PB12引脚，
-                                                        //否则读取DHT11可能会出问题            
+        {                      
             DHT11_Read_Data(&temperature,&humidity);    //读取温湿度值   
 
             t++;
@@ -652,7 +642,7 @@ void demo_dht11_entry(void)
             LCD_ShowNum(30+40,210,temperature,2,16);    //显示温度                  
             LCD_ShowNum(30+40,230,humidity,2,16);       //显示湿度
             dht11_flag = 0;
-            LED1_Toggle;            
+            atk_led_toggle(1);            
         }        
     }
 }

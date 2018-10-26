@@ -1,5 +1,7 @@
 #include "atk_rgb_led.h"
 
+#include "atk_rgb_led.h"
+
 //////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F407开发板
@@ -11,20 +13,33 @@
 //版权所有，盗版必究。
 //Copyright(C) 广州市星翼电子科技有限公司 2009-2019
 //All rights reserved                                      
-//////////////////////////////////////////////////////////////////////////////////   
+//////////////////////////////////////////////////////////////////////////////////  
+
+ //sda高低电平设置
+void atk_sda_set(int leve)
+{
+    SDA = leve;          
+}
+
+//scl高低电平设置
+void atk_scl_set(int leve)
+{
+    SCL = leve;  
+}
+
 
 //发送前32位'0'起始帧
 void RGBLED_Send32Zero(void)
 { 
      u8 i;
     
-     SDA = 0;
+     atk_sda_set(0);
     
      for(i=0;i<32;i++)
      {
-        SCL = 0;
+        atk_scl_set(0);
         delay_us(200);
-        SCL = 1;
+        atk_scl_set(1);
         delay_us(200);        
      } 
 }
@@ -46,13 +61,13 @@ void RGBLED_DatSend(u32 dx)
      for(i=0;i<32;i++)
      {
         if((dx & 0x80000000) !=0)
-         SDA=1;
+           atk_sda_set(1);
         else 
-         SDA=0;
+         atk_sda_set(0);
         
         dx<<=1;
-        SCL=0;delay_us(200);
-        SCL=1;delay_us(200);
+        atk_scl_set(0);delay_us(200);
+        atk_scl_set(1);delay_us(200);
      }    
 }
 

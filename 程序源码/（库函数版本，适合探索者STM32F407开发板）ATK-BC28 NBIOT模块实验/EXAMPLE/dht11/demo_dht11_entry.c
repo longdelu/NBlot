@@ -642,7 +642,7 @@ void demo_dht11_entry(void)
             LCD_ShowNum(30+40,210,temperature,2,16);    //显示温度                  
             LCD_ShowNum(30+40,230,humidity,2,16);       //显示湿度
             dht11_flag = 0;
-            LED1=!LED1;            
+            atk_led_toggle(1);            
         }        
     }
 }

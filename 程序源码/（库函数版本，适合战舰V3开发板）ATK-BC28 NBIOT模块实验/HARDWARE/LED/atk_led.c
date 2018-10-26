@@ -18,7 +18,7 @@
   * @param  None
   * @retval None
   */
-void led_init(void)
+void atk_led_init(void)
 {
   
     GPIO_InitTypeDef  GPIO_InitStructure;
@@ -36,5 +36,68 @@ void led_init(void)
     GPIO_Init(GPIOE, &GPIO_InitStructure);                     //推挽输出 ，IO口速度为50MHz
     GPIO_SetBits(GPIOE,GPIO_Pin_5);                            //PE.5 输出高   
 
+}
+
+
+/**
+  * @brief  led亮
+  * @param  led_id  
+  * @retval None
+  */
+void atk_led_on(int led_id)
+{
+  
+    if (0 == led_id)
+    {
+       LED0 = 0;                
+    }
+    
+    else 
+    {
+      
+       LED1 = 0;  
+    }
+
+}
+
+
+/**
+  * @brief  led灭
+  * @param  led_id
+  * @retval None
+  */
+void atk_led_off(int led_id)
+{
+    if (0 == led_id)
+    {
+       LED0 = 1;        
+        
+    }
+    
+    else 
+    {
+       LED1 = 1;        
+      
+    }
+}
+
+/**
+  * @brief  led翻转
+  * @param  led_id
+  * @retval None
+  */
+void atk_led_toggle(int led_id)
+{
+    if (0 == led_id)
+    {
+      
+       LED0_Toggle; 
+    }
+    
+    else 
+    {
+      
+       LED1_Toggle;
+    }
 }
 

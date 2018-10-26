@@ -330,13 +330,13 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             if (strstr(led_beep_action_buf, "31")) 
             {                          
                 board_led_dev[0].led_status = 1;               
-                LED0 = 0; 
+                atk_led_on(0); 
                 LCD_ShowString(30,170,200,16,16,"NBIOT LED0 ON");               
             } 
             else
             {
-                board_led_dev[0].led_status = 0;               
-                LED0 = 1;          
+                board_led_dev[0].led_status = 0;   
+                atk_led_off(0);                                   
                 LCD_ShowString(30,170,200,16,16,"NBIOT LED0 OFF");               
                
             }
@@ -348,13 +348,13 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
             if (strstr(led_beep_action_buf, "31")) 
             {                          
                 board_led_dev[1].led_status = 1;               
-                LED1 = 0;              
+                atk_led_on(1);             
                 LCD_ShowString(30,190,200,16,16,"NBIOT LED1 ON"); 
             } 
             else
             {
                 board_led_dev[1].led_status = 0;               
-                LED1 = 1;   
+                atk_led_off(1);  
                 LCD_ShowString(30,190,200,16,16,"NBIOT LED1 OFF");               
                
             } 

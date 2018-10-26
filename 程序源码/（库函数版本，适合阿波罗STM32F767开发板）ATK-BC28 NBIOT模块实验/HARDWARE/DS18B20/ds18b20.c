@@ -1,5 +1,6 @@
 #include "ds18b20.h"
 #include "delay.h"
+#include "atk_bsp.h"
 //////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F7开发板
@@ -11,7 +12,22 @@
 //版权所有，盗版必究。
 //Copyright(C) 广州市星翼电子科技有限公司 2014-2024
 //All rights reserved                                      
-//////////////////////////////////////////////////////////////////////////////////     
+////////////////////////////////////////////////////////////////////////////////// 
+
+static void __ds18b20_plfm_init(void)  
+{
+    PCF8574_Init();                 //初始化PCF8574       
+    PCF8574_ReadBit(BEEP_IO);       //由于DHT11和PCF8574的中断引脚共用一个IO，
+                                    //所以在初始化DHT11之前要先读取一次PCF8574的任意一个IO，
+                                    //使其释放掉中断引脚所占用的IO(PB12引脚),否则初始化DS18B20会出问题     
+}
+
+static void __ds18b20_read_prepare(void)  
+{
+    PCF8574_ReadBit(BEEP_IO);       //由于DHT11和PCF8574的中断引脚共用一个IO，
+                                    //所以在初始化DHT11之前要先读取一次PCF8574的任意一个IO，
+                                    //使其释放掉中断引脚所占用的IO(PB12引脚),否则初始化DS18B20会出问题            
+}
 
 //复位DS18B20
 void DS18B20_Rst(void)       
@@ -127,6 +143,8 @@ u8 DS18B20_Init(void)
     GPIO_Initure.Pull=GPIO_PULLUP;          //上拉
     GPIO_Initure.Speed=GPIO_SPEED_HIGH;     //高速
     HAL_GPIO_Init(GPIOB,&GPIO_Initure);     //初始化
+  
+    __ds18b20_plfm_init();
  
      DS18B20_Rst();
     return DS18B20_Check();
@@ -140,6 +158,7 @@ short DS18B20_Get_Temp(void)
     u8 temp;
     u8 TL,TH;
     short tem;
+    __ds18b20_read_prepare();
     DS18B20_Start ();           //开始转换
     DS18B20_Rst();
     DS18B20_Check();     

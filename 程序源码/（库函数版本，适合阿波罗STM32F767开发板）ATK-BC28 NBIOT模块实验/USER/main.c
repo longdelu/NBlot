@@ -23,7 +23,7 @@ int main(void)
     Stm32_Clock_Init(432,25,2,9);   //设置时钟,216Mhz 
     delay_init(216);                //延时初始化
     uart_init(9600);               //初始化调试USART
-    led_init();                     //初始化LED 
+    atk_led_init();                 //初始化LED 
     LCD_Init();                     //初始化LCD 
     SDRAM_Init();                   //初始化SDRAM 
   
@@ -36,7 +36,7 @@ int main(void)
 //    demo_atk_ring_buf_entry();
 //    demo_key_entry();  
 //    demo_uart_any_data_len_recv_entry();    
-   demo_nbiot_huaweiiot_entry();  
+//   demo_nbiot_huaweiiot_entry();  
 //   demo_dht11_entry();  
 //    demo_rgb_led_entry();
   

@@ -27,6 +27,29 @@
   * @param  None
   * @retval None
   */
-void led_init(void);
+void atk_led_init(void);
+
+
+/**
+  * @brief  ledÁÁ
+  * @param  led_id  
+  * @retval None
+  */
+void atk_led_on(int led_id);
+
+
+/**
+  * @brief  ledÃð
+  * @param  led_id
+  * @retval None
+  */
+void atk_led_off(int led_id);
+
+/**
+  * @brief  led·­×ª
+  * @param  led_id
+  * @retval None
+  */
+void atk_led_toggle(int led_id);
 
 #endif

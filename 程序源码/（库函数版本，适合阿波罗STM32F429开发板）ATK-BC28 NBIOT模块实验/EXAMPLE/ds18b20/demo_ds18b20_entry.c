@@ -19,8 +19,8 @@
 #include "atk_key.h"
 #include "ds18b20.h"
 #include "lcd.h"
-#include "atk_soft_timer.h"
 #include "atk_bsp.h"
+#include "atk_soft_timer.h"
 
 
 #define NBIOT_APP_DEBUG  
@@ -452,9 +452,7 @@ static void nbiot_app_status_poll(nbiot_handle_t nbiot_handle, int *nbiot_app_st
             char ds18b20_dest_buf[20] = {0};  
                                                         
             NBIOT_APP_DEBUG_INFO("data send start\r\n");
-                                                             
-            PCF8574_ReadBit(BEEP_IO);                   //读取一次PCF8574的任意一个IO，使其释放掉PB12引脚，
-                                                        //否则读取ds18b20可能会出问题            
+                                                                        
             temperature = DS18B20_Get_Temp();           //读取温度值 
                                
             snprintf(ds18b20_src_buf,
@@ -586,14 +584,9 @@ void demo_ds18b20_entry(void)
     nbiot_handle = nbiot_dev_init(uart_handle);
      
     nbiot_event_registercb(nbiot_handle, __nbiot_msg_cb_handler, nbiot_handle); 
-    
-    PCF8574_Init();                 //初始化PCF8574
 
     LCD_ShowString(30,170,200,16,16,"NBIOT ds18b20");  
 
-    PCF8574_ReadBit(BEEP_IO);       //由于ds18b20和PCF8574的中断引脚共用一个IO，
-                                    //所以在初始化ds18b20之前要先读取一次PCF8574的任意一个IO，
-                                    //使其释放掉中断引脚所占用的IO(PB12引脚),否则初始化DS18B20会出问题    
     while(DS18B20_Init())    //ds18b20初始化    
     {
         LCD_ShowString(30,190,200,16,16,"ds18b20 Error");
@@ -607,8 +600,7 @@ void demo_ds18b20_entry(void)
     LCD_ShowString(30,190,200,16,16,"ds18b20 OK");
     LCD_ShowString(30,210,200,16,16,"Temp:   . C");
 
-    PCF8574_ReadBit(BEEP_IO);                   //读取一次PCF8574的任意一个IO，使其释放掉PB12引脚，
-                                                //否则读取ds18b20可能会出问题            
+        
     temperature = DS18B20_Get_Temp();           //读取温度值 
 
     LCD_ShowNum(30+40,210,temperature,2,16);    //显示温度                     
@@ -626,9 +618,7 @@ void demo_ds18b20_entry(void)
       
         //定时采集温度
         if (ds18b20_flag == 1)
-        {            
-            PCF8574_ReadBit(BEEP_IO);                   //读取一次PCF8574的任意一个IO，使其释放掉PB12引脚，
-                                                        //否则读取ds18b20可能会出问题            
+        {                      
             temperature = DS18B20_Get_Temp();           //读取温度值度值 
                                
             t++;
@@ -665,7 +655,7 @@ void demo_ds18b20_entry(void)
                      
                
             ds18b20_flag = 0;
-            LED1=!LED1;            
+            atk_led_toggle(1);            
         }
         
     }

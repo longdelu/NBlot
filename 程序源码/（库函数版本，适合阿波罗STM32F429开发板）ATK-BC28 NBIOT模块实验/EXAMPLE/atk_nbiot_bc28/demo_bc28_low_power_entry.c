@@ -24,10 +24,10 @@
 static int nbiot_app_status = NBIOT_APP_NCONFIG;
 static int nbiot_net_flag   = 0;
 
+//nbiot设备句柄
+nbiot_handle_t  nbiot_handle = NULL; 
  
-#define VEN_PIN_Toggle (HAL_GPIO_TogglePin(GPIOI, GPIO_PIN_11))
-#define VEN_PIN PIout(11)   
-#define RST_PIN PAout(4)  
+
 
 /**
   * @brief  led初始化
@@ -35,27 +35,7 @@ static int nbiot_net_flag   = 0;
   * @retval None
   */
 static void ___low_power__init(void)
-{
-    GPIO_InitTypeDef GPIO_Initure;
-    __HAL_RCC_GPIOI_CLK_ENABLE();           //开启GPIOI时钟
-    __HAL_RCC_GPIOA_CLK_ENABLE();           //开启GPIOA时钟
-
-    GPIO_Initure.Pin=GPIO_PIN_11;           //PI11
-    GPIO_Initure.Mode=GPIO_MODE_OUTPUT_PP;  //推挽输出
-    GPIO_Initure.Pull=GPIO_PULLUP;          //上拉
-    GPIO_Initure.Speed=GPIO_SPEED_HIGH;     //高速
-    HAL_GPIO_Init(GPIOI,&GPIO_Initure);
-
-    HAL_GPIO_WritePin(GPIOI,GPIO_PIN_11,GPIO_PIN_SET);    //PI11置1 
-
-
-    GPIO_Initure.Pin=GPIO_PIN_4;            //PA4
-    GPIO_Initure.Mode=GPIO_MODE_OUTPUT_PP;  //推挽输出
-    GPIO_Initure.Pull=GPIO_PULLUP;          //上拉
-    GPIO_Initure.Speed=GPIO_SPEED_HIGH;     //高速
-    HAL_GPIO_Init(GPIOA,&GPIO_Initure);
-
-    HAL_GPIO_WritePin(GPIOA,GPIO_PIN_4,GPIO_PIN_SET);    //PA4置1   
+{ 
   
 }
 
@@ -239,6 +219,11 @@ static void __nbiot_msg_cb_handler (void *p_arg, int msg_id, int len, char *msg)
                 case 0:
                     LCD_ShowString(30,150,200,16,16, (uint8_t *)"msg cscon status=idle"); 
                     NBIOT_APP_DEBUG_INFO("msg cscon status=idle\r\n");
+                    if (nbiot_net_flag == 2)  
+                    {
+                        //跳到更新cdp服务器,在iot平台注册设备
+                        nbiot_app_status = NBIOT_APP_NCDP_SERVER;  
+                    }
                     break;                
 
                 case 1:
@@ -522,9 +507,9 @@ static void __key_event_handle(u32 key_event,void *p_arg)
             //已经入网了，断电
             if (nbiot_net_flag == 1) 
             {              
-                VEN_PIN = 0;
+                nbiot_lowpower_set(nbiot_handle, 0);
                 NBIOT_APP_DEBUG_INFO("power down\r\n");  
-                nbiot_net_flag = 0;              
+                nbiot_net_flag = 2;              
             }                   
             
              break;
@@ -532,25 +517,30 @@ static void __key_event_handle(u32 key_event,void *p_arg)
         case KEY1_PRES://KEY1按下，重新注册入网 
           
             //已经断电，肯定不在入网状态了
-            if (nbiot_net_flag == 0) 
-            {              
-                VEN_PIN = 1;
+            if (nbiot_net_flag == 2) 
+            {            
+                nbiot_lowpower_set(nbiot_handle, 1);
               
-                RST_PIN = 0;
-              
-                delay_ms(150);
-              
-                RST_PIN = 1;
+                nbiot_rst_set(nbiot_handle, 0);    //RST置0
+
+                delay_ms(50);
+                
+                nbiot_rst_set(nbiot_handle, 1);    //RST置1   
               
                 //重新开始入网
                 nbiot_app_status = NBIOT_APP_NCONFIG;           
             }                   
                                                             
-            break;
+            break;                  
+                                                            
         
         case KEY2_PRES://KEY2按下
                        
-                       
+
+            //跳到更新cdp服务器,在iot平台注册设备
+            nbiot_app_status = NBIOT_APP_NCDP_SERVER;  
+        
+                                          
             break;
         
         case WKUP_PRES://WKUP按下，应用状态为NBIOT_APP_NCDP_SEND
@@ -580,9 +570,6 @@ void demo_bc28_low_power_entry(void)
   
     //串口设备句柄  
     uart_handle_t   uart_handle = NULL; 
-
-    //nbiot设备句柄
-    nbiot_handle_t  nbiot_handle = NULL; 
 
     //按键设备句柄 
     key_handle_t    key_handle = NULL;

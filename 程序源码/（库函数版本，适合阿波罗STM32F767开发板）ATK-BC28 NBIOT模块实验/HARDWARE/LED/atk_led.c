@@ -1,31 +1,100 @@
 #include "atk_led.h"
 //////////////////////////////////////////////////////////////////////////////////     
-//±¾³ÌĞòÖ»¹©Ñ§Ï°Ê¹ÓÃ£¬Î´¾­×÷ÕßĞí¿É£¬²»µÃÓÃÓÚÆäËüÈÎºÎÓÃÍ¾
-//ALIENTEK STM32F7¿ª·¢°å
-//LEDÇı¶¯´úÂë       
-//ÕıµãÔ­×Ó@ALIENTEK
-//¼¼ÊõÂÛÌ³:www.openedv.com
-//´´½¨ÈÕÆÚ:2015/11/27
-//°æ±¾£ºV1.0
-//°æÈ¨ËùÓĞ£¬µÁ°æ±Ø¾¿¡£
-//Copyright(C) ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾ 2014-2024
+//æœ¬ç¨‹åºåªä¾›å­¦ä¹ ä½¿ç”¨ï¼Œæœªç»ä½œè€…è®¸å¯ï¼Œä¸å¾—ç”¨äºå…¶å®ƒä»»ä½•ç”¨é€”
+//ALIENTEK STM32F7å¼€å‘æ¿
+//LEDé©±åŠ¨ä»£ç        
+//æ­£ç‚¹åŸå­@ALIENTEK
+//æŠ€æœ¯è®ºå›:www.openedv.com
+//åˆ›å»ºæ—¥æœŸ:2015/11/27
+//ç‰ˆæœ¬ï¼šV1.0
+//ç‰ˆæƒæ‰€æœ‰ï¼Œç›—ç‰ˆå¿…ç©¶ã€‚
+//Copyright(C) å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸ 2014-2024
 //All rights reserved                                      
 //////////////////////////////////////////////////////////////////////////////////     
+          
 
-//³õÊ¼»¯PB0,PB1ÎªÊä³ö.²¢Ê¹ÄÜÕâÁ½¸ö¿ÚµÄÊ±ÖÓ            
-//LED IO³õÊ¼»¯
-void led_init(void)
+/**
+  * @brief  ledÂ³ÃµÃŠÂ¼Â»Â¯
+  * @param  None
+  * @retval None
+  */
+void atk_led_init(void)
 {
     GPIO_InitTypeDef GPIO_Initure;
-    __HAL_RCC_GPIOB_CLK_ENABLE();            //¿ªÆôGPIOBÊ±ÖÓ
+    __HAL_RCC_GPIOB_CLK_ENABLE();            //å¼€å¯GPIOBæ—¶é’Ÿ
 
     GPIO_Initure.Pin=GPIO_PIN_0|GPIO_PIN_1; //PB0,1
-    GPIO_Initure.Mode=GPIO_MODE_OUTPUT_PP;  //ÍÆÍìÊä³ö
-    GPIO_Initure.Pull=GPIO_PULLUP;          //ÉÏÀ­
-    GPIO_Initure.Speed=GPIO_SPEED_HIGH;     //¸ßËÙ
+    GPIO_Initure.Mode=GPIO_MODE_OUTPUT_PP;  //æ¨æŒ½è¾“å‡º
+    GPIO_Initure.Pull=GPIO_PULLUP;          //ä¸Šæ‹‰
+    GPIO_Initure.Speed=GPIO_SPEED_HIGH;     //é«˜é€Ÿ
     HAL_GPIO_Init(GPIOB,&GPIO_Initure);
 
-    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0,GPIO_PIN_SET);    //PB1ÖÃ0
-    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,GPIO_PIN_SET);    //PB1ÖÃ1 
+    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0,GPIO_PIN_SET);    //PB1ç½®0
+    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1,GPIO_PIN_SET);    //PB1ç½®1 
+}
+
+
+
+/**
+  * @brief  ledÃÃ
+  * @param  led_id  
+  * @retval None
+  */
+void atk_led_on(int led_id)
+{
+  
+    if (0 == led_id)
+    {
+       LED0(0);        
+        
+    }
+    
+    else 
+    {
+      
+       LED1(0);  
+    }
+
+}
+
+
+/**
+  * @brief  ledÃƒÃ°
+  * @param  led_id
+  * @retval None
+  */
+void atk_led_off(int led_id)
+{
+    if (0 == led_id)
+    {
+       LED0(1);        
+        
+    }
+    
+    else 
+    {
+       LED1(1);        
+      
+    }
+}
+
+/**
+  * @brief  ledÂ·Â­Ã—Âª
+  * @param  led_id
+  * @retval None
+  */
+void atk_led_toggle(int led_id)
+{
+    if (0 == led_id)
+    {
+      
+       LED0_Toggle; 
+    }
+    
+    else 
+    {
+      
+       LED1_Toggle;
+    }
 }
 

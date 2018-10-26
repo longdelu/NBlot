@@ -30,9 +30,9 @@
 #endif
 
 static int nbiot_app_status = NBIOT_APP_NCONFIG; 
-u8 temperature = 0; 
-u8 humidity    = 0; 
-u8 dht11_flag  = 0;
+static u8 temperature = 0; 
+static u8 humidity    = 0; 
+static u8 dht11_flag  = 0;
 
 /**
   * @brief  nbiot消息事件处理函数
@@ -508,18 +508,25 @@ static void __key_event_handle(u32 key_event,void *p_arg)
   
     switch(key_event)
     {
-      case KEY0_PRES://KEY0按下
+      case KEY0_PRES://KEY0按下,应用状态为NBIOT_APP_NCONFIG 
             
-           
+            //初始化网络注册
+            nbiot_app_status = NBIOT_APP_INIT; 
+            
             break;
         
-        case KEY1_PRES://KEY1按下 
+        case KEY1_PRES://KEY1按下，应用状态为NBIOT_APP_INFO 
              
+            //查询模块信息，得到imei号
+            nbiot_app_status = NBIOT_APP_INFO; 
                             
             break;
         
-        case KEY2_PRES://KEY2按下
-                                              
+        case KEY2_PRES://KEY2按下，应用状态为NBIOT_APP_NCDP_SERVER
+                       
+             //跳到更新cdp服务器,在iot平台注册设备
+             nbiot_app_status = NBIOT_APP_NCDP_SERVER;  
+                       
             break;
         
         case WKUP_PRES://WKUP按下，应用状态为NBIOT_APP_NCDP_SEND
@@ -554,7 +561,12 @@ static void __dht11_timer_callback (void *p_arg)
   * @retval None
   */
 void demo_dht11_entry(void)
-{           
+{
+    int t = 0;
+  
+    char dht11_src_buf[10] = {0};
+    char dht11_dest_buf[20] = {0};  
+    
     struct atk_soft_timer dht11_timer;
 
     uart_handle_t uart_handle = NULL; 
@@ -583,13 +595,20 @@ void demo_dht11_entry(void)
         LCD_Fill(30,190,239,130+16,WHITE);
         delay_ms(200);
     }
-    
+    //先清该区域
+    LCD_Fill(30,190,30+200,190+16,WHITE);
     LCD_ShowString(30,190,200,16,16,"DHT11 OK");
     LCD_ShowString(30,210,200,16,16,"Temp:  C");
-    LCD_ShowString(30,230,200,16,16,"Humi:  %");   
+    LCD_ShowString(30,230,200,16,16,"Humi:  %");
+
+          
+    DHT11_Read_Data(&temperature,&humidity);    //读取温湿度值 
+
+    LCD_ShowNum(30+40,210,temperature,2,16);    //显示温度                  
+    LCD_ShowNum(30+40,230,humidity,2,16);       //显示湿度    
     
-    //软件定时器200ms周期定时
-    atk_soft_timer_init(&dht11_timer, __dht11_timer_callback, NULL, 200, 200); 
+    //软件定时器1000ms周期定时
+    atk_soft_timer_init(&dht11_timer, __dht11_timer_callback, NULL, 1000, 1000); 
     atk_soft_timer_start(&dht11_timer);                                         
     
     while(1)
@@ -601,14 +620,34 @@ void demo_dht11_entry(void)
       
         //定时采集温度
         if (dht11_flag == 1)
-        {                                                                    //否则读取DHT11可能会出问题            
-            DHT11_Read_Data(&temperature,&humidity);    //读取温湿度值                        
+        {                      
+            DHT11_Read_Data(&temperature,&humidity);    //读取温湿度值   
+
+            t++;
+          
+            if (t == 1800)
+            {
+                snprintf(dht11_src_buf,
+                         sizeof(dht11_src_buf) - 1,
+                         "%d\r\n%d",
+                         temperature, humidity); 
+                                    
+                
+                //转换数据格式                     
+                nbiot_srcbuf2hexchrbuf(dht11_src_buf, dht11_dest_buf, strlen(dht11_src_buf)); 
+                                            
+                         
+                //发送当前温湿度到iot平台            
+                nbiot_ncdp_send_hexstr(nbiot_handle, strlen(dht11_dest_buf), dht11_dest_buf, NBIOT_NCDP, NULL);  
+                         
+                t = 0;          
+            }                         
+                     
             LCD_ShowNum(30+40,210,temperature,2,16);    //显示温度                  
             LCD_ShowNum(30+40,230,humidity,2,16);       //显示湿度
             dht11_flag = 0;
-            LED1=!LED1;            
-        }
-        
+            atk_led_toggle(1);            
+        }        
     }
 }
 

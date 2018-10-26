@@ -1,5 +1,6 @@
 #include "dht11.h"
 #include "delay.h"
+#include "atk_bsp.h"
 
 //////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
@@ -14,13 +15,33 @@
 //All rights reserved                                      
 //////////////////////////////////////////////////////////////////////////////////     
 
+static void __dht11_plfm_init(void)  
+{
+    PCF8574_Init();                 //初始化PCF8574       
+    PCF8574_ReadBit(BEEP_IO);       //由于DHT11和PCF8574的中断引脚共用一个IO，
+                                    //所以在初始化DHT11之前要先读取一次PCF8574的任意一个IO，
+                                    //使其释放掉中断引脚所占用的IO(PB12引脚),否则初始化DS18B20会出问题     
+}
+
+static void __dht11_read_prepare(void)  
+{
+    PCF8574_ReadBit(BEEP_IO);       //由于DHT11和PCF8574的中断引脚共用一个IO，
+                                    //所以在初始化DHT11之前要先读取一次PCF8574的任意一个IO，
+                                    //使其释放掉中断引脚所占用的IO(PB12引脚),否则初始化DS18B20会出问题          
+  
+}
+static void __dht11_dq_out_set(int level)
+{
+     DHT11_DQ_OUT  = level;
+
+}
 //复位DHT11
 void DHT11_Rst(void)       
 {                 
     DHT11_IO_OUT();     //设置为输出
-    DHT11_DQ_OUT=0;     //拉低DQ
+    __dht11_dq_out_set(0);     //拉低DQ
     delay_ms(20);        //拉低至少18ms
-    DHT11_DQ_OUT=1;     //DQ=1 
+    __dht11_dq_out_set(1);     //DQ=1 
     delay_us(30);         //主机拉高20~40us
 }
 
@@ -90,6 +111,8 @@ u8 DHT11_Read_Data(u8 *temp,u8 *humi)
 {        
      u8 buf[5];
     u8 i;
+    __dht11_read_prepare();
+  
     DHT11_Rst();
     if(DHT11_Check()==0)
     {
@@ -113,6 +136,8 @@ u8 DHT11_Init(void)
 {
     GPIO_InitTypeDef GPIO_Initure;
     __HAL_RCC_GPIOB_CLK_ENABLE();            //开启GPIOB时钟
+  
+     __dht11_plfm_init();
     
     GPIO_Initure.Pin=GPIO_PIN_12;           //PB12
     GPIO_Initure.Mode=GPIO_MODE_OUTPUT_PP;  //推挽输出

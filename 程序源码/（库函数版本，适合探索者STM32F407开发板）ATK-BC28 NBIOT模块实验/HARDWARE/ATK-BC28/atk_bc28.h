@@ -39,12 +39,12 @@
 #define AT_CMEE        "AT+CMEE"
 #define AT_NBAND       "AT+NBAND"
 #define AT_ATI         "ATI"
-#define AT_NCCID       "AT+NCCID"     //查询SIM卡的ID
+#define AT_NCCID       "AT+NCCID"      //查询SIM卡的ID
 #define AT_CSQ         "AT+CSQ"
 #define AT_CFUN        "AT+CFUN"
-#define AT_NCSEARFCN   "AT+NCSEARFCN"
+#define AT_NCSEARFCN   "AT+NCSEARFCN"  //清除频点 
 
-#define AT_CEREG       "AT+CEREG"      //注册网络
+#define AT_CEREG       "AT+CEREG"       //注册网络
 #define AT_CIPCA       "AT+CIPCA"       //PDP上下文设置 
 #define AT_CGATT       "AT+CGATT"
 #define AT_NUESTATS    "AT+NUESTATS"
@@ -645,5 +645,17 @@ void nbiot_event_registercb (nbiot_handle_t nbiot_handle, nbiot_cb cb, void *p_a
   * @retval NBIOT_OK 成功  
   */
 int nbiot_event_poll (nbiot_handle_t nbiot_handle);
+
+
+/**
+  * @brief  nbiot低功耗设置
+  */
+void nbiot_lowpower_set (nbiot_handle_t nbiot_handle, int en);
+
+
+/**
+  * @brief  nbiot复位设置
+  */
+void nbiot_rst_set (nbiot_handle_t nbiot_handle, int en);
                                                                                                     
 #endif /* ATK_BC28_H */

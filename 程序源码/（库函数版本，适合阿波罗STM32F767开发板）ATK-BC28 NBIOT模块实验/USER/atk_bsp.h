@@ -18,6 +18,7 @@
 #include "stm32f7xx_hal.h"
 #include "stm32f7xx_hal_rcc.h"
 #include "core_cm7.h"
+#include "pcf8574.h"
 
 #endif
 

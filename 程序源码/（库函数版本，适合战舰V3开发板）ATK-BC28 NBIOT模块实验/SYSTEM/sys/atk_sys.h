@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include "atk_bsp.h"
+
+#include "stm32f10x.h"
+#include "stm32f10x_rcc.h"
 
 //////////////////////////////////////////////////////////////////////////////////     
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途

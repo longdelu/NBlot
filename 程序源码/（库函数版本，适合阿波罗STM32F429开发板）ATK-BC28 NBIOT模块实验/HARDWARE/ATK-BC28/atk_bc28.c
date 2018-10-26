@@ -19,7 +19,7 @@
 /**
   * @brief 调试宏开关
   */
-#define NBIOT_DEBUG                   
+//#define NBIOT_DEBUG                   
 #ifdef NBIOT_DEBUG
 #define NBIOT_DEBUG_INFO(...)    (int)printf(__VA_ARGS__)
 #else
@@ -994,6 +994,22 @@ static uint8_t at_cmd_next (void)
              nbiot_at_cmd_param_init(&g_at_cmd, AT_CSQ, NULL, CMD_EXCUTE, 3000);
           }
           break;
+          
+        //禁能模块射频信号,响应等待的最长时间为6S      
+        case NBIOT_SUB_CFUN_DISABLE:                                   
+          {
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_CFUN,"0",CMD_SET, 6000);
+          }         
+          break; 
+
+        //清频     
+        case NBIOT_SUB_NCSEARFCN:                                   
+          {
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_NCSEARFCN, NULL, CMD_EXCUTE, 500);
+          }
+          
+          break; 
+          
 
         //使能模块射频信号,响应等待的最长时间为6S      
         case NBIOT_SUB_CFUN:                                   
@@ -1807,11 +1823,11 @@ static int nbiot_data_recv(nbiot_handle_t nbiot_handle, uint8_t *pData, uint16_t
 }
 
 
-void __nbiot_plfm_init (void)
+static void __nbiot_plfm_init (void)
 {
     GPIO_InitTypeDef GPIO_Initure;
-    __HAL_RCC_GPIOI_CLK_ENABLE();           //开启GPIOF时钟
-    __HAL_RCC_GPIOA_CLK_ENABLE();           //开启GPIOC时钟
+    __HAL_RCC_GPIOI_CLK_ENABLE();           //开启GPIOI时钟
+    __HAL_RCC_GPIOA_CLK_ENABLE();           //开启GPIOA时钟
   
     g_nbiot_dev_info.GPIO_VEN = GPIOI;
     g_nbiot_dev_info.ven_pin = GPIO_PIN_11;  
@@ -1822,7 +1838,7 @@ void __nbiot_plfm_init (void)
     GPIO_Initure.Pin=g_nbiot_dev_info.ven_pin;                               //VEN脚
     GPIO_Initure.Mode=GPIO_MODE_OUTPUT_PP;                                   //推挽输出
     GPIO_Initure.Pull=GPIO_PULLDOWN;                                         //下拉
-    GPIO_Initure.Speed=GPIO_SPEED_HIGH;                                      //高速
+    GPIO_Initure.Speed=GPIO_SPEED_FREQ_VERY_HIGH;                            //高速
     HAL_GPIO_Init(g_nbiot_dev_info.GPIO_VEN, &GPIO_Initure);
   
     HAL_GPIO_WritePin(g_nbiot_dev_info.GPIO_VEN, g_nbiot_dev_info.ven_pin, GPIO_PIN_SET);    //VEN置1， 默认初始化后为高
@@ -1831,7 +1847,7 @@ void __nbiot_plfm_init (void)
     GPIO_Initure.Pin=g_nbiot_dev_info.rst_pin;                               //RST脚
     GPIO_Initure.Mode=GPIO_MODE_OUTPUT_PP;                                   //推挽输出
     GPIO_Initure.Pull=GPIO_PULLUP;                                           //上拉
-    GPIO_Initure.Speed=GPIO_SPEED_HIGH;                                      //高速
+    GPIO_Initure.Speed=GPIO_SPEED_FREQ_VERY_HIGH;                            //高速
     HAL_GPIO_Init(g_nbiot_dev_info.GPIO_RST, &GPIO_Initure);
   
     HAL_GPIO_WritePin(g_nbiot_dev_info.GPIO_RST, g_nbiot_dev_info.rst_pin, GPIO_PIN_RESET);  //RST置0
@@ -1887,6 +1903,26 @@ void nbiot_event_registercb (nbiot_handle_t nbiot_handle, nbiot_cb cb, void *p_a
         nbiot_handle->nbiot_cb  = (nbiot_cb)cb;
         nbiot_handle->p_arg     = p_arg;
     }
+}
+
+/**
+  * @brief  nbiot低功耗设置
+  */
+void nbiot_lowpower_set (nbiot_handle_t nbiot_handle, int en)
+{
+  
+    HAL_GPIO_WritePin(nbiot_handle->p_dev_info->GPIO_VEN, nbiot_handle->p_dev_info->ven_pin, (GPIO_PinState)en);    
+
+}
+
+
+/**
+  * @brief  nbiot复位设置
+  */
+void nbiot_rst_set (nbiot_handle_t nbiot_handle, int en)
+{
+    
+    HAL_GPIO_WritePin(nbiot_handle->p_dev_info->GPIO_RST, nbiot_handle->p_dev_info->rst_pin, (GPIO_PinState)en);
 }
 
 

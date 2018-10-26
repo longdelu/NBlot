@@ -1,0 +1,125 @@
+#! armcc -E
+/*
+** ###################################################################
+**     Processors:          MIMXRT1052CVL5A
+**                          MIMXRT1052DVL6A
+**
+**     Compiler:            Keil ARM C/C++ Compiler
+**     Reference manual:    IMXRT1050RM Rev.C, 08/2017
+**     Version:             rev. 0.1, 2017-01-10
+**     Build:               b170927
+**
+**     Abstract:
+**         Linker file for the Keil ARM C/C++ Compiler
+**
+**     Copyright 2016 Freescale Semiconductor, Inc.
+**     Copyright 2016-2017 NXP
+**     Redistribution and use in source and binary forms, with or without modification,
+**     are permitted provided that the following conditions are met:
+**
+**     1. Redistributions of source code must retain the above copyright notice, this list
+**       of conditions and the following disclaimer.
+**
+**     2. Redistributions in binary form must reproduce the above copyright notice, this
+**       list of conditions and the following disclaimer in the documentation and/or
+**       other materials provided with the distribution.
+**
+**     3. Neither the name of the copyright holder nor the names of its
+**       contributors may be used to endorse or promote products derived from this
+**       software without specific prior written permission.
+**
+**     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+**     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+**     WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+**     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+**     ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+**     (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+**     LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+**     ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+**     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+**     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
+**     http:                 www.nxp.com
+**     mail:                 support@nxp.com
+**
+** ###################################################################
+*/
+
+//////////////////////////////////////////////////////////////////////////////////  
+//移植自NXP官方.scf文件(分散加载),正点原子团队修改.
+//ALIENTEK RT10xx开发板  
+//正点原子@ALIENTEK
+//技术论坛:www.openedv.com
+//创建日期:2018/4/20
+//版本：V1.0
+//版权所有，盗版必究。
+//Copyright(C) 广州市星翼电子科技有限公司 2014-2024
+//All rights reserved
+//********************************************************************************
+//修改说明
+//无
+//////////////////////////////////////////////////////////////////////////////////
+
+
+#define m_interrupts_start             0x00000000			//m_interrupts域起始地址,定义在ITCM里面(128KB)
+#define m_interrupts_size              0x00000400			//m_interrupts域大小
+
+#define m_text_start                   0x00000400			//m_text域起始地址,定义在ITCM里面(128KB)
+#define m_text_size                    0x0001FC00			//m_text域大小
+
+#define m_data_start                   0x80000000			//m_data域起始地址,定义在SDRAM里面(2MB)
+#define m_data_size                    0x00200000			//m_data域大小
+
+#define m_ncache_start                 0x80500000			//m_ncache域起始地址,定义在SDRAM里面(5M开始,总共27MB),必须初始化SDRAM,才能使用此域
+#define m_ncache_size                  0x01B00000			//m_ncache域大小
+
+/* Sizes */
+#if (defined(__stack_size__))
+  #define Stack_Size                   __stack_size__
+#else
+  #define Stack_Size                   0x0800				//设置堆栈大小,一般设置大一点.
+#endif
+
+#if (defined(__heap_size__))
+  #define Heap_Size                    __heap_size__
+#else
+  #define Heap_Size                    0x0000				//没用到系统自带的内存管理,则可以设置这里为0.
+#endif
+
+
+LR_m_text m_text_start m_text_size {   						//LR_m_text加载域
+  ER_m_text m_text_start m_text_size { 						//ER_m_text运行域,起始地址为:m_text_start,大小为:m_text_size 
+    * (InRoot$$Sections)									//将所有的库段(C/C++标准库)放在root region.如__main.o,__scatter*.o等
+    .ANY (+RO)												//将只读数据(+RO)放这个域,任意分配.相当于程序就是存放在这个域的.
+  }
+  
+  RW_m_data m_data_start m_data_size-Stack_Size-Heap_Size { //RW_m_data运行域,起始地址为:m_data_start,大小为:m_data_size-Stack_Size-Heap_Size
+    .ANY (+RW +ZI) 											//将RW和ZI数据(+RW +ZI)放这个域,任意分配.相当于内存数据就是存放在这个域的.
+    *(m_usb_dma_init_data)									//将m_usb_dma_init_data段数据全部放这个域,需要定义m_usb_dma_init_data段才有用.
+    *(m_usb_dma_noninit_data)								//将m_usb_dma_noninit_data段数据全部放这个域,需要定义m_usb_dma_noninit_data段才有用.
+  }
+  ARM_LIB_HEAP +0 EMPTY Heap_Size {   						//ARM_LIB_HEAP运行域,起始地址紧挨RW_m_data域的末尾(+0),大小为:Heap_Size,即定义堆区(heap).
+  }															//EMPTY的意思位保留空白内存块,一般给栈/堆使用.
+  ARM_LIB_STACK m_data_start+m_data_size EMPTY -Stack_Size {//ARM_LIB_STACK运行域,起始地址为:m_data_start+m_data_size-Stack_Size,大小为:Stack_Size
+  }															//-Stack_Size表示从起始地址位置,往前偏移Stack_Size,得到真正的起始地址,结束地址为起始地址的设置.
+  RW_m_ncache m_ncache_start m_ncache_size { 				//RW_m_ncache运行域,起始地址为:m_ncache_start,大小为:m_ncache_size.
+    * (NonCacheable.init)									//将NonCacheable.init段数据全部放这个域,需要定义NonCacheable.init段才有用.
+    * (NonCacheable)										//将NonCacheable段数据全部放这个域,需要定义NonCacheable段才有用.
+  }
+}
+
+LR_m_interrupts m_interrupts_start m_interrupts_size {		//LR_m_interrupts加载域
+  VECTOR_ROM m_interrupts_start m_interrupts_size { 		//VECTOR_ROM运行域,起始地址为:m_interrupts_start,大小为:m_interrupts_size
+    * (RESET,+FIRST)										//优先(+FIRST)将RESET(中断向量表)段放这个域,实际上就是把中断向量表拷贝到m_interrupts_start
+  }															//RESET是一个段名,表示中断向量表(在.s文件定义);+FIRST表示时第一个要加载的.
+}
+
+
+
+
+
+
+
+
+
+

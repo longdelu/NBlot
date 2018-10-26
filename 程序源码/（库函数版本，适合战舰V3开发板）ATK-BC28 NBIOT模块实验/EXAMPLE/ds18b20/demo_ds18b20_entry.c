@@ -19,6 +19,7 @@
 #include "atk_key.h"
 #include "ds18b20.h"
 #include "lcd.h"
+#include "atk_bsp.h"
 #include "atk_soft_timer.h"
 
 
@@ -619,8 +620,7 @@ void demo_ds18b20_entry(void)
         //定时采集温度
         if (ds18b20_flag == 1)
         {            
-
-                                                        //否则读取ds18b20可能会出问题            
+         
             temperature = DS18B20_Get_Temp();           //读取温度值度值 
                                
             t++;
@@ -654,10 +654,9 @@ void demo_ds18b20_entry(void)
                 LCD_ShowNum(30+40+8,210,temperature/10,2,16); //显示正数部分	    
                 LCD_ShowNum(30+40+32,210,temperature%10,1,16);//显示小数部分  
             }             
-                     
-               
+                                 
             ds18b20_flag = 0;
-            LED1=!LED1;            
+            atk_led_toggle(1);            
         }
         
     }

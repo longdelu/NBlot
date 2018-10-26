@@ -49,7 +49,8 @@ static at_cmd_info_t g_at_cmd;
 /**
   * @brief 定义nbiot设备结构体变量
   */
-static struct nbiot_dev       g_nbiot_dev;
+static struct nbiot_dev         g_nbiot_dev;
+static struct nbiot_dev_info    g_nbiot_dev_info;
 
 /**
   * @brief 定义nbiot指令状态流程信息结构体变量
@@ -993,6 +994,22 @@ static uint8_t at_cmd_next (void)
              nbiot_at_cmd_param_init(&g_at_cmd, AT_CSQ, NULL, CMD_EXCUTE, 3000);
           }
           break;
+          
+        //禁能模块射频信号,响应等待的最长时间为6S      
+        case NBIOT_SUB_CFUN_DISABLE:                                   
+          {
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_CFUN,"0",CMD_SET, 6000);
+          }         
+          break; 
+
+        //清频     
+        case NBIOT_SUB_NCSEARFCN:                                   
+          {
+            nbiot_at_cmd_param_init(&g_at_cmd, AT_NCSEARFCN, NULL, CMD_EXCUTE, 500);
+          }
+          
+          break; 
+          
 
         //使能模块射频信号,响应等待的最长时间为6S      
         case NBIOT_SUB_CFUN:                                   
@@ -1806,6 +1823,39 @@ static int nbiot_data_recv(nbiot_handle_t nbiot_handle, uint8_t *pData, uint16_t
 }
 
 
+static void __nbiot_plfm_init (void)
+{
+    GPIO_InitTypeDef  GPIO_InitStructure;
+    
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);//使能GPIOA端口时钟
+
+    g_nbiot_dev_info.GPIO_VEN = GPIOA;
+    g_nbiot_dev_info.ven_pin = GPIO_Pin_4;  
+  
+    g_nbiot_dev_info.GPIO_RST = GPIOA;
+    g_nbiot_dev_info.rst_pin = GPIO_Pin_15;      
+   
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;            //PA4端口配置
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;    //速度为50MHz
+    GPIO_Init(GPIOA, &GPIO_InitStructure);               //根据参数初始化
+
+    GPIO_SetBits(GPIOA, GPIO_Pin_4);   
+  
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;           //PA15端口配置
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;     //推挽输出
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;    //速度为50MHz
+    GPIO_Init(GPIOA, &GPIO_InitStructure);               //根据参数初始化  
+    
+
+    GPIO_ResetBits(GPIOA, GPIO_Pin_15);  
+    delay_ms(50); 
+    GPIO_SetBits(GPIOA, GPIO_Pin_15);   
+         
+}
+
+
+
 /**
   * @brief  nbiot模块设备实例初始化 .
   * @param  nbiot_handle  : 指向nbiot设备句柄的指针.
@@ -1814,6 +1864,9 @@ static int nbiot_data_recv(nbiot_handle_t nbiot_handle, uint8_t *pData, uint16_t
   */
 nbiot_handle_t nbiot_dev_init(uart_handle_t nbiot_handle)
 {
+     //使能上电及复位初始化
+     __nbiot_plfm_init();
+  
      //填充设备结构体
      g_nbiot_dev.p_uart_dev       = nbiot_handle;
      g_nbiot_dev.p_drv_funcs      = &drv_funcs; 
@@ -1824,7 +1877,8 @@ nbiot_handle_t nbiot_dev_init(uart_handle_t nbiot_handle)
      g_nbiot_dev.p_sm_status      = &g_nbiot_sm_status;
      g_nbiot_dev.p_connect_status = &g_nbiot_connect_status;
   
-     g_nbiot_dev.frame_format     = 0;  
+     g_nbiot_dev.frame_format     = 0;
+     g_nbiot_dev.p_dev_info       = &g_nbiot_dev_info;    
     
      //注册串口收发事件回调函数
      uart_event_registercb(nbiot_handle, __uart_event_cb_handle, &g_nbiot_dev);     
@@ -1848,6 +1902,24 @@ void nbiot_event_registercb (nbiot_handle_t nbiot_handle, nbiot_cb cb, void *p_a
 }
 
 
+/**
+  * @brief  nbiot低功耗设置
+  */
+void nbiot_lowpower_set (nbiot_handle_t nbiot_handle, int en)
+{
+    
+     GPIO_WriteBit(nbiot_handle->p_dev_info->GPIO_VEN, nbiot_handle->p_dev_info->ven_pin, (BitAction)en);
+}
+
+
+/**
+  * @brief  nbiot复位设置
+  */
+void nbiot_rst_set (nbiot_handle_t nbiot_handle, int en)
+{
+    
+    GPIO_WriteBit(nbiot_handle->p_dev_info->GPIO_RST, nbiot_handle->p_dev_info->rst_pin, (BitAction)en);
+}
 
 
 

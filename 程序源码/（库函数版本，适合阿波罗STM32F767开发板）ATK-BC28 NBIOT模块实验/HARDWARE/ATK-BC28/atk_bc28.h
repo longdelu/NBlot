@@ -42,6 +42,7 @@
 #define AT_NCCID       "AT+NCCID"     //查询SIM卡的ID
 #define AT_CSQ         "AT+CSQ"
 #define AT_CFUN        "AT+CFUN"
+#define AT_NCSEARFCN   "AT+NCSEARFCN"  //清除频点 
 
 #define AT_CEREG       "AT+CEREG"      //注册网络
 #define AT_CIPCA       "AT+CIPCA"       //PDP上下文设置 
@@ -309,7 +310,10 @@ typedef enum nbiot_sub_status
     NBIOT_SUB_NONE,
     NBIOT_SUB_SYNC,
     NBIOT_SUB_QLED,  
-    NBIOT_SUB_CMEE,     
+
+    NBIOT_SUB_CMEE, 
+    NBIOT_SUB_CFUN_DISABLE,  
+    NBIOT_SUB_NCSEARFCN,  
     NBIOT_SUB_BAND, 
     NBIOT_SUB_QREGSWT,     
     NBIOT_SUB_CFUN,
@@ -509,9 +513,26 @@ typedef void (*nbiot_cb)(void *p_arg, int, int ,char*);
 /**
  * @brief nbiot设备结构体
  */
+typedef struct nbiot_dev_info
+{ 
+    GPIO_TypeDef  *GPIO_VEN;     
+    int ven_pin;  
+  
+    GPIO_TypeDef  *GPIO_RST;   
+    int rst_pin; 
+  
+}nbiot_dev_info_t;
+
+
+/**
+ * @brief nbiot设备结构体
+ */
 typedef struct nbiot_dev
 {     
-    struct nbiot_drv_funcs *p_drv_funcs;
+    struct nbiot_drv_funcs   *p_drv_funcs;
+  
+    //设备信息结构体
+    struct nbiot_dev_info    *p_dev_info;  
     
     //关联的串口设备
     uart_dev_t               *p_uart_dev;

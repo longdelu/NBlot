@@ -17,7 +17,7 @@
   * @param  None
   * @retval None
   */
-void led_init(void)
+void atk_led_init(void)
 {
     GPIO_InitTypeDef GPIO_Initure;
     __HAL_RCC_GPIOF_CLK_ENABLE();           //开启GPIOF时钟
@@ -30,4 +30,67 @@ void led_init(void)
     
     HAL_GPIO_WritePin(GPIOF,GPIO_PIN_9,GPIO_PIN_SET);    //PF9置1，默认初始化后灯灭
     HAL_GPIO_WritePin(GPIOF,GPIO_PIN_10,GPIO_PIN_SET);    //PF10置1，默认初始化后灯灭
+}
+
+
+/**
+  * @brief  led亮
+  * @param  led_id  
+  * @retval None
+  */
+void atk_led_on(int led_id)
+{
+  
+    if (0 == led_id)
+    {
+       LED0 = 0;                
+    }
+    
+    else 
+    {
+      
+       LED1 = 0;  
+    }
+
+}
+
+
+/**
+  * @brief  led灭
+  * @param  led_id
+  * @retval None
+  */
+void atk_led_off(int led_id)
+{
+    if (0 == led_id)
+    {
+       LED0 = 1;        
+        
+    }
+    
+    else 
+    {
+       LED1 = 1;        
+      
+    }
+}
+
+/**
+  * @brief  led翻转
+  * @param  led_id
+  * @retval None
+  */
+void atk_led_toggle(int led_id)
+{
+    if (0 == led_id)
+    {
+      
+       LED0_Toggle; 
+    }
+    
+    else 
+    {
+      
+       LED1_Toggle;
+    }
 }
