@@ -123,9 +123,9 @@ void GPIO5_Combined_0_15_IRQHandler(void)
      
     if(GPIO_GetPinsInterruptFlags(GPIO5)&(1<<0))    //ÅÐ¶ÏÊÇ·ñÎªGPIO5_0ÖÐ¶Ï
     {
-        if(KEY0==GPIO_PIN_RESET)  //
+        if(WK_UP==GPIO_PIN_RESET)  //
         {                
-            key_dev.key_event  = KEY0_PRES;
+            key_dev.key_event  = WKUP_PRES;
             key_dev.start_tick = atk_soft_timer_getick();
         } 
     }

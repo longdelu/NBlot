@@ -9,7 +9,6 @@
  广州市星翼电子科技有限公司  
  作者：正点原子 @ALIENTEK
 ************************************************/ 
-
 #include "atk_sys.h"
 #include "atk_soft_timer.h"
 
@@ -19,6 +18,7 @@ static struct atk_soft_timer timer2;
 static void timer1_callback (void *p_arg)
 {
     printf("timer1 timeout!\r\n");
+
 }
 
 static void timer2_callback (void *p_arg)

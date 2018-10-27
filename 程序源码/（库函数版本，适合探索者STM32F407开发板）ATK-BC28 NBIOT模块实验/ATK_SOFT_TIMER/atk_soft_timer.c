@@ -13,6 +13,18 @@ volatile static uint32_t _timer_ticks = 0;
 
 
 /**
+  * @brief Provides a tick value in millisecond.
+  * @note This function is declared as __weak to be overwritten in case of other 
+  *       implementations in user file.
+  * @retval tick value
+  */
+ uint32_t atk_soft_timer_getick(void)
+{
+  return _timer_ticks;
+}
+
+
+/**
   * @brief  Initializes the atk_soft timer struct handle.
   * @param  handle    : the atk soft timer handle strcut.
   * @param  timeout_cb: timeout callback.

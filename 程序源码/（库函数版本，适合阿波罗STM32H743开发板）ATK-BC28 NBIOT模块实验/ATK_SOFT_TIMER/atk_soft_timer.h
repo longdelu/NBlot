@@ -19,7 +19,15 @@ typedef struct atk_soft_timer {
     void  *p_arg;                     //回调函数参数
     struct atk_soft_timer *next;
 }atk_soft_timer_t;  
-  
+ 
+
+/**
+  * @brief Provides a tick value in millisecond.
+  * @note This function is declared as __weak to be overwritten in case of other 
+  *       implementations in user file.
+  * @retval tick value
+  */
+ uint32_t atk_soft_timer_getick(void);
 
 void atk_soft_timer_init (struct atk_soft_timer  *handle, 
                           void(*timeout_cb)(void *p_arg),                            

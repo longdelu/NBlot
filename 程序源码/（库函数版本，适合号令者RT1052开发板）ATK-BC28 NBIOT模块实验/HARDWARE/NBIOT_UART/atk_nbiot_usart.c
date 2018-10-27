@@ -178,6 +178,7 @@ uart_dev_t *atk_nbiot_uart_init (u32 bound)
     //低转换速度,驱动能力为R0/6,速度为100Mhz，关闭开路功能，使能pull/keepr
     //选择keeper功能，下拉100K Ohm，关闭Hyst
     IOMUXC_SetPinConfig(IOMUXC_GPIO_AD_B1_10_LPUART8_TX,0x10B0u); 
+    
     IOMUXC_SetPinConfig(IOMUXC_GPIO_AD_B1_11_LPUART8_RX,0x10B0u); 
 
     freq=LPUART_SrcFreqGet();    

@@ -128,7 +128,7 @@
         </DebugOption>
         <Utilities>
           <Flash1>
-            <UseTargetDll>1</UseTargetDll>
+            <UseTargetDll>0</UseTargetDll>
             <UseExternalTool>0</UseExternalTool>
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>0</UpdateFlashBeforeDebugging>
@@ -137,7 +137,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2></Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -186,7 +186,7 @@
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>0</StupSel>
-            <useUlib>0</useUlib>
+            <useUlib>1</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <nSecure>0</nSecure>
@@ -779,6 +779,11 @@
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\timer\demo_timer_entry.c</FilePath>
             </File>
+            <File>
+              <FileName>demo_uart_any_data_len_recv_entry .c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\uart\demo_uart_any_data_len_recv_entry .c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -835,7 +840,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>..\OBJ\</OutputDirectory>
-          <OutputName>test</OutputName>
+          <OutputName>NBIoT</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>0</CreateHexFile>
@@ -915,10 +920,10 @@
         </DebugOption>
         <Utilities>
           <Flash1>
-            <UseTargetDll>1</UseTargetDll>
-            <UseExternalTool>0</UseExternalTool>
+            <UseTargetDll>0</UseTargetDll>
+            <UseExternalTool>1</UseExternalTool>
             <RunIndependent>0</RunIndependent>
-            <UpdateFlashBeforeDebugging>0</UpdateFlashBeforeDebugging>
+            <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>0</Capability>
             <DriverSelection>-1</DriverSelection>
           </Flash1>
@@ -973,7 +978,7 @@
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>0</StupSel>
-            <useUlib>0</useUlib>
+            <useUlib>1</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <nSecure>0</nSecure>
@@ -1566,6 +1571,11 @@
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\timer\demo_timer_entry.c</FilePath>
             </File>
+            <File>
+              <FileName>demo_uart_any_data_len_recv_entry .c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\uart\demo_uart_any_data_len_recv_entry .c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1760,7 +1770,7 @@
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>0</StupSel>
-            <useUlib>0</useUlib>
+            <useUlib>1</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <nSecure>0</nSecure>
@@ -2352,6 +2362,11 @@
               <FileName>demo_timer_entry.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\EXAMPLE\timer\demo_timer_entry.c</FilePath>
+            </File>
+            <File>
+              <FileName>demo_uart_any_data_len_recv_entry .c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\EXAMPLE\uart\demo_uart_any_data_len_recv_entry .c</FilePath>
             </File>
           </Files>
         </Group>

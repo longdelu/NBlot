@@ -11,6 +11,19 @@ static struct atk_soft_timer *head_handle = NULL;
 //atk_soft_timer ticks
 volatile static uint32_t _timer_ticks = 0;
 
+
+/**
+  * @brief Provides a tick value in millisecond.
+  * @note This function is declared as __weak to be overwritten in case of other 
+  *       implementations in user file.
+  * @retval tick value
+  */
+ uint32_t atk_soft_timer_getick(void)
+{
+  return _timer_ticks;
+}
+
+
 /**
   * @brief  Initializes the atk_soft timer struct handle.
   * @param  handle    : the atk soft timer handle strcut.
@@ -71,8 +84,7 @@ int atk_soft_timer_timeout_change(struct atk_soft_timer *handle, uint32_t timeou
     head_handle = handle;
     
     INTX_ENABLE();     
-    
-    
+        
     return 0;       
 }
 

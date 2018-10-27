@@ -30,7 +30,7 @@
 #define WKUP_PRES   8
 
 //按键消抖时延
-#define KEY_DELAY_TICK   35
+#define KEY_DELAY_TICK   20
 
 /**
   * @brief  定义按键回调函数指针

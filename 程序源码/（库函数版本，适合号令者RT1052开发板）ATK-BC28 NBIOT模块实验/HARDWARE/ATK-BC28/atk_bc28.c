@@ -1825,8 +1825,9 @@ static int nbiot_data_recv(nbiot_handle_t nbiot_handle, uint8_t *pData, uint16_t
 
 static void __nbiot_plfm_init (void)
 {
-    gpio_pin_config_t led_config;
-    
+    gpio_pin_config_t bc28_config;
+  
+
     //IO功能设置
     IOMUXC_SetPinMux(IOMUXC_GPIO_AD_B1_07_GPIO1_IO23,0);    //GPIO_AD_B1_07配置为ALT5,即GPIO1_23
     IOMUXC_SetPinMux(IOMUXC_GPIO_AD_B1_06_GPIO1_IO22,0);    //GPIO_AD_B1_06配置为ALT5,即GPIO1_22
@@ -1836,20 +1837,29 @@ static void __nbiot_plfm_init (void)
     //选择keeper功能，下拉100K Ohm，关闭Hyst
     IOMUXC_SetPinConfig(IOMUXC_GPIO_AD_B1_07_GPIO1_IO23,0x10B0);
   
+  
+    g_nbiot_dev_info.GPIO_VEN = GPIO1;
+    g_nbiot_dev_info.ven_pin = 23;  
+  
+    g_nbiot_dev_info.GPIO_RST = GPIO1;
+    g_nbiot_dev_info.rst_pin = 22;     
+      
+  
+    bc28_config.direction=kGPIO_DigitalOutput;    //输出
+    bc28_config.interruptMode=kGPIO_NoIntmode;    //不使用中断功能
+    bc28_config.outputLogic=1;                    //默认高电平
+    GPIO_PinInit(GPIO1,23,&bc28_config);          //初始化GPIO1_23  
+  
     //配置RST IO的功能
     //低转换速度,关闭输出驱动,速度为100Mhz，关闭开路功能，使能pull/keepr
     //选择pull功能，上拉22K Ohm，关闭Hyst  
     IOMUXC_SetPinConfig(IOMUXC_GPIO_AD_B1_06_GPIO1_IO22,0xF080);
 
-    led_config.direction=kGPIO_DigitalOutput;    //输出
-    led_config.interruptMode=kGPIO_NoIntmode;    //不使用中断功能
-    led_config.outputLogic=1;                    //默认高电平
-    GPIO_PinInit(GPIO1,23,&led_config);          //初始化GPIO1_23
     
-    led_config.direction=kGPIO_DigitalOutput;    //输出
-    led_config.interruptMode=kGPIO_NoIntmode;    //不使用中断功能
-    led_config.outputLogic=0;                    //默认低电平
-    GPIO_PinInit(GPIO1,22,&led_config);          //初始化GPIO1_22 
+    bc28_config.direction=kGPIO_DigitalOutput;    //输出
+    bc28_config.interruptMode=kGPIO_NoIntmode;    //不使用中断功能
+    bc28_config.outputLogic=0;                    //默认低电平
+    GPIO_PinInit(GPIO1,22, &bc28_config);         //初始化GPIO1_22 
 
     delay_ms(50);
     

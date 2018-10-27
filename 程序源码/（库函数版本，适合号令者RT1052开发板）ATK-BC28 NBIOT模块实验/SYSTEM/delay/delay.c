@@ -1,5 +1,6 @@
 #include "delay.h"
 #include "sys.h"
+#include "atk_soft_timer.h"
 //////////////////////////////////////////////////////////////////////////////////      
 //如果使用ucos,则包括下面的头文件即可.
 #if SYSTEM_SUPPORT_OS
@@ -98,6 +99,15 @@ void SysTick_Handler(void)
         OSIntExit();                            //触发任务切换软中断
     }
 }
+#else
+
+
+//systick中断服务函数,使用OS时用到
+void SysTick_Handler(void)
+{    
+     atk_soft_timer_ticks(); //1ms ticks
+}
+
 #endif
                
 //初始化延迟函数
@@ -109,10 +119,12 @@ void DELAY_Init(u16 SYSCLK)
 #if SYSTEM_SUPPORT_OS                             //如果需要支持OS.
     u32 reload;
 #endif
-    fac_us=SYSCLK;                                   //不论是否使用OS,fac_us都需要使用
-    SysTick->CTRL|=SysTick_CTRL_CLKSOURCE_Msk;    //设置SYSTCIK时钟源为内核时钟，600Mhz
-    SysTick->LOAD=16777215;                        //重载值设置为最大2^24=16777216
-    SysTick->CTRL|=SysTick_CTRL_ENABLE_Msk;        //开启SYSTICK    
+    fac_us=SYSCLK;                                //不论是否使用OS,fac_us都需要使用
+//    SysTick->CTRL|=SysTick_CTRL_CLKSOURCE_Msk;    //设置SYSTCIK时钟源为内核时钟，600Mhz
+//    SysTick->LOAD=16777215;                       //重载值设置为最大2^24=16777216
+//    SysTick->CTRL|=SysTick_CTRL_ENABLE_Msk;       //开启SYSTICK 
+  
+    SysTick_Config(fac_us*1000);   
     
 #if SYSTEM_SUPPORT_OS                         //如果需要支持OS.
     reload=SYSCLK;                            //每秒钟的计数次数 单位为K       
